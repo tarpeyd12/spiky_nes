@@ -24,7 +24,9 @@ namespace sn
         void setVideoWidth(int width);
         void setVideoHeight(int height);
         void setVideoScale(float scale);
-        void setKeys(std::vector<sf::Keyboard::Key>& p1, std::vector<sf::Keyboard::Key>& p2);
+        void setKeys(const std::vector<sf::Keyboard::Key>& p1, const std::vector<sf::Keyboard::Key>& p2);
+        void setControllerCallbacks(const std::vector<std::function<bool(void)>>& p1, const std::vector<std::function<bool(void)>>& p2);
+        void setControllerCallbacks(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2);
     private:
         void DMA(Byte page);
 

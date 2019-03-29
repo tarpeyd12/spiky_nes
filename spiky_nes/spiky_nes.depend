@@ -489,7 +489,7 @@
 
 1550798683 c:\users\tarpeyd12\documents\github\spiky_nes\spnn\tests\tests.hpp
 
-1553733733 c:\users\tarpeyd12\documents\github\spiky_nes\simple_nes\include\emulator.h
+1553893685 c:\users\tarpeyd12\documents\github\spiky_nes\simple_nes\include\emulator.h
 	<SFML/Graphics.hpp>
 	<chrono>
 	"CPU.h"
@@ -947,10 +947,11 @@
 1553733733 c:\users\tarpeyd12\documents\github\spiky_nes\simple_nes\include\palettecolors.h
 	<cstdint>
 
-1553849315 c:\users\tarpeyd12\documents\github\spiky_nes\simple_nes\include\controller.h
+1553892070 c:\users\tarpeyd12\documents\github\spiky_nes\simple_nes\include\controller.h
 	<SFML/Window.hpp>
 	<cstdint>
 	<vector>
+	<map>
 	<functional>
 
 1553848092 c:\users\tarpeyd12\documents\github\spiky_nes\simple_nes\include\log.h

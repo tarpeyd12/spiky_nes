@@ -175,10 +175,21 @@ namespace sn
                   << int(NESVideoWidth * m_screenScale) << "x" << int(NESVideoHeight * m_screenScale) << std::endl;
     }
 
-    void Emulator::setKeys(std::vector<sf::Keyboard::Key>& p1, std::vector<sf::Keyboard::Key>& p2)
+    void Emulator::setKeys(const std::vector<sf::Keyboard::Key>& p1, const std::vector<sf::Keyboard::Key>& p2)
     {
         m_controller1.setKeyBindings(p1);
         m_controller2.setKeyBindings(p2);
     }
 
+    void Emulator::setControllerCallbacks(const std::vector<std::function<bool(void)>>& p1, const std::vector<std::function<bool(void)>>& p2)
+    {
+        m_controller1.setCallbacks(p1);
+        m_controller2.setCallbacks(p2);
+    }
+
+    void Emulator::setControllerCallbacks(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2)
+    {
+        m_controller1.setCallbacks(p1);
+        m_controller2.setCallbacks(p2);
+    }
 }

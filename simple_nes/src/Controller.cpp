@@ -3,7 +3,7 @@
 namespace sn
 {
     Controller::Controller() :
-        m_keyStates(0),
+        m_buttonStates(0),
         m_buttonCallbacks(TotalButtons)
     {
 //         m_keyBindings[A] = sf::Keyboard::J;
@@ -20,18 +20,51 @@ namespace sn
     {
         //m_keyBindings = keys;
 
-        for (int button = A; button < TotalButtons; ++button)
+        for (size_t button = A; button < TotalButtons; ++button)
         {
-            m_buttonCallbacks[ button ] = [=](void)
+            if( button < keys.size() )
             {
-                return sf::Keyboard::isKeyPressed(keys[static_cast<Buttons>(button)]);
-            };
+                m_buttonCallbacks[ button ] = [=](void) -> bool
+                {
+                    return sf::Keyboard::isKeyPressed(keys[button]);
+                };
+            }
+            else
+            {
+                m_buttonCallbacks[ button ] = [](void) -> bool { return false; };
+            }
+
         }
     }
 
     void Controller::setCallbacks(const std::vector<std::function<bool(void)>>& callbacks)
     {
         m_buttonCallbacks = callbacks;
+
+        for( auto& callback : m_buttonCallbacks )
+        {
+            if( !callback )
+            {
+                callback = [](void) -> bool { return false; };
+            }
+        }
+
+        while( m_buttonCallbacks.size() < TotalButtons )
+        {
+            m_buttonCallbacks.emplace_back( [](void) -> bool { return false; } );
+        }
+    }
+
+    void Controller::setCallbacks(const std::map<Buttons,std::function<bool(void)>>& callbacks)
+    {
+        for (size_t button = A; button < TotalButtons; ++button)
+        {
+            auto it = callbacks.find( static_cast<Buttons>(button) );
+            if( it != callbacks.end() && it->second )
+            {
+                m_buttonCallbacks[ button ] = it->second;
+            }
+        }
     }
 
     void Controller::strobe(Byte b)
@@ -39,11 +72,11 @@ namespace sn
         m_strobe = (b & 1);
         if (!m_strobe)
         {
-            m_keyStates = 0;
+            m_buttonStates = 0;
             int shift = 0;
-            for (int button = A; button < TotalButtons; ++button)
+            for( size_t button = A; button < TotalButtons; ++button )
             {
-                m_keyStates |= (m_buttonCallbacks[static_cast<Buttons>(button)]() << shift);
+                m_buttonStates |= (m_buttonCallbacks[ button ]() << shift);
                 ++shift;
             }
         }
@@ -56,8 +89,8 @@ namespace sn
             ret = m_buttonCallbacks[A]();
         else
         {
-            ret = (m_keyStates & 1);
-            m_keyStates >>= 1;
+            ret = (m_buttonStates & 1);
+            m_buttonStates >>= 1;
         }
         return ret | 0x40;
     }

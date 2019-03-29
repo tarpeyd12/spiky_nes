@@ -3,6 +3,7 @@
 #include <SFML/Window.hpp>
 #include <cstdint>
 #include <vector>
+#include <map>
 #include <functional>
 
 namespace sn
@@ -12,7 +13,7 @@ namespace sn
     {
     public:
         Controller();
-        enum Buttons
+        enum Buttons : size_t
         {
             A,
             B,
@@ -29,9 +30,10 @@ namespace sn
         Byte read();
         void setKeyBindings(const std::vector<sf::Keyboard::Key>& keys);
         void setCallbacks(const std::vector<std::function<bool(void)>>& callbacks);
+        void setCallbacks(const std::map<Buttons,std::function<bool(void)>>& callbacks);
     private:
         bool m_strobe;
-        unsigned int m_keyStates;
+        unsigned int m_buttonStates;
 
         std::vector<std::function<bool(void)>> m_buttonCallbacks;
 //        std::vector<sf::Keyboard::Key> m_keyBindings;
