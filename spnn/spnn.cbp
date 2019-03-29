@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="spnn" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/spnn-d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Debug/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-Og" />
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/spnn" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Release/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wnon-virtual-dtor" />
+			<Add option="-Winit-self" />
+			<Add option="-Wredundant-decls" />
+			<Add option="-Wunreachable-code" />
+			<Add option="-Wmissing-declarations" />
+			<Add option="-Wswitch-enum" />
+			<Add option="-Weffc++" />
+			<Add option="-Wzero-as-null-pointer-constant" />
+			<Add option="-pedantic-errors" />
+			<Add option="-pedantic" />
+			<Add option="-Wextra" />
+			<Add option="-Wall" />
+			<Add option="-std=c++14" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Linker>
+			<Add option="-static-libstdc++" />
+			<Add option="-static-libgcc" />
+			<Add option="-static" />
+		</Linker>
+		<Unit filename="neat/fitness.cpp" />
+		<Unit filename="neat/fitness.hpp" />
+		<Unit filename="neat/fitness.inl" />
+		<Unit filename="neat/generation.cpp" />
+		<Unit filename="neat/generation.hpp" />
+		<Unit filename="neat/innovation_generator.hpp" />
+		<Unit filename="neat/innovation_generator.inl" />
+		<Unit filename="neat/mutations.cpp" />
+		<Unit filename="neat/mutations.hpp" />
+		<Unit filename="neat/mutations_add.cpp" />
+		<Unit filename="neat/mutations_connection.cpp" />
+		<Unit filename="neat/mutations_node.cpp" />
+		<Unit filename="neat/neat.hpp" />
+		<Unit filename="neat/neat.inl" />
+		<Unit filename="neat/network.cpp" />
+		<Unit filename="neat/network.hpp" />
+		<Unit filename="neat/network_genotype.cpp" />
+		<Unit filename="neat/network_phenotype.cpp" />
+		<Unit filename="neat/population.cpp" />
+		<Unit filename="neat/population.hpp" />
+		<Unit filename="neat/population_init.cpp" />
+		<Unit filename="neat/population_species.cpp" />
+		<Unit filename="neat/random.hpp" />
+		<Unit filename="neat/random/random_functor.cpp" />
+		<Unit filename="neat/random/random_functor.hpp" />
+		<Unit filename="neat/random/random_functor.inl" />
+		<Unit filename="neat/species.cpp" />
+		<Unit filename="neat/species.hpp" />
+		<Unit filename="neat/species_distance.cpp" />
+		<Unit filename="neat/splice.cpp" />
+		<Unit filename="neat/splice.hpp" />
+		<Unit filename="neat/thread_pool.hpp" />
+		<Unit filename="neat/thread_pool/future.hpp" />
+		<Unit filename="neat/thread_pool/future.inl" />
+		<Unit filename="neat/thread_pool/safe_queue.hpp" />
+		<Unit filename="neat/thread_pool/safe_queue.inl" />
+		<Unit filename="neat/thread_pool/task.hpp" />
+		<Unit filename="neat/thread_pool/thread_pool.cpp" />
+		<Unit filename="neat/thread_pool/thread_pool.hpp" />
+		<Unit filename="neat/thread_pool/thread_pool.inl" />
+		<Unit filename="spnn.hpp" />
+		<Unit filename="spnn/network.hpp" />
+		<Unit filename="spnn/network.inl" />
+		<Unit filename="spnn/neuron.hpp" />
+		<Unit filename="spnn/neuron.inl" />
+		<Unit filename="spnn/neuron_methods.inl" />
+		<Unit filename="spnn/neuron_properties.inl" />
+		<Unit filename="spnn/pulse_manager.hpp" />
+		<Unit filename="spnn/pulse_manager.inl" />
+		<Unit filename="spnn/spnn.hpp" />
+		<Unit filename="spnn/synapse.hpp" />
+		<Unit filename="spnn/synapse.inl" />
+		<Unit filename="tests/test4.cpp" />
+		<Unit filename="tests/test6.cpp" />
+		<Unit filename="tests/test7.cpp" />
+		<Unit filename="tests/test_helpers.cpp" />
+		<Unit filename="tests/tests.cpp" />
+		<Unit filename="tests/tests.hpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -23,7 +23,7 @@
 # Compiled Static libraries
 *.lai
 *.la
-*.a
+# *.a # we need to keep the sfml libs so we dont want to ignore *.a files
 *.lib
 
 # Executables
@@ -57,3 +57,20 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# =========================
+# Project Files
+# =========================
+
+# ROM Files
+# =========================
+*.nes
+
+# Project directories
+# =========================
+
+spnn/bin/
+simple_nes/bin/
+spiky_nes/bin/
+
+

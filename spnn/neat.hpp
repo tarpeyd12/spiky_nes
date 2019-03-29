@@ -1,0 +1,6 @@
+#ifndef NEAT_NEAT_HPP_INCLUDE_INCLUDED
+#define NEAT_NEAT_HPP_INCLUDE_INCLUDED
+
+#include "neat/neat.hpp"
+
+#endif // NEAT_NEAT_HPP_INCLUDE_INCLUDED
