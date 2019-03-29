@@ -645,5 +645,5 @@ namespace sn
         return m_bus.read(addr) | m_bus.read(addr + 1) << 8;
     }
 
-};
+}
 

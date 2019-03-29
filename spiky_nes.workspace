@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
-	<Workspace title="Workspace">
+	<Workspace title="spiky_nes workspace">
 		<Project filename="spnn/spnn.cbp" />
 		<Project filename="simple_nes/simple_nes.cbp" />
 		<Project filename="spiky_nes/spiky_nes.cbp">

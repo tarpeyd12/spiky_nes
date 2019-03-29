@@ -123,7 +123,7 @@ int main(int argc, char** argv)
     emulator.run(path);
     });
 
-    _tests::Test7();
+    //_tests::Test7();
 
     th.get();
 

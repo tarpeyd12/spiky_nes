@@ -64,6 +64,7 @@ $RECYCLE.BIN/
 
 # ROM Files
 # =========================
+
 *.nes
 
 # Project directories
@@ -73,4 +74,8 @@ spnn/bin/
 simple_nes/bin/
 spiky_nes/bin/
 
+# Project misc files
+# =========================
 
+*.csv
+exec/simplenes.log

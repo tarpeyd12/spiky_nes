@@ -75,5 +75,5 @@ namespace sn
             TeeBuf m_tbuf;
     };
 
-};
+}
 #endif // LOG_H

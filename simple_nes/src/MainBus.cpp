@@ -165,4 +165,4 @@ namespace sn
         return m_readCallbacks.emplace(reg, callback).second;
     }
 
-};
+}

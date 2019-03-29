@@ -68,5 +68,5 @@ namespace sn
             MainBus &m_bus;
     };
 
-};
+}
 #endif // CPU_H

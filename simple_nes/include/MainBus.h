@@ -40,8 +40,8 @@ namespace sn
             Mapper* m_mapper;
 
             std::map<IORegisters, std::function<void(Byte)>> m_writeCallbacks;
-            std::map<IORegisters, std::function<Byte(void)>> m_readCallbacks;;
+            std::map<IORegisters, std::function<Byte(void)>> m_readCallbacks;
     };
-};
+}
 
 #endif // MEMORY_H

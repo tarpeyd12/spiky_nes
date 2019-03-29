@@ -28,6 +28,6 @@ namespace sn
             bool m_chrRAM;
     };
 
-};
+}
 
 #endif // CARTRIDGE_H

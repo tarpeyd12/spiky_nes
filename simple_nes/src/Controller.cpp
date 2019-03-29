@@ -4,7 +4,7 @@ namespace sn
 {
     Controller::Controller() :
         m_keyStates(0),
-        m_keyBindings(TotalButtons)
+        m_buttonCallbacks(TotalButtons)
     {
 //         m_keyBindings[A] = sf::Keyboard::J;
 //         m_keyBindings[B] = sf::Keyboard::K;
@@ -18,7 +18,20 @@ namespace sn
 
     void Controller::setKeyBindings(const std::vector<sf::Keyboard::Key>& keys)
     {
-        m_keyBindings = keys;
+        //m_keyBindings = keys;
+
+        for (int button = A; button < TotalButtons; ++button)
+        {
+            m_buttonCallbacks[ button ] = [=](void)
+            {
+                return sf::Keyboard::isKeyPressed(keys[static_cast<Buttons>(button)]);
+            };
+        }
+    }
+
+    void Controller::setCallbacks(const std::vector<std::function<bool(void)>>& callbacks)
+    {
+        m_buttonCallbacks = callbacks;
     }
 
     void Controller::strobe(Byte b)
@@ -30,7 +43,7 @@ namespace sn
             int shift = 0;
             for (int button = A; button < TotalButtons; ++button)
             {
-                m_keyStates |= (sf::Keyboard::isKeyPressed(m_keyBindings[static_cast<Buttons>(button)]) << shift);
+                m_keyStates |= (m_buttonCallbacks[static_cast<Buttons>(button)]() << shift);
                 ++shift;
             }
         }
@@ -40,7 +53,7 @@ namespace sn
     {
         Byte ret;
         if (m_strobe)
-            ret = sf::Keyboard::isKeyPressed(m_keyBindings[A]);
+            ret = m_buttonCallbacks[A]();
         else
         {
             ret = (m_keyStates & 1);
