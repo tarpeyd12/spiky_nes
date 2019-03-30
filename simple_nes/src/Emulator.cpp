@@ -192,4 +192,9 @@ namespace sn
         m_controller1.setCallbacks(p1);
         m_controller2.setCallbacks(p2);
     }
+
+    Byte Emulator::peakMemory(Address addr)
+    {
+        return m_bus.read( addr );
+    }
 }

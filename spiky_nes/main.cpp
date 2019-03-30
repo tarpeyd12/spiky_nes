@@ -117,15 +117,71 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    auto th = std::async( std::launch::async, [&]{
-    sn::parseControllerConf("keybindings.conf", p1, p2);
-    emulator.setKeys(p1, p2);
-    emulator.run(path);
+    auto th = std::async( std::launch::async, [&]
+    {
+        sn::parseControllerConf("keybindings.conf", p1, p2);
+        emulator.setKeys(p1, p2);
+        emulator.run(path);
+    });
+
+    auto th2 = std::async( std::launch::async, [&]
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::cout << "\n\n";
+        while(th.valid())
+        {
+            std::cout << "High = ";
+            std::cout << int(emulator.peakMemory( 0x07D7 ));
+            std::cout << int(emulator.peakMemory( 0x07D8 ));
+            std::cout << int(emulator.peakMemory( 0x07D9 ));
+            std::cout << int(emulator.peakMemory( 0x07DA ));
+            std::cout << int(emulator.peakMemory( 0x07DB ));
+            std::cout << int(emulator.peakMemory( 0x07DC ));
+            std::cout << "0 Mario = ";
+            std::cout << int(emulator.peakMemory( 0x07DD ));
+            std::cout << int(emulator.peakMemory( 0x07DE ));
+            std::cout << int(emulator.peakMemory( 0x07DF ));
+            std::cout << int(emulator.peakMemory( 0x07E0 ));
+            std::cout << int(emulator.peakMemory( 0x07E1 ));
+            std::cout << int(emulator.peakMemory( 0x07E2 ));
+            std::cout << "0 Luigi = ";
+            std::cout << int(emulator.peakMemory( 0x07D3 ));
+            std::cout << int(emulator.peakMemory( 0x07D4 ));
+            std::cout << int(emulator.peakMemory( 0x07D5 ));
+            std::cout << int(emulator.peakMemory( 0x07E6 ));
+            std::cout << int(emulator.peakMemory( 0x07E7 ));
+            std::cout << int(emulator.peakMemory( 0x07E8 ));
+            std::cout << "0 coins = ";
+            std::cout << int(emulator.peakMemory( 0x07ED ));
+            std::cout << int(emulator.peakMemory( 0x07EE ));
+            std::cout << "(" << int(emulator.peakMemory( 0x075E )) << ")";
+            std::cout << " time = ";
+            std::cout << int(emulator.peakMemory( 0x07F8 ));
+            std::cout << int(emulator.peakMemory( 0x07F9 ));
+            std::cout << int(emulator.peakMemory( 0x07FA ));
+            std::cout << " World-Level = ";
+            std::cout << int(emulator.peakMemory( 0x075F ));
+            std::cout << "-";
+            std::cout << int(emulator.peakMemory( 0x0760 ));
+            std::cout << " Lives = ";
+            std::cout << int(emulator.peakMemory( 0x075A ));
+            std::cout << " screen = ";
+            std::cout << int(emulator.peakMemory( 0x071A )) << ",";
+            std::cout << int(emulator.peakMemory( 0x071B )) << ",";
+            std::cout << int(emulator.peakMemory( 0x071C ));
+
+            std::cout << "         \r" << std::flush;
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        std::cout << "\n" << std::endl;
     });
 
     //_tests::Test7();
 
     th.get();
+    th2.get();
 
     return 0;
 }
