@@ -187,10 +187,10 @@ namespace sn
         m_controller2.setCallbacks(p2);
     }
 
-    void Emulator::setControllerCallbacks(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2)
+    void Emulator::setControllerCallbackMap(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2)
     {
-        m_controller1.setCallbacks(p1);
-        m_controller2.setCallbacks(p2);
+        m_controller1.setCallbackMap(p1);
+        m_controller2.setCallbackMap(p2);
     }
 
     Byte Emulator::peakMemory(Address addr)

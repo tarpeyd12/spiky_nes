@@ -11,7 +11,7 @@ namespace sn
         void setPixel (std::size_t x, std::size_t y, sf::Color color);
 
     private:
-        void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+        void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
         sf::Vector2u m_screenSize;
         float m_pixelSize; //virtual pixel size in real pixels

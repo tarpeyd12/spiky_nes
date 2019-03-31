@@ -30,7 +30,7 @@ namespace sn
         Byte read();
         void setKeyBindings(const std::vector<sf::Keyboard::Key>& keys);
         void setCallbacks(const std::vector<std::function<bool(void)>>& callbacks);
-        void setCallbacks(const std::map<Buttons,std::function<bool(void)>>& callbacks);
+        void setCallbackMap(const std::map<Buttons,std::function<bool(void)>>& callbacks);
     private:
         bool m_strobe;
         unsigned int m_buttonStates;

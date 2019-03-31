@@ -26,7 +26,7 @@ namespace sn
         void setVideoScale(float scale);
         void setKeys(const std::vector<sf::Keyboard::Key>& p1, const std::vector<sf::Keyboard::Key>& p2);
         void setControllerCallbacks(const std::vector<std::function<bool(void)>>& p1, const std::vector<std::function<bool(void)>>& p2);
-        void setControllerCallbacks(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2);
+        void setControllerCallbackMap(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2);
 
         Byte peakMemory(Address addr);
     private:

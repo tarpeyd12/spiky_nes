@@ -121,6 +121,24 @@ int main(int argc, char** argv)
     {
         sn::parseControllerConf("keybindings.conf", p1, p2);
         emulator.setKeys(p1, p2);
+
+        auto _up =    [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) < -80.0; };
+        auto _down =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) > 80.0; };
+        auto _left =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) < -80.0; };
+        auto _right = [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) > 80.0; };
+
+        emulator.setControllerCallbackMap(
+        {
+            { sn::Controller::A,      [&]{ return sf::Joystick::isButtonPressed(0, 1) || sf::Keyboard::isKeyPressed(sf::Keyboard::J); } },
+            { sn::Controller::B,      [&]{ return sf::Joystick::isButtonPressed(0, 0) || sf::Keyboard::isKeyPressed(sf::Keyboard::K); } },
+            { sn::Controller::Select, [&]{ return sf::Joystick::isButtonPressed(0, 6) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift); } },
+            { sn::Controller::Start,  [&]{ return sf::Joystick::isButtonPressed(0, 7) || sf::Keyboard::isKeyPressed(sf::Keyboard::Return); } },
+            { sn::Controller::Up,     [&]{ return _up(0)    || sf::Keyboard::isKeyPressed(sf::Keyboard::W); } },
+            { sn::Controller::Down,   [&]{ return _down(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::S); } },
+            { sn::Controller::Left,   [&]{ return _left(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::A); } },
+            { sn::Controller::Right,  [&]{ return _right(0) || sf::Keyboard::isKeyPressed(sf::Keyboard::D); } },
+        }, {} );
+
         emulator.run(path);
     });
 
@@ -170,9 +188,27 @@ int main(int argc, char** argv)
             std::cout << int(emulator.peakMemory( 0x071B )) << ",";
             std::cout << int(emulator.peakMemory( 0x071C ));
 
-            std::cout << "         \r" << std::flush;
+            std::cout << "         \n";
 
+            std::cout << " " << std::string(sf::Joystick::getIdentification(0).name);
+            std::cout << " " << sf::Joystick::getButtonCount(0) << "\n\t";
+
+            for( size_t i = 0; i < sf::Joystick::getButtonCount(0); ++i )
+            {
+                std::cout << " [" << i << ":" << sf::Joystick::isButtonPressed(0, i) << "], ";
+            }
+
+            std::cout << "\n\t";
+
+            std::cout << "[X:" << sf::Joystick::hasAxis(0,sf::Joystick::Axis::X) << ":" << sf::Joystick::getAxisPosition(0,sf::Joystick::Axis::X) << "], ";
+            std::cout << "[Y:" << sf::Joystick::hasAxis(0,sf::Joystick::Axis::Y) << ":" << sf::Joystick::getAxisPosition(0,sf::Joystick::Axis::Y) << "], ";
+
+            std::cout << "\n\n";
+
+
+            std::cout << std::flush;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            system("cls");
         }
 
         std::cout << "\n" << std::endl;

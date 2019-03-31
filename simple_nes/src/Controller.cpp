@@ -55,7 +55,7 @@ namespace sn
         }
     }
 
-    void Controller::setCallbacks(const std::map<Buttons,std::function<bool(void)>>& callbacks)
+    void Controller::setCallbackMap(const std::map<Buttons,std::function<bool(void)>>& callbacks)
     {
         for (size_t button = A; button < TotalButtons; ++button)
         {
