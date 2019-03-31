@@ -1,9 +1,0 @@
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Emulator.cpp:174] Scale: 5 set. Screen: 1280x1200
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:50] Reading ROM from path: mario.nes
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:68] Reading header, it dictates: 
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:71] 16KB PRG-ROM Banks: 2
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:79] 8KB CHR-ROM Banks: 1
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:82] Name Table Mirroring: 1
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:85] Mapper #: 0
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:88] Extended (CPU) RAM: false
-[C:\Users\TarpeyD12\Desktop\SpikyNES\simple_nes\src\Cartridge.cpp:102] ROM is NTSC compatible.
