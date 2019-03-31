@@ -197,4 +197,9 @@ namespace sn
     {
         return m_bus.read( addr );
     }
+
+    std::shared_ptr<std::vector<sf::Color>> Emulator::getScreenData() const
+    {
+        return m_emulatorScreen.getScreenData();
+    }
 }
