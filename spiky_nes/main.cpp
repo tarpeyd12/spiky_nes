@@ -148,6 +148,10 @@ int main(int argc, char** argv)
         std::cout << "\n\n";
         while(th.valid())
         {
+            std::cout << std::flush;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            system("cls");
+
             std::cout << "High = ";
             std::cout << int(emulator.peakMemory( 0x07D7 ));
             std::cout << int(emulator.peakMemory( 0x07D8 ));
@@ -204,11 +208,6 @@ int main(int argc, char** argv)
             std::cout << "[Y:" << sf::Joystick::hasAxis(0,sf::Joystick::Axis::Y) << ":" << sf::Joystick::getAxisPosition(0,sf::Joystick::Axis::Y) << "], ";
 
             std::cout << "\n\n";
-
-
-            std::cout << std::flush;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            system("cls");
         }
 
         std::cout << "\n" << std::endl;
