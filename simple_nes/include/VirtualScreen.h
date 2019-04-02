@@ -8,7 +8,7 @@ namespace sn
     class VirtualScreen : public sf::Drawable
     {
     public:
-        void create (unsigned int width, unsigned int height, float pixel_size, sf::Color color);
+        void create (unsigned int width = 256, unsigned int height = 240, float pixel_size = 2.f, sf::Color color = sf::Color::Magenta);
         void setPixel (std::size_t x, std::size_t y, sf::Color color);
 
         std::shared_ptr<std::vector<sf::Color>> getScreenData() const;

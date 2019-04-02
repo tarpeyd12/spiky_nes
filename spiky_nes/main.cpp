@@ -46,66 +46,12 @@ int main(int argc, char** argv)
                                    p2 {sf::Keyboard::Numpad5, sf::Keyboard::Numpad6, sf::Keyboard::Numpad8, sf::Keyboard::Numpad9,
                                        sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::Left, sf::Keyboard::Right};
     sn::Emulator emulator;
+    sn::Emulator emulator2;
 
     for (int i = 1; i < argc; ++i)
     {
         std::string arg (argv[i]);
-        if (arg == "-h" || arg == "--help")
-        {
-            std::cout << "SimpleNES is a simple NES emulator.\n"
-                      << "It can run off .nes images.\n"
-                      << "Set keybindings with keybindings.conf\n\n"
-                      << "Usage: SimpleNES [options] rom-path\n\n"
-                      << "Options:\n"
-                      << "-h, --help             Print this help text and exit\n"
-                      << "-s, --scale            Set video scale. Default: 2.\n"
-                      << "                       Scale of 1 corresponds to " << sn::NESVideoWidth << "x" << sn::NESVideoHeight << std::endl
-                      << "-w, --width            Set the width of the emulation screen (height is\n"
-                      << "                       set automatically to fit the aspect ratio)\n"
-                      << "-H, --height           Set the height of the emulation screen (width is\n"
-                      << "                       set automatically to fit the aspect ratio)\n"
-                      << "                       This option is mutually exclusive to --width\n"
-                      << std::endl;
-            return 0;
-        }
-        else if (std::strcmp(argv[i], "--log-cpu") == 0)
-        {
-            sn::Log::get().setLevel(sn::CpuTrace);
-            cpuTraceFile.open("sn.cpudump");
-            sn::Log::get().setCpuTraceStream(cpuTraceFile);
-            LOG(sn::Info) << "CPU logging set." << std::endl;
-        }
-        else if (std::strcmp(argv[i], "-s") == 0 || std::strcmp(argv[i], "--scale") == 0)
-        {
-            float scale;
-            std::stringstream ss;
-            if (i + 1 < argc && ss << argv[i + 1] && ss >> scale)
-                emulator.setVideoScale(scale);
-            else
-                LOG(sn::Error) << "Setting scale from argument failed" << std::endl;
-            ++i;
-        }
-        else if (std::strcmp(argv[i], "-w") == 0 || std::strcmp(argv[i], "--width") == 0)
-        {
-            int width;
-            std::stringstream ss;
-            if (i + 1 < argc && ss << argv[i + 1] && ss >> width)
-                emulator.setVideoWidth(width);
-            else
-                LOG(sn::Error) << "Setting width from argument failed" << std::endl;
-            ++i;
-        }
-        else if (std::strcmp(argv[i], "-H") == 0 || std::strcmp(argv[i], "--height") == 0)
-        {
-            int height;
-            std::stringstream ss;
-            if (i + 1 < argc && ss << argv[i + 1] && ss >> height)
-                emulator.setVideoHeight(height);
-            else
-                LOG(sn::Error) << "Setting height from argument failed" << std::endl;
-            ++i;
-        }
-        else if (argv[i][0] != '-')
+        if (argv[i][0] != '-')
             path = argv[i];
         else
             std::cerr << "Unrecognized argument: " << argv[i] << std::endl;
@@ -121,36 +67,118 @@ int main(int argc, char** argv)
     {
         sn::parseControllerConf("keybindings.conf", p1, p2);
         emulator.setKeys(p1, p2);
+        emulator2.setKeys( p1,p2 );
 
         auto _up =    [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) < -80.0; };
         auto _down =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) > 80.0; };
         auto _left =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) < -80.0; };
         auto _right = [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) > 80.0; };
 
-        emulator.setControllerCallbackMap(
-        {
-            { sn::Controller::A,      [&]{ return sf::Joystick::isButtonPressed(0, 1) || sf::Keyboard::isKeyPressed(sf::Keyboard::J); } },
-            { sn::Controller::B,      [&]{ return sf::Joystick::isButtonPressed(0, 0) || sf::Keyboard::isKeyPressed(sf::Keyboard::K); } },
+        std::map<sn::Controller::Buttons,std::function<bool(void)>> controller_map = {
+            { sn::Controller::A,      [&]{ return sf::Joystick::isButtonPressed(0, 1) || sf::Joystick::isButtonPressed(0, 2) || sf::Keyboard::isKeyPressed(sf::Keyboard::J); } },
+            { sn::Controller::B,      [&]{ return sf::Joystick::isButtonPressed(0, 0) || sf::Joystick::isButtonPressed(0, 3) || sf::Keyboard::isKeyPressed(sf::Keyboard::K); } },
             { sn::Controller::Select, [&]{ return sf::Joystick::isButtonPressed(0, 6) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift); } },
             { sn::Controller::Start,  [&]{ return sf::Joystick::isButtonPressed(0, 7) || sf::Keyboard::isKeyPressed(sf::Keyboard::Return); } },
             { sn::Controller::Up,     [&]{ return _up(0)    || sf::Keyboard::isKeyPressed(sf::Keyboard::W); } },
             { sn::Controller::Down,   [&]{ return _down(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::S); } },
             { sn::Controller::Left,   [&]{ return _left(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::A); } },
             { sn::Controller::Right,  [&]{ return _right(0) || sf::Keyboard::isKeyPressed(sf::Keyboard::D); } },
-        }, {} );
+        };
 
-        emulator.run(path);
+        emulator.setControllerCallbackMap( controller_map, {} );
+        emulator2.setControllerCallbackMap( controller_map, {} );
+
+        //emulator.run(path);
+
+        {
+            sn::VirtualScreen screen;
+            sn::VirtualScreen screen2;
+            screen.create(sn::NESVideoWidth,sn::NESVideoHeight,2.f,sf::Color::Magenta);
+            screen2.create(sn::NESVideoWidth,sn::NESVideoHeight,2.f,sf::Color::Magenta);
+            screen2.setScreenPosition( { sn::NESVideoWidth*2.f+4.f,0.f } );
+
+            emulator.init( path );
+            emulator2.init( path );
+
+            screen.setScreenData( emulator.getScreenData() );
+            screen2.setScreenData( emulator2.getScreenData() );
+
+            sf::RenderWindow window;
+            window.create( sf::VideoMode((sn::NESVideoWidth*2.f+2.f)*2.f, sn::NESVideoHeight*2.f), "SimpleNES", sf::Style::Titlebar|sf::Style::Close );
+            window.setVerticalSyncEnabled(true);
+
+            bool run = true;
+
+            auto emu_steps1 = std::async( std::launch::async, [&]
+            {
+                while(run)
+                {
+                    emulator.stepNFrames(1);
+                    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+            } );
+
+            auto emu_steps2 = std::async( std::launch::async, [&]
+            {
+                while(run)
+                {
+                    emulator2.stepNFrames(1);
+                    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+            } );
+
+            while (window.isOpen())
+            {
+                sf::Event event;
+                while (window.pollEvent(event))
+                {
+                    if (event.type == sf::Event::Closed )
+                    {
+                        run = false;
+                        window.close();
+                        emu_steps1.get();
+                        emu_steps2.get();
+                        return;
+                    }
+                }
+
+                /*emulator.stepNFrames(1);
+                emulator2.stepNFrames(2);*/
+
+                window.draw(screen);
+                window.draw(screen2);
+                window.display();
+            }
+            emu_steps1.get();
+            emu_steps2.get();
+        }
     });
 
     auto th2 = std::async( std::launch::async, [&]
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
+
+        auto start_time = std::chrono::high_resolution_clock::now();
+        auto prev_time = start_time;
+
+        uint64_t prev_numFrames = 0;
+
         std::cout << "\n\n";
         while(th.valid())
         {
-            std::cout << std::flush;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             system("cls");
+
+            auto current_time = std::chrono::high_resolution_clock::now();
+
+            uint64_t numFrames = emulator.getNumVBlank() + emulator2.getNumVBlank();
+
+            double dt = std::chrono::duration<double>( current_time - prev_time ).count();
+            uint64_t dframes = numFrames - prev_numFrames;
+
+            std::cout << "numVBlanks = " << numFrames << " ";
+            std::cout << "(" << double(dframes)/dt << "/s)";
+
+            std::cout << "\n";
 
             std::cout << "High = ";
             std::cout << int(emulator.peakMemory( 0x07D7 ));
@@ -208,6 +236,12 @@ int main(int argc, char** argv)
             std::cout << "[Y:" << sf::Joystick::hasAxis(0,sf::Joystick::Axis::Y) << ":" << sf::Joystick::getAxisPosition(0,sf::Joystick::Axis::Y) << "], ";
 
             std::cout << "\n\n";
+
+            std::cout << std::flush;
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
+            prev_time = current_time;
+            prev_numFrames = numFrames;
         }
 
         std::cout << "\n" << std::endl;

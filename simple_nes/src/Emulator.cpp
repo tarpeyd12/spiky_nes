@@ -9,8 +9,9 @@ namespace sn
     Emulator::Emulator() :
         m_cpu(m_bus),
         m_ppu(m_pictureBus, m_emulatorScreen),
+        m_vblankCounter(0),
+        m_vblankFlag(false),
         m_screenScale(2.f),
-        m_cycleTimer(),
         m_cpuCycleDuration(std::chrono::nanoseconds(559))
     {
         if(!m_bus.setReadCallback(PPUSTATUS, [&](void) {return m_ppu.getStatus();}) ||
@@ -36,34 +37,80 @@ namespace sn
             LOG(Error) << "Critical error: Failed to set I/O callbacks" << std::endl;
         }
 
-        m_ppu.setInterruptCallback([&](){ m_cpu.interrupt(CPU::NMI); });
+        m_ppu.setInterruptCallback([&](){ m_cpu.interrupt(CPU::NMI); m_vblankFlag = true; ++m_vblankCounter; });
     }
 
-    void Emulator::run(std::string rom_path)
+    bool Emulator::init(const std::string& rom_path)
     {
         if (!m_cartridge.loadFromFile(rom_path))
-            return;
+            return false;
 
         m_mapper = Mapper::createMapper(static_cast<Mapper::Type>(m_cartridge.getMapper()),
                                         m_cartridge,
                                         [&](){ m_pictureBus.updateMirroring(); });
+
         if (!m_mapper)
         {
             LOG(Error) << "Creating Mapper failed. Probably unsupported." << std::endl;
-            return;
+            return false;
         }
 
-        if (!m_bus.setMapper(m_mapper.get()) ||
-            !m_pictureBus.setMapper(m_mapper.get()))
-            return;
+        if (!m_bus.setMapper(m_mapper.get()) || !m_pictureBus.setMapper(m_mapper.get()))
+            return false;
 
         m_cpu.reset();
         m_ppu.reset();
 
+        m_emulatorScreen.create(NESVideoWidth, NESVideoHeight, m_screenScale, sf::Color::Magenta);
+
+        m_vblankCounter = 0;
+        m_vblankFlag = false;
+
+        return true;
+    }
+
+    void Emulator::stepFrame()
+    {
+        m_vblankFlag = false;
+
+        while(!m_vblankFlag)
+        {
+            //PPU
+            m_ppu.step();
+            m_ppu.step();
+            m_ppu.step();
+            //CPU
+            m_cpu.step();
+        }
+
+        m_vblankFlag = false;
+    }
+
+    void Emulator::stepNFrames( uint64_t n )
+    {
+        uint64_t endFrame = m_vblankCounter + n;
+
+        while( m_vblankCounter < endFrame )
+        {
+            stepFrame();
+        }
+    }
+
+    void Emulator::run(const std::string& rom_path)
+    {
+        if(!init(rom_path))
+        {
+            LOG(Error) << "Emulator Init failed for ROM file: \"" << rom_path << "\"" << std::endl;
+        }
+
+        sf::RenderWindow m_window;
+
         m_window.create(sf::VideoMode(NESVideoWidth * m_screenScale, NESVideoHeight * m_screenScale),
                         "SimpleNES", sf::Style::Titlebar | sf::Style::Close);
         m_window.setVerticalSyncEnabled(true);
-        m_emulatorScreen.create(NESVideoWidth, NESVideoHeight, m_screenScale, sf::Color::White);
+
+        std::chrono::high_resolution_clock::time_point m_cycleTimer;
+        std::chrono::high_resolution_clock::duration m_elapsedTime;
 
         m_cycleTimer = std::chrono::high_resolution_clock::now();
         m_elapsedTime = m_cycleTimer - m_cycleTimer;
@@ -133,6 +180,8 @@ namespace sn
                     //CPU
                     m_cpu.step();
 
+                    m_vblankFlag = false;
+
                     m_elapsedTime -= m_cpuCycleDuration;
                 }
 
@@ -166,8 +215,8 @@ namespace sn
         m_screenScale = width / float(NESVideoWidth);
         LOG(Info) << "Scale: " << m_screenScale << " set. Screen: "
                   << int(NESVideoWidth * m_screenScale) << "x" << int(NESVideoHeight * m_screenScale) << std::endl;
-
     }
+
     void Emulator::setVideoScale(float scale)
     {
         m_screenScale = scale;
@@ -201,5 +250,10 @@ namespace sn
     std::shared_ptr<std::vector<sf::Color>> Emulator::getScreenData() const
     {
         return m_emulatorScreen.getScreenData();
+    }
+
+    uint64_t Emulator::getNumVBlank() const
+    {
+        return m_vblankCounter;
     }
 }

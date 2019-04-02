@@ -11,8 +11,6 @@
 
 namespace sn
 {
-    using TimePoint = std::chrono::high_resolution_clock::time_point;
-
     const int NESVideoWidth = ScanlineVisibleDots;
     const int NESVideoHeight = VisibleScanlines;
 
@@ -20,7 +18,11 @@ namespace sn
     {
     public:
         Emulator();
-        void run(std::string rom_path);
+        bool init(const std::string& rom_path);
+        void stepFrame();
+        void stepNFrames( uint64_t n );
+        void run(const std::string& rom_path);
+
         void setVideoWidth(int width);
         void setVideoHeight(int height);
         void setVideoScale(float scale);
@@ -30,6 +32,7 @@ namespace sn
 
         Byte peakMemory(Address addr);
         std::shared_ptr<std::vector<sf::Color>> getScreenData() const;
+        uint64_t getNumVBlank() const;
     private:
         void DMA(Byte page);
 
@@ -37,18 +40,16 @@ namespace sn
         PictureBus m_pictureBus;
         CPU m_cpu;
         PPU m_ppu;
+        uint64_t m_vblankCounter;
+        bool m_vblankFlag;
         Cartridge m_cartridge;
         std::unique_ptr<Mapper> m_mapper;
 
         Controller m_controller1, m_controller2;
 
-        sf::RenderWindow m_window;
         VirtualScreen m_emulatorScreen;
         float m_screenScale;
 
-        TimePoint m_cycleTimer;
-
-        std::chrono::high_resolution_clock::duration m_elapsedTime;
         std::chrono::nanoseconds m_cpuCycleDuration;
     };
 }
