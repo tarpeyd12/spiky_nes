@@ -3,8 +3,12 @@
 
 #include <SFML/Graphics/Color.hpp>
 
+#include "../simple_nes/include/Log.h"
+
 namespace spkn
 {
+    void InitEmulatorLogs( sn::Level log_level = sn::None );
+
     struct ColorHSL
     {
         float h; // 0 to 360

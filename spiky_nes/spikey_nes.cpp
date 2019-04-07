@@ -4,6 +4,21 @@
 
 namespace spkn
 {
+    void InitEmulatorLogs( sn::Level log_level )
+    {
+        // when multi-threading multiple emulator classes, it is HIGHLY recommended to have log_level = sn::None
+
+        std::ofstream logFile ("simplenes.log"), cpuTraceFile;
+        sn::TeeStream logTee (logFile, std::cout);
+
+        if (logFile.is_open() && logFile.good())
+            sn::Log::get().setLogStream(logTee);
+        else
+            sn::Log::get().setLogStream(std::cout);
+
+        sn::Log::get().setLevel( log_level );
+    }
+
     ColorHSL
     ConvertRGBtoHSL( const sf::Color& color )
     {

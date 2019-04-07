@@ -33,15 +33,7 @@ namespace sn
 
 int main(int argc, char** argv)
 {
-    std::ofstream logFile ("simplenes.log"), cpuTraceFile;
-    sn::TeeStream logTee (logFile, std::cout);
-
-    if (logFile.is_open() && logFile.good())
-        sn::Log::get().setLogStream(logTee);
-    else
-        sn::Log::get().setLogStream(std::cout);
-
-    sn::Log::get().setLevel(sn::Info);
+    spkn::InitEmulatorLogs();
 
     std::string path;
 
