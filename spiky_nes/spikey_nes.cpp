@@ -64,6 +64,10 @@ namespace spkn
     float
     ConvertHSLtoSingle( const ColorHSL& color, size_t rings, bool smooth )
     {
+        // this function takes a HSL color and outputs an a single value that approximates the color,
+        // by finding the closes point on a spiral that spirals through Hue and Lightness (it ignores Saturation)
+        // the density of the spiral is determined by size_t rings
+
         if( color.l <= 0.0f )
         {
             return 0.0f;
@@ -93,8 +97,6 @@ namespace spkn
         {
             return floor_l + hue_offset;
         }
-
-        float ceil_l = floor_l + step_l;
 
         float lum_in_step = fmod( color.l, step_l );
 

@@ -338,7 +338,7 @@ namespace _tests
         //SetProcessPriority_low();
         SetProcessPriority_lowest();
 
-        unsigned seed = 1000;
+        //unsigned seed = 1000;
 
         //Rand::Seed( seed );
 

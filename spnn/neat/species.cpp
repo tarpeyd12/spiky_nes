@@ -139,7 +139,7 @@ namespace neat
     }
 
     std::vector< SpeciesID >
-    SpeciesManager::getSpeciesIDsOfGenotypes( tpl::pool& thread_pool, const std::vector< NetworkGenotype >& genotypeList, bool preSpeciate )
+    SpeciesManager::getSpeciesIDsOfGenotypes( tpl::pool& thread_pool, const std::vector< NetworkGenotype >& genotypeList, bool /*preSpeciate*/ )
     {
         // lock for writing
         std::unique_lock< std::shared_timed_mutex > lock( speciesIDMap_mutex );
