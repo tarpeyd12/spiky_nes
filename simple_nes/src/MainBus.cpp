@@ -57,6 +57,43 @@ namespace sn
         return 0;
     }
 
+    Byte MainBus::peak(Address addr) const
+    {
+        if (addr < 0x2000)
+            return m_RAM[addr & 0x7ff];
+        else if (addr < 0x4020)
+        {
+            if (addr < 0x4000) //PPU registers, mirrored
+            {
+                // no callbacks stuff so we dont actually change the emulator state
+                return 0;
+            }
+            else if (addr < 0x4018 && addr >= 0x4014) //Only *some* IO registers
+            {
+                // no callbacks stuff so we dont actually change the emulator state
+                return 0;
+            }
+            else
+                LOG(InfoVerbose) << "Read access attempt at: " << std::hex << +addr << std::endl;
+        }
+        else if (addr < 0x6000)
+        {
+            LOG(InfoVerbose) << "Expansion ROM read attempted. This is currently unsupported" << std::endl;
+        }
+        else if (addr < 0x8000)
+        {
+            if (m_mapper->hasExtendedRAM())
+            {
+                return m_extRAM[addr - 0x6000];
+            }
+        }
+        else
+        {
+            return m_mapper->readPRG(addr);
+        }
+        return 0;
+    }
+
     void MainBus::write(Address addr, Byte value)
     {
         if (addr < 0x2000)

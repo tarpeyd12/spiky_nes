@@ -30,7 +30,7 @@ namespace sn
         void setControllerCallbacks(const std::vector<std::function<bool(void)>>& p1, const std::vector<std::function<bool(void)>>& p2);
         void setControllerCallbackMap(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2);
 
-        Byte peakMemory(Address addr);
+        Byte peakMemory(Address addr) const;
         std::shared_ptr<std::vector<sf::Color>> getScreenData() const;
         uint64_t getNumVBlank() const;
     private:

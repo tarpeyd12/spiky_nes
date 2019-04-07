@@ -242,9 +242,10 @@ namespace sn
         m_controller2.setCallbackMap(p2);
     }
 
-    Byte Emulator::peakMemory(Address addr)
+    Byte Emulator::peakMemory(Address addr) const
     {
-        return m_bus.read( addr );
+        //return m_bus.read( addr );
+        return m_bus.peak( addr );
     }
 
     std::shared_ptr<std::vector<sf::Color>> Emulator::getScreenData() const
