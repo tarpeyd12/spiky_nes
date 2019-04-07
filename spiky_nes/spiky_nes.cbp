@@ -12,7 +12,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="mario.nes -s 5" />
+				<Option parameters="mario.nes" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -68,7 +68,10 @@
 			<Add directory="../spnn/bin" />
 			<Add directory="../simple_nes/bin" />
 		</Linker>
+		<Unit filename="fitness.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="spikey_nes.cpp" />
+		<Unit filename="spikey_nes.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

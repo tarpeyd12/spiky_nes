@@ -13,7 +13,7 @@ namespace sn
 
     void VirtualScreen::setPixel(std::size_t x, std::size_t y, sf::Color color)
     {
-        auto index = y * m_screenSize.x + x;
+        auto index = y * screenSize().x + x;
 
         if (index >= m_pixelColors->size())
             return;
@@ -29,7 +29,7 @@ namespace sn
     std::shared_ptr<std::vector<sf::Color>> VirtualScreen::flushScreenData()
     {
         auto currentScreenData = getScreenData();
-        m_pixelColors = std::make_shared<std::vector<sf::Color>>( m_screenSize.x * m_screenSize.y, m_defaultColor );
+        m_pixelColors = std::make_shared<std::vector<sf::Color>>( screenSize().x * screenSize().y, m_defaultColor );
 
         return currentScreenData;
     }
@@ -44,15 +44,20 @@ namespace sn
         m_pixelColors = data;
     }
 
+    sf::Vector2u VirtualScreen::screenSize() const
+    {
+        return m_screenSize;
+    }
+
     void VirtualScreen::draw(sf::RenderTarget& target, sf::RenderStates states) const
     {
-        sf::VertexArray vertices( sf::Quads, m_screenSize.x * m_screenSize.y * 4 );
+        sf::VertexArray vertices( sf::Quads, screenSize().x * screenSize().y * 4 );
 
-        for(size_t y = 0; y < m_screenSize.y; ++y)
+        for(size_t y = 0; y < screenSize().y; ++y)
         {
-            for(size_t x = 0; x < m_screenSize.x; ++x)
+            for(size_t x = 0; x < screenSize().x; ++x)
             {
-                auto index = y * m_screenSize.x + x;
+                auto index = y * screenSize().x + x;
 
                 auto color = (*m_pixelColors)[index];
 

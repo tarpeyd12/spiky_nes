@@ -18,6 +18,8 @@ namespace sn
 
         void setScreenData( std::shared_ptr<std::vector<sf::Color>> data );
 
+        sf::Vector2u screenSize() const;
+
     private:
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 

@@ -19,12 +19,17 @@ int main()
 #include <sstream>
 #include <future>
 
+#include "spikey_nes.hpp"
+
 namespace sn
 {
     void parseControllerConf(std::string filepath,
                             std::vector<sf::Keyboard::Key>& p1,
                             std::vector<sf::Keyboard::Key>& p2);
 }
+
+
+
 
 int main(int argc, char** argv)
 {
@@ -67,7 +72,7 @@ int main(int argc, char** argv)
     {
         sn::parseControllerConf("keybindings.conf", p1, p2);
         emulator.setKeys(p1, p2);
-        emulator2.setKeys( p1,p2 );
+        //emulator2.setKeys( p1,p2 );
 
         auto _up =    [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) < -80.0; };
         auto _down =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) > 80.0; };
@@ -86,44 +91,99 @@ int main(int argc, char** argv)
         };
 
         emulator.setControllerCallbackMap( controller_map, {} );
-        emulator2.setControllerCallbackMap( controller_map, {} );
+        //emulator2.setControllerCallbackMap( controller_map, {} );
 
         //emulator.run(path);
 
         {
             sn::VirtualScreen screen;
             sn::VirtualScreen screen2;
+            sn::VirtualScreen screen3;
             screen.create(sn::NESVideoWidth,sn::NESVideoHeight,2.f,sf::Color::Magenta);
-            screen2.create(sn::NESVideoWidth,sn::NESVideoHeight,2.f,sf::Color::Magenta);
+            screen2.create(sn::NESVideoWidth/2,sn::NESVideoHeight/2,2.f,sf::Color::Magenta);
+            screen3.create(sn::NESVideoWidth/2,sn::NESVideoHeight/2,2.f,sf::Color::Magenta);
             screen2.setScreenPosition( { sn::NESVideoWidth*2.f+4.f,0.f } );
+            screen3.setScreenPosition( { sn::NESVideoWidth*2.f+4.f,sn::NESVideoHeight } );
 
             emulator.init( path );
-            emulator2.init( path );
+            //emulator2.init( path );
 
             screen.setScreenData( emulator.getScreenData() );
-            screen2.setScreenData( emulator2.getScreenData() );
+            //screen2.setScreenData( emulator2.getScreenData() );
 
             sf::RenderWindow window;
-            window.create( sf::VideoMode((sn::NESVideoWidth*2.f+2.f)*2.f, sn::NESVideoHeight*2.f), "SimpleNES", sf::Style::Titlebar|sf::Style::Close );
+            window.create( sf::VideoMode((sn::NESVideoWidth*2.f+2.f)*2.f, sn::NESVideoHeight*2.f), "Spikey NES", sf::Style::Titlebar|sf::Style::Close );
             window.setVerticalSyncEnabled(true);
 
             bool run = true;
 
             auto emu_steps1 = std::async( std::launch::async, [&]
             {
+                emulator.stepNFrames(50);
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+                auto frameTimer = std::chrono::high_resolution_clock::now();
+                auto elapsed_time = std::chrono::duration<double>( frameTimer - frameTimer );
+
                 while(run)
                 {
-                    emulator.stepNFrames(1);
-                    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    auto currentTime = std::chrono::high_resolution_clock::now();
+                    elapsed_time += currentTime - frameTimer;
+                    frameTimer = currentTime;
+
+                    while( run && elapsed_time > std::chrono::duration<double>( 1.0/60.0 ) )
+                    {
+                        emulator.stepNFrames(1);
+
+                        elapsed_time -= std::chrono::duration<double>( 1.0/60.0 );
+                    }
+
+                    std::this_thread::sleep_for(std::chrono::nanoseconds(500));
+
                 }
             } );
 
             auto emu_steps2 = std::async( std::launch::async, [&]
             {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
                 while(run)
                 {
-                    emulator2.stepNFrames(1);
-                    //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                    //emulator2.stepNFrames(1);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+                    for(size_t y = 0; y < screen.screenSize().y; ++y)
+                    {
+                        for(size_t x = 0; x < screen.screenSize().x; ++x)
+                        {
+                            auto index = y * screen.screenSize().x + x;
+                            auto index2 = y/2 * screen2.screenSize().x + x/2;
+
+                            if( !(x%2) && !(y%2) )
+                            {
+                                (*screen2.getScreenData())[ index2 ] = sf::Color::Black;
+                            }
+
+                            auto c = (*screen.getScreenData())[ index ];
+
+                            c.r /= 4;
+                            c.g /= 4;
+                            c.b /= 4;
+
+                            (*screen2.getScreenData())[ index2 ] +=  c;
+
+                            if( (x%2) && (y%2) )
+                            {
+                                auto clr = (*screen2.getScreenData())[ index2 ];
+                                auto hsl = spkn::ConvertRGBtoHSL( clr );
+                                float v = spkn::ConvertHSLtoSingle( hsl, 5, true );
+                                //float v = spkn::ConvertRGBtoHSL( (*screen2.getScreenData())[ index2 ] ).l;
+                                uint8_t b = ( v )*255.0f;
+                                (*screen3.getScreenData())[ index2 ] = sf::Color{ b, b, b, 255 };
+                            }
+                        }
+                    }
                 }
             } );
 
@@ -147,6 +207,7 @@ int main(int argc, char** argv)
 
                 window.draw(screen);
                 window.draw(screen2);
+                window.draw(screen3);
                 window.display();
             }
             emu_steps1.get();
