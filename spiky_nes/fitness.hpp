@@ -8,6 +8,8 @@
 
 namespace spkn
 {
+    class FitnessFactory;
+
     class FitnessCalculator : public neat::FitnessCalculator
     {
         private:
@@ -33,6 +35,10 @@ namespace spkn
             // screen settings
 
             size_t spiralRings;
+
+            // factory book-keeping
+
+            FitnessFactory * parentFactory;
 
         public:
 
@@ -64,6 +70,13 @@ namespace spkn
             // controller stuff
 
             void resetControllerState();
+
+            // book-keeping stuff
+
+            void setParentFactory( const FitnessFactory * factory );
+
+            // friends
+            friend class FitnessFactory;
     };
 
     class FitnessFactory : public neat::FitnessFactory
@@ -74,15 +87,26 @@ namespace spkn
             uint64_t stepsPerFrame;
             size_t colorRings;
 
+            std::atomic<uint64_t> totalVBlanks;
+
         public:
 
             FitnessFactory( const std::string& mario_rom, uint64_t steps_per_frame = 100, size_t color_rings = 5 );
             virtual ~FitnessFactory();
 
+            uint64_t getTotalVBlanks() const;
+
         protected:
 
             std::shared_ptr< neat::FitnessCalculator > getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const override;
             size_t numTimesToTest() const override;
+
+            // book-keeping stuff
+
+            void addToTotalVBlanks( uint64_t num_vblanks );
+
+            // friends
+            friend class FitnessCalculator;
     };
 }
 

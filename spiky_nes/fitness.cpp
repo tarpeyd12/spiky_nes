@@ -15,7 +15,8 @@ namespace spkn
         maxScreenPosPerLevel(),
         highestWorldLevel(0),
         networkOutputCallbacks(),
-        spiralRings( colorRings )
+        spiralRings( colorRings ),
+        parentFactory( nullptr )
     {
         networkStepsPerFrame = std::max<size_t>( 1, networkStepsPerFrame );
 
@@ -45,7 +46,11 @@ namespace spkn
 
     FitnessCalculator::~FitnessCalculator()
     {
-        /*  */
+        // add the vblanks gone through to the factory
+        if( parentFactory != nullptr )
+        {
+            parentFactory->addToTotalVBlanks( getNumVBlank() );
+        }
     }
 
     size_t
@@ -183,6 +188,12 @@ namespace spkn
         }
     }
 
+    void
+    FitnessCalculator::setParentFactory( const FitnessFactory * factory )
+    {
+        parentFactory = const_cast<FitnessFactory*>(factory);
+    }
+
 
     // fitness factory
 
@@ -203,7 +214,10 @@ namespace spkn
     std::shared_ptr< neat::FitnessCalculator >
     FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const
     {
-        auto calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings );
+        std::shared_ptr< spkn::FitnessCalculator > calc;
+        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings );
+
+        calc->setParentFactory( this );
 
         return calc;
     }
@@ -212,5 +226,17 @@ namespace spkn
     FitnessFactory::numTimesToTest() const
     {
         return 1;
+    }
+
+    void
+    FitnessFactory::addToTotalVBlanks( uint64_t num_vblanks )
+    {
+        totalVBlanks += num_vblanks;
+    }
+
+    uint64_t
+    FitnessFactory::getTotalVBlanks() const
+    {
+        return totalVBlanks;
     }
 }
