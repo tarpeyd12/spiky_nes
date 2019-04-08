@@ -73,6 +73,8 @@
 		<Unit filename="game_state.cpp" />
 		<Unit filename="game_state.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="preview_window.cpp" />
+		<Unit filename="preview_window.hpp" />
 		<Unit filename="spikey_nes.cpp" />
 		<Unit filename="spikey_nes.hpp" />
 		<Extensions>

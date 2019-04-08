@@ -79,7 +79,7 @@ int main(int argc, char** argv)
     auto th = std::async( std::launch::async, [&]
     {
         sn::parseControllerConf("keybindings.conf", p1, p2);
-        emulator.setKeys(p1, p2);
+        //emulator.setKeys(p1, p2);
         //emulator2.setKeys( p1,p2 );
 
         //emulator.setControllerCallbackMap( controller_map, {} );

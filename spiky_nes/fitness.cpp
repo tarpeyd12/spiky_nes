@@ -50,6 +50,7 @@ namespace spkn
         if( parentFactory != nullptr )
         {
             parentFactory->addToTotalVBlanks( getNumVBlank() );
+            parentFactory->unregesterScreenData( getScreenData() );
         }
     }
 
@@ -192,16 +193,21 @@ namespace spkn
     FitnessCalculator::setParentFactory( const FitnessFactory * factory )
     {
         parentFactory = const_cast<FitnessFactory*>(factory);
+        if( parentFactory )
+        {
+            parentFactory->regesterScreenData( getScreenData() );
+        }
     }
 
 
     // fitness factory
 
-    FitnessFactory::FitnessFactory( const std::string& mario_rom, uint64_t steps_per_frame, size_t color_rings )
+    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, uint64_t steps_per_frame, size_t color_rings )
          :
         rom_path( mario_rom ),
         stepsPerFrame( steps_per_frame ),
-        colorRings( color_rings )
+        colorRings( color_rings ),
+        preview_window( window )
     {
         /*  */
     }
@@ -232,6 +238,24 @@ namespace spkn
     FitnessFactory::addToTotalVBlanks( uint64_t num_vblanks )
     {
         totalVBlanks += num_vblanks;
+    }
+
+    void
+    FitnessFactory::regesterScreenData( std::shared_ptr<std::vector<sf::Color>> data )
+    {
+        if( preview_window )
+        {
+            preview_window->addScreenData( data );
+        }
+    }
+
+    void
+    FitnessFactory::unregesterScreenData( std::shared_ptr<std::vector<sf::Color>> data )
+    {
+        if( preview_window )
+        {
+            preview_window->removeScreenData( data );
+        }
     }
 
     uint64_t

@@ -4,6 +4,7 @@
 #include "../simple_nes/include/Emulator.h"
 #include "../spnn/spnn.hpp"
 
+#include "preview_window.hpp"
 #include "game_state.hpp"
 
 namespace spkn
@@ -36,7 +37,7 @@ namespace spkn
 
             size_t spiralRings;
 
-            // factory book-keeping
+            // book-keeping
 
             FitnessFactory * parentFactory;
 
@@ -89,9 +90,11 @@ namespace spkn
 
             std::atomic<uint64_t> totalVBlanks;
 
+            std::shared_ptr<PreviewWindow> preview_window;
+
         public:
 
-            FitnessFactory( const std::string& mario_rom, uint64_t steps_per_frame = 100, size_t color_rings = 5 );
+            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, uint64_t steps_per_frame = 100, size_t color_rings = 5 );
             virtual ~FitnessFactory();
 
             uint64_t getTotalVBlanks() const;
@@ -104,6 +107,8 @@ namespace spkn
             // book-keeping stuff
 
             void addToTotalVBlanks( uint64_t num_vblanks );
+            void regesterScreenData( std::shared_ptr<std::vector<sf::Color>> data );
+            void unregesterScreenData( std::shared_ptr<std::vector<sf::Color>> data );
 
             // friends
             friend class FitnessCalculator;
