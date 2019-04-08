@@ -60,29 +60,29 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    auto _up =    [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) < -80.0; };
+    auto _down =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) > 80.0; };
+    auto _left =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) < -80.0; };
+    auto _right = [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) > 80.0; };
+
+    std::map<sn::Controller::Buttons,std::function<bool(void)>> controller_map = {
+        { sn::Controller::A,      [&]{ return sf::Joystick::isButtonPressed(0, 1) || sf::Joystick::isButtonPressed(0, 2) || sf::Keyboard::isKeyPressed(sf::Keyboard::J); } },
+        { sn::Controller::B,      [&]{ return sf::Joystick::isButtonPressed(0, 0) || sf::Joystick::isButtonPressed(0, 3) || sf::Keyboard::isKeyPressed(sf::Keyboard::K); } },
+        { sn::Controller::Select, [&]{ return sf::Joystick::isButtonPressed(0, 6) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift); } },
+        { sn::Controller::Start,  [&]{ return sf::Joystick::isButtonPressed(0, 7) || sf::Keyboard::isKeyPressed(sf::Keyboard::Return); } },
+        { sn::Controller::Up,     [&]{ return _up(0)    || sf::Keyboard::isKeyPressed(sf::Keyboard::W); } },
+        { sn::Controller::Down,   [&]{ return _down(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::S); } },
+        { sn::Controller::Left,   [&]{ return _left(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::A); } },
+        { sn::Controller::Right,  [&]{ return _right(0) || sf::Keyboard::isKeyPressed(sf::Keyboard::D); } },
+    };
+
     auto th = std::async( std::launch::async, [&]
     {
         sn::parseControllerConf("keybindings.conf", p1, p2);
         emulator.setKeys(p1, p2);
         //emulator2.setKeys( p1,p2 );
 
-        auto _up =    [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) < -80.0; };
-        auto _down =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) > 80.0; };
-        auto _left =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) < -80.0; };
-        auto _right = [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) > 80.0; };
-
-        std::map<sn::Controller::Buttons,std::function<bool(void)>> controller_map = {
-            { sn::Controller::A,      [&]{ return sf::Joystick::isButtonPressed(0, 1) || sf::Joystick::isButtonPressed(0, 2) || sf::Keyboard::isKeyPressed(sf::Keyboard::J); } },
-            { sn::Controller::B,      [&]{ return sf::Joystick::isButtonPressed(0, 0) || sf::Joystick::isButtonPressed(0, 3) || sf::Keyboard::isKeyPressed(sf::Keyboard::K); } },
-            { sn::Controller::Select, [&]{ return sf::Joystick::isButtonPressed(0, 6) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift); } },
-            { sn::Controller::Start,  [&]{ return sf::Joystick::isButtonPressed(0, 7) || sf::Keyboard::isKeyPressed(sf::Keyboard::Return); } },
-            { sn::Controller::Up,     [&]{ return _up(0)    || sf::Keyboard::isKeyPressed(sf::Keyboard::W); } },
-            { sn::Controller::Down,   [&]{ return _down(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::S); } },
-            { sn::Controller::Left,   [&]{ return _left(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::A); } },
-            { sn::Controller::Right,  [&]{ return _right(0) || sf::Keyboard::isKeyPressed(sf::Keyboard::D); } },
-        };
-
-        emulator.setControllerCallbackMap( controller_map, {} );
+        //emulator.setControllerCallbackMap( controller_map, {} );
         //emulator2.setControllerCallbackMap( controller_map, {} );
 
         //emulator.run(path);
@@ -111,9 +111,15 @@ int main(int argc, char** argv)
 
             auto emu_steps1 = std::async( std::launch::async, [&]
             {
-                emulator.stepNFrames(50);
+                //emulator.stepNFrames(50);
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                spkn::GameState_SuperMarioBros(emulator).InitGameToRunning();
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
+
+
+                emulator.setControllerCallbackMap( controller_map, {} );
 
                 auto frameTimer = std::chrono::high_resolution_clock::now();
                 auto elapsed_time = std::chrono::duration<double>( frameTimer - frameTimer );
@@ -233,45 +239,27 @@ int main(int argc, char** argv)
 
             std::cout << "\n";
 
+            spkn::GameState_SuperMarioBros state( emulator );
+
             std::cout << "High = ";
-            std::cout << int(emulator.peakMemory( 0x07D7 ));
-            std::cout << int(emulator.peakMemory( 0x07D8 ));
-            std::cout << int(emulator.peakMemory( 0x07D9 ));
-            std::cout << int(emulator.peakMemory( 0x07DA ));
-            std::cout << int(emulator.peakMemory( 0x07DB ));
-            std::cout << int(emulator.peakMemory( 0x07DC ));
-            std::cout << "0 Mario = ";
-            std::cout << int(emulator.peakMemory( 0x07DD ));
-            std::cout << int(emulator.peakMemory( 0x07DE ));
-            std::cout << int(emulator.peakMemory( 0x07DF ));
-            std::cout << int(emulator.peakMemory( 0x07E0 ));
-            std::cout << int(emulator.peakMemory( 0x07E1 ));
-            std::cout << int(emulator.peakMemory( 0x07E2 ));
-            std::cout << "0 Luigi = ";
-            std::cout << int(emulator.peakMemory( 0x07D3 ));
-            std::cout << int(emulator.peakMemory( 0x07D4 ));
-            std::cout << int(emulator.peakMemory( 0x07D5 ));
-            std::cout << int(emulator.peakMemory( 0x07E6 ));
-            std::cout << int(emulator.peakMemory( 0x07E7 ));
-            std::cout << int(emulator.peakMemory( 0x07E8 ));
-            std::cout << "0 coins = ";
-            std::cout << int(emulator.peakMemory( 0x07ED ));
-            std::cout << int(emulator.peakMemory( 0x07EE ));
-            std::cout << "(" << int(emulator.peakMemory( 0x075E )) << ")";
+            std::cout << state.Score_High();
+            std::cout << " Mario = ";
+            std::cout << state.Score_Mario();
+            std::cout << " Luigi = ";
+            std::cout << state.Score_Luigi();
+            std::cout << " coins = ";
+            std::cout << state.Coins_BCD();
+            std::cout << "(" << int(state.Coins_Byte()) << ")";
             std::cout << " time = ";
-            std::cout << int(emulator.peakMemory( 0x07F8 ));
-            std::cout << int(emulator.peakMemory( 0x07F9 ));
-            std::cout << int(emulator.peakMemory( 0x07FA ));
+            std::cout << state.Time();
             std::cout << " World-Level = ";
-            std::cout << int(emulator.peakMemory( 0x075F ));
+            std::cout << state.World();
             std::cout << "-";
-            std::cout << int(emulator.peakMemory( 0x0760 ));
+            std::cout << state.Level();
             std::cout << " Lives = ";
-            std::cout << int(emulator.peakMemory( 0x075A ));
+            std::cout << state.Lives();
             std::cout << " screen = ";
-            std::cout << int(emulator.peakMemory( 0x071A )) << ",";
-            std::cout << int(emulator.peakMemory( 0x071B )) << ",";
-            std::cout << int(emulator.peakMemory( 0x071C ));
+            std::cout << state.ScreenPosition() << "," << int(emulator.peakMemory(0x07A0));
 
             std::cout << "         \n";
 

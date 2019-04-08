@@ -2,11 +2,25 @@
 
 #include "spikey_nes.hpp"
 
+#include "../spnn/tests/tests.hpp"
+
 namespace spkn
 {
+    void
+    SetProcessPriority_low()
+    {
+        _tests::SetProcessPriority_low();
+    }
+
+    void
+    SetProcessPriority_lowest()
+    {
+        _tests::SetProcessPriority_lowest();
+    }
+
     void InitEmulatorLogs( sn::Level log_level )
     {
-        // when multi-threading multiple emulator classes, it is HIGHLY recommended to have log_level = sn::None
+        // when multi-threading multiple sn::Emulator classes, it is HIGHLY recommended to have log_level = sn::None
 
         std::ofstream logFile ("simplenes.log"), cpuTraceFile;
         sn::TeeStream logTee (logFile, std::cout);
@@ -60,13 +74,13 @@ namespace spkn
                 hue = (2.0f / 3) + ((r - g) / 6) / delta;
             }
 
+            while( hue >= 1.0f )
+            {
+                hue -= 1.0f;
+            }
             while( hue < 0.0f )
             {
                 hue += 1.0f;
-            }
-            while( hue > 1.0f )
-            {
-                hue -= 1.0f;
             }
 
             hsl.h = hue * 360.0f;
@@ -82,6 +96,7 @@ namespace spkn
         // this function takes a HSL color and outputs an a single value that approximates the color,
         // by finding the closes point on a spiral that spirals through Hue and Lightness (it ignores Saturation)
         // the density of the spiral is determined by size_t rings
+        // as size_t increases in value the closer the output resembles the Lightness component of the input
 
         if( color.l <= 0.0f )
         {
@@ -127,5 +142,4 @@ namespace spkn
         // stay
         return floor_l + hue_offset;
     }
-
 }

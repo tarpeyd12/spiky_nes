@@ -7,6 +7,9 @@
 
 namespace spkn
 {
+    void SetProcessPriority_low();
+    void SetProcessPriority_lowest();
+
     void InitEmulatorLogs( sn::Level log_level = sn::None );
 
     struct ColorHSL
@@ -19,6 +22,12 @@ namespace spkn
     ColorHSL ConvertRGBtoHSL( const sf::Color& color );
 
     float ConvertHSLtoSingle( const ColorHSL& color, size_t rings = 3, bool smooth = true );
+
+    void SetProcessPriority_low();
+    void SetProcessPriority_lowest();
 }
+
+#include "fitness.hpp"
+#include "game_state.hpp"
 
 #endif // SPKN_SPIKEY_NES_HPP_INCLUDED

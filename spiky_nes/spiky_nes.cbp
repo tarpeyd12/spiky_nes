@@ -68,7 +68,10 @@
 			<Add directory="../spnn/bin" />
 			<Add directory="../simple_nes/bin" />
 		</Linker>
+		<Unit filename="fitness.cpp" />
 		<Unit filename="fitness.hpp" />
+		<Unit filename="game_state.cpp" />
+		<Unit filename="game_state.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="spikey_nes.cpp" />
 		<Unit filename="spikey_nes.hpp" />
