@@ -26,6 +26,7 @@
 					<Add library="freetype" />
 					<Add library="winmm" />
 					<Add library="gdi32" />
+					<Add directory="../lib/SFML/extlibs/libs-mingw/x86" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -49,6 +50,7 @@
 					<Add library="freetype" />
 					<Add library="winmm" />
 					<Add library="gdi32" />
+					<Add directory="../lib/SFML/extlibs/libs-mingw/x86" />
 				</Linker>
 			</Target>
 		</Build>
@@ -64,7 +66,6 @@
 			<Add option="-static-libgcc" />
 			<Add option="-static" />
 			<Add directory="../lib/SFML/lib" />
-			<Add directory="../lib/SFML/extlibs/libs-mingw/x86" />
 			<Add directory="../spnn/bin" />
 			<Add directory="../simple_nes/bin" />
 		</Linker>

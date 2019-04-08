@@ -15,6 +15,7 @@ namespace spkn
         maxScreenPosPerLevel(),
         highestWorldLevel(0),
         networkOutputCallbacks(),
+        screenInput( numInputs(), 0.0 ),
         spiralRings( colorRings ),
         avtivationMaxValue( maxActivationWeight ),
         parentFactory( nullptr )
@@ -106,11 +107,11 @@ namespace spkn
     bool
     FitnessCalculator::stopTest() const
     {
-        if( gameStateExtractor.Lives() == 0 )
+        if( gameStateExtractor.Lives() >= 3 )
         {
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 
     void
@@ -138,9 +139,7 @@ namespace spkn
     std::vector< double >
     FitnessCalculator::getInputValues( uint64_t time )
     {
-        std::vector< double > output( getNumInputNodes(), 0.0 );
-
-        output.back() = avtivationMaxValue;
+        screenInput.back() = avtivationMaxValue;
 
         auto emuScreen = emulator.getScreenData();
 
@@ -170,11 +169,11 @@ namespace spkn
                 }
 
                 auto hsl = ConvertRGBtoHSL( { uint8_t(r/4.0), uint8_t(g/4.0), uint8_t(b/4.0), 255 } );
-                output[ scaled_index ] = ConvertHSLtoSingle( hsl, spiralRings ) * avtivationMaxValue;
+                screenInput[ scaled_index ] = ConvertHSLtoSingle( hsl, spiralRings ) * avtivationMaxValue;
             }
         }
 
-        return output;
+        return screenInput;
     }
 
     std::vector< neat::NodeCallback >

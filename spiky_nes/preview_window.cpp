@@ -12,7 +12,6 @@ namespace spkn
         virtual_screens_mutex(),
         virtual_screens(),
         screen_data_queue_in(),
-        screen_data_queue_out_mutex(),
         screen_data_queue_out(),
         blankScreenData( nullptr )
     {
@@ -45,9 +44,7 @@ namespace spkn
     void
     PreviewWindow::removeScreenData( std::shared_ptr<std::vector<sf::Color>> data )
     {
-        std::lock_guard<std::mutex> lock( screen_data_queue_out_mutex );
-
-        screen_data_queue_out.push_back( data );
+        screen_data_queue_out.push( data );
     }
 
     void
@@ -59,9 +56,7 @@ namespace spkn
     void
     PreviewWindow::clearAllScreenData()
     {
-        std::unique_lock<std::mutex>  vs_lock( virtual_screens_mutex,       std::defer_lock );
-        std::unique_lock<std::mutex> out_lock( screen_data_queue_out_mutex, std::defer_lock );
-        std::lock( vs_lock, out_lock );
+        std::unique_lock<std::mutex>  vs_lock( virtual_screens_mutex );
 
         for( auto& vs : virtual_screens )
         {
@@ -69,11 +64,7 @@ namespace spkn
         }
 
         screen_data_queue_in.clear();
-
-        while( screen_data_queue_out.size() )
-        {
-            screen_data_queue_out.pop_front();
-        }
+        screen_data_queue_out.clear();
     }
 
     void
@@ -115,6 +106,8 @@ namespace spkn
 
             processRemoveRequests();
             processAddRequests();
+
+            std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
         }
     }
 
@@ -138,28 +131,36 @@ namespace spkn
     void
     PreviewWindow::processRemoveRequests()
     {
-        std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex, std::defer_lock );
-        std::unique_lock<std::mutex> lock( screen_data_queue_out_mutex, std::defer_lock );
-        std::lock( vs_lock, lock );
+        std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
 
-        std::list<std::list<std::shared_ptr<std::vector<sf::Color>>>::iterator> was_removed;
+        std::list< std::shared_ptr<std::vector<sf::Color>> > toReAdd;
 
-        // old school list traversal. I fucking love the auto keyword so much
-        for( std::list<std::shared_ptr<std::vector<sf::Color>>>::iterator toRemove = screen_data_queue_out.begin(); toRemove != screen_data_queue_out.end(); ++toRemove )
+        std::shared_ptr<std::vector<sf::Color>> target( nullptr );
+        while( screen_data_queue_out.try_pop( target ) && target != nullptr )
         {
+            bool was_removed = false;
             for( auto& vs : virtual_screens )
             {
-                if( vs.getScreenData() == *toRemove )
+                if( vs.getScreenData() == target )
                 {
                     vs.setScreenData( blankScreenData );
-                    was_removed.emplace_back( toRemove );
+                    was_removed = true;
+                    break;
                 }
             }
+
+            if( !was_removed )
+            {
+                toReAdd.emplace_back( target );
+            }
+
+            target = nullptr;
         }
 
-        for( auto rem : was_removed )
+        while( !toReAdd.empty() )
         {
-            screen_data_queue_out.erase( rem );
+            addScreenData( toReAdd.front() );
+            toReAdd.pop_front();
         }
     }
 

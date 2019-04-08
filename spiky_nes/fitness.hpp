@@ -35,6 +35,7 @@ namespace spkn
 
             // screen settings
 
+            std::vector< double > screenInput;
             size_t spiralRings;
             double avtivationMaxValue;
 

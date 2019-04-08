@@ -31,8 +31,7 @@ namespace spkn
 
             tpl::safe_queue< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_in;
 
-            std::mutex screen_data_queue_out_mutex;
-            std::list< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_out;
+            tpl::safe_queue< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_out;
 
             std::shared_ptr<std::vector<sf::Color>> blankScreenData;
 

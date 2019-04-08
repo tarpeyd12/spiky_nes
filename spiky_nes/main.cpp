@@ -55,7 +55,7 @@ main( int argc, char** argv )
     //limits.pulseSlow =    { 5, 100 };
 
     limits.weight =       { -1000.0, 1000.0 };
-    limits.length =       { 1, 10000 };
+    limits.length =       { 1, 1000 };
 
 
 
@@ -140,12 +140,12 @@ main( int argc, char** argv )
 
     auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", thread_pool.num_threads(), pixelMultiplier );
 
-    spkn::FitnessFactory fitnessFactory( rom_path, previewWindow, limits.thresholdMax.max, 100, 5 );
+    spkn::FitnessFactory fitnessFactory( rom_path, previewWindow, limits.thresholdMax.max, 1, 5 );
 
     std::cout << "Population construct call" << std::endl;
 
     neat::Population population(
-        150,
+        50,
         spkn::FitnessFactory::numInputs(),
         spkn::FitnessFactory::numOutputs(),
         limits,
@@ -443,10 +443,10 @@ main( int argc, char** argv )
         //std::this_thread::sleep_for( std::chrono::duration<double>( 0.05 ) );
 
         //if( genData->getAvgFitness() >= 900.0 )
-        if( ratioHighPreformance >= 0.95 || genData->getMaxFitness() >= 1000.0 )
+        /*if( ratioHighPreformance >= 0.95 || genData->getMaxFitness() >= 1000.0 )
         {
             break;
-        }
+        }*/
 
     }
 
