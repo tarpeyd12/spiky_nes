@@ -5,11 +5,13 @@
 #include <SFML/Window.hpp>
 
 #include <list>
+#include <thread>
 #include <mutex>
 #include <atomic>
 #include <future>
 
 #include "../simple_nes/include/VirtualScreen.h"
+#include "../spnn/neat/thread_pool/safe_queue.hpp"
 
 namespace spkn
 {
@@ -17,24 +19,24 @@ namespace spkn
     {
         private:
 
-            sf::RenderWindow window;
+            const uint8_t pixelGap = 3;
+
             std::string windowName;
             float pixelSize;
 
             std::atomic_bool doRun;
 
-            mutable std::mutex virtual_screens_mutex;
+            std::mutex virtual_screens_mutex;
             std::vector< sn::VirtualScreen > virtual_screens;
 
-            mutable std::mutex screen_data_queue_in_mutex;
-            std::list< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_in;
+            tpl::safe_queue< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_in;
 
-            mutable std::mutex screen_data_queue_out_mutex;
+            std::mutex screen_data_queue_out_mutex;
             std::list< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_out;
 
             std::shared_ptr<std::vector<sf::Color>> blankScreenData;
 
-            std::future< void > window_thread;
+            std::thread window_thread;
 
         public:
 

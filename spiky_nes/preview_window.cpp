@@ -6,13 +6,11 @@ namespace spkn
 {
     PreviewWindow::PreviewWindow( const std::string& window_name, size_t num_previews, float screen_size_ratio )
          :
-        window(),
         windowName( window_name ),
         pixelSize( screen_size_ratio ),
         doRun( true ),
         virtual_screens_mutex(),
         virtual_screens(),
-        screen_data_queue_in_mutex(),
         screen_data_queue_in(),
         screen_data_queue_out_mutex(),
         screen_data_queue_out(),
@@ -23,31 +21,31 @@ namespace spkn
         while( virtual_screens.size() < num_previews )
         {
             virtual_screens.push_back( sn::VirtualScreen() );
+            virtual_screens.back().create( sn::NESVideoWidth, sn::NESVideoHeight, pixelSize, sf::Color::Cyan );
             virtual_screens.back().setScreenData( blankScreenData );
-            virtual_screens.back().setScreenPosition( { (sn::NESVideoWidth + 1) * pixelSize * virtual_screens.size(), 0.0 } );
+            virtual_screens.back().setScreenPosition( { (sn::NESVideoWidth + pixelGap) * pixelSize * ( virtual_screens.size() - 1 ), 0.0 } );
         }
 
-        window_thread = std::async( std::launch::async, [&]{ run(); } );
+        window_thread = std::thread( [&]{ run(); } );
     }
 
     PreviewWindow::~PreviewWindow()
     {
+        clearAllScreenData();
         close();
-        window_thread.get();
+        window_thread.join();
     }
 
     void
     PreviewWindow::addScreenData( std::shared_ptr<std::vector<sf::Color>> data )
     {
-        std::unique_lock<std::mutex> lock( screen_data_queue_in_mutex );
-
-        screen_data_queue_in.push_back( data );
+        screen_data_queue_in.push( data );
     }
 
     void
     PreviewWindow::removeScreenData( std::shared_ptr<std::vector<sf::Color>> data )
     {
-        std::unique_lock<std::mutex> lock( screen_data_queue_out_mutex );
+        std::lock_guard<std::mutex> lock( screen_data_queue_out_mutex );
 
         screen_data_queue_out.push_back( data );
     }
@@ -62,19 +60,15 @@ namespace spkn
     PreviewWindow::clearAllScreenData()
     {
         std::unique_lock<std::mutex>  vs_lock( virtual_screens_mutex,       std::defer_lock );
-        std::unique_lock<std::mutex>  in_lock( screen_data_queue_in_mutex,  std::defer_lock );
         std::unique_lock<std::mutex> out_lock( screen_data_queue_out_mutex, std::defer_lock );
-        std::lock( vs_lock, in_lock, out_lock );
+        std::lock( vs_lock, out_lock );
 
         for( auto& vs : virtual_screens )
         {
             vs.setScreenData( blankScreenData );
         }
 
-        while( screen_data_queue_in.size() )
-        {
-            screen_data_queue_in.pop_front();
-        }
+        screen_data_queue_in.clear();
 
         while( screen_data_queue_out.size() )
         {
@@ -85,49 +79,58 @@ namespace spkn
     void
     PreviewWindow::run()
     {
-        sf::VideoMode videoMode( (sn::NESVideoWidth+1) * pixelSize * virtual_screens.size(), sn::NESVideoHeight * pixelSize );
+        sf::RenderWindow window;
 
+        sf::VideoMode videoMode( ( (sn::NESVideoWidth+pixelGap) * virtual_screens.size()-pixelGap ) * pixelSize, sn::NESVideoHeight * pixelSize );
         window.create( videoMode, windowName, sf::Style::Titlebar );
         window.setVerticalSyncEnabled(true);
 
+        sf::Event event;
+        bool focus = true;
         while( window.isOpen() && doRun )
         {
-            sf::Event event;
             while( window.pollEvent( event ) )
             {
-                /*  */
-            }
-
-            {
-                // draw the shit
+                if( event.type == sf::Event::GainedFocus )
                 {
-                    std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
-                    for( auto& vs : virtual_screens )
-                    {
-                        window.draw( vs );
-                    }
-                    window.display();
+                    focus = true;
                 }
-
-                processRemoveRequests();
-                processAddRequests();
+                else if( event.type == sf::Event::LostFocus )
+                {
+                    focus = false;
+                }
             }
+
+            // draw the shit
+            {
+                window.clear();
+
+                std::lock_guard<std::mutex> vs_lock( virtual_screens_mutex );
+                for( auto& vs : virtual_screens )
+                {
+                    window.draw( vs );
+                }
+                window.display();
+            }
+
+            processRemoveRequests();
+            processAddRequests();
         }
     }
 
     void
     PreviewWindow::processAddRequests()
     {
-        std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex, std::defer_lock );
-        std::unique_lock<std::mutex> lock( screen_data_queue_in_mutex, std::defer_lock );
-        std::lock( vs_lock, lock );
+        std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
 
-        for( auto& vs : virtual_screens )
         {
-            if( vs.getScreenData() == blankScreenData )
+            for( auto& vs : virtual_screens )
             {
-                vs.setScreenData( screen_data_queue_in.front() );
-                screen_data_queue_in.pop_front();
+                std::shared_ptr<std::vector<sf::Color>> target( nullptr );
+                if( vs.getScreenData() == blankScreenData && screen_data_queue_in.try_pop( target ) && target != nullptr )
+                {
+                    vs.setScreenData( target );
+                }
             }
         }
     }
@@ -149,7 +152,7 @@ namespace spkn
                 if( vs.getScreenData() == *toRemove )
                 {
                     vs.setScreenData( blankScreenData );
-                    was_removed.push_back( toRemove );
+                    was_removed.emplace_back( toRemove );
                 }
             }
         }

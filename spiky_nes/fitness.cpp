@@ -6,7 +6,7 @@
 
 namespace spkn
 {
-    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings )
+    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight )
          : neat::FitnessCalculator( net ),
         networkStepsPerFrame( stepsPerFrame ),
         emulator(),
@@ -16,6 +16,7 @@ namespace spkn
         highestWorldLevel(0),
         networkOutputCallbacks(),
         spiralRings( colorRings ),
+        avtivationMaxValue( maxActivationWeight ),
         parentFactory( nullptr )
     {
         networkStepsPerFrame = std::max<size_t>( 1, networkStepsPerFrame );
@@ -57,7 +58,7 @@ namespace spkn
     size_t
     FitnessCalculator::numInputs()
     {
-        return sn::NESVideoHeight * sn::NESVideoWidth / 4;
+        return sn::NESVideoHeight * sn::NESVideoWidth / 4 + 1;
     }
 
     size_t
@@ -139,6 +140,8 @@ namespace spkn
     {
         std::vector< double > output( getNumInputNodes(), 0.0 );
 
+        output.back() = avtivationMaxValue;
+
         auto emuScreen = emulator.getScreenData();
 
         size_t scaled_width = sn::NESVideoWidth / 2;
@@ -167,7 +170,7 @@ namespace spkn
                 }
 
                 auto hsl = ConvertRGBtoHSL( { uint8_t(r/4.0), uint8_t(g/4.0), uint8_t(b/4.0), 255 } );
-                output[ scaled_index ] = ConvertHSLtoSingle( hsl, spiralRings );
+                output[ scaled_index ] = ConvertHSLtoSingle( hsl, spiralRings ) * avtivationMaxValue;
             }
         }
 
@@ -202,12 +205,13 @@ namespace spkn
 
     // fitness factory
 
-    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, uint64_t steps_per_frame, size_t color_rings )
+    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame, size_t color_rings )
          :
         rom_path( mario_rom ),
         stepsPerFrame( steps_per_frame ),
         colorRings( color_rings ),
-        preview_window( window )
+        preview_window( window ),
+        avtivationMaxValue( maxWeightForActivation )
     {
         /*  */
     }
@@ -221,7 +225,7 @@ namespace spkn
     FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const
     {
         std::shared_ptr< spkn::FitnessCalculator > calc;
-        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings );
+        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue );
 
         calc->setParentFactory( this );
 
@@ -262,5 +266,17 @@ namespace spkn
     FitnessFactory::getTotalVBlanks() const
     {
         return totalVBlanks;
+    }
+
+    size_t
+    FitnessFactory::numInputs()
+    {
+        return FitnessCalculator::numInputs();
+    }
+
+    size_t
+    FitnessFactory::numOutputs()
+    {
+        return FitnessCalculator::numOutputs();
     }
 }

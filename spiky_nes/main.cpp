@@ -1,297 +1,488 @@
-/*#include <iostream>
-
-using namespace std;
-
-int main()
-{
-    cout << "Hello world!" << endl;
-    return 0;
-}
-*/
-
-
-#include "../spnn/tests/tests.hpp"
-
-
-#include "../simple_nes/include/Emulator.h"
-#include "../simple_nes/include/Log.h"
+#include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <future>
 
+#include "../spnn/spnn.hpp"
+
 #include "spikey_nes.hpp"
 
-namespace sn
+
+int
+main( int argc, char** argv )
 {
-    void parseControllerConf(std::string filepath,
-                            std::vector<sf::Keyboard::Key>& p1,
-                            std::vector<sf::Keyboard::Key>& p2);
-}
+    std::ios_base::sync_with_stdio( false );
 
+    spkn::SetProcessPriority_lowest();
 
-
-
-int main(int argc, char** argv)
-{
     spkn::InitEmulatorLogs();
 
-    std::string path;
+    std::string rom_path;
 
-    //Default keybindings
-    std::vector<sf::Keyboard::Key> p1 {sf::Keyboard::J, sf::Keyboard::K, sf::Keyboard::RShift, sf::Keyboard::Return,
-                                       sf::Keyboard::W, sf::Keyboard::S, sf::Keyboard::A, sf::Keyboard::D},
-                                   p2 {sf::Keyboard::Numpad5, sf::Keyboard::Numpad6, sf::Keyboard::Numpad8, sf::Keyboard::Numpad9,
-                                       sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::Left, sf::Keyboard::Right};
-    sn::Emulator emulator;
-    sn::Emulator emulator2;
-
-    for (int i = 1; i < argc; ++i)
+    for( int i = 1; i < argc; ++i )
     {
-        std::string arg (argv[i]);
-        if (argv[i][0] != '-')
-            path = argv[i];
+        std::string arg( argv[i] );
+        if( argv[i][0] != '-' )
+        {
+            rom_path = argv[i];
+        }
         else
+        {
             std::cerr << "Unrecognized argument: " << argv[i] << std::endl;
+        }
     }
 
-    if (path.empty())
+    if( rom_path.empty() )
     {
         std::cout << "Argument required: ROM path" << std::endl;
         return 1;
     }
 
-    auto _up =    [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) < -80.0; };
-    auto _down =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) > 80.0; };
-    auto _left =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) < -80.0; };
-    auto _right = [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) > 80.0; };
+    neat::MutationLimits limits;
+    neat::MutationRates rates;
+    neat::SpeciesDistanceParameters speciationParams;
 
-    std::map<sn::Controller::Buttons,std::function<bool(void)>> controller_map = {
-        { sn::Controller::A,      [&]{ return sf::Joystick::isButtonPressed(0, 1) || sf::Joystick::isButtonPressed(0, 2) || sf::Keyboard::isKeyPressed(sf::Keyboard::J); } },
-        { sn::Controller::B,      [&]{ return sf::Joystick::isButtonPressed(0, 0) || sf::Joystick::isButtonPressed(0, 3) || sf::Keyboard::isKeyPressed(sf::Keyboard::K); } },
-        { sn::Controller::Select, [&]{ return sf::Joystick::isButtonPressed(0, 6) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift); } },
-        { sn::Controller::Start,  [&]{ return sf::Joystick::isButtonPressed(0, 7) || sf::Keyboard::isKeyPressed(sf::Keyboard::Return); } },
-        { sn::Controller::Up,     [&]{ return _up(0)    || sf::Keyboard::isKeyPressed(sf::Keyboard::W); } },
-        { sn::Controller::Down,   [&]{ return _down(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::S); } },
-        { sn::Controller::Left,   [&]{ return _left(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::A); } },
-        { sn::Controller::Right,  [&]{ return _right(0) || sf::Keyboard::isKeyPressed(sf::Keyboard::D); } },
-    };
+    limits.thresholdMin = {  2.0,  900.0 };
+    limits.thresholdMax = { 10.0, 1000.0 };
 
-    auto th = std::async( std::launch::async, [&]
+    limits.valueDecay =   { 0.01,   900.0 };
+    limits.activDecay =   { 0.001, 1000.0 };
+
+    limits.pulseFast =    {  1,   90 };
+    limits.pulseSlow =    { 10, 1000 };
+    //limits.pulseFast =    { 1,  10 };
+    //limits.pulseSlow =    { 5, 100 };
+
+    limits.weight =       { -1000.0, 1000.0 };
+    limits.length =       { 1, 10000 };
+
+
+
+    const double simpleMutationRate_node = 0.01;
+    const double simpleMutationRate_conn = 0.01;
+
+    rates.thresholdMin =         simpleMutationRate_node * limits.thresholdMin.range();
+    rates.thresholdMax =         simpleMutationRate_node * limits.thresholdMax.range();
+
+    rates.valueDecay =           simpleMutationRate_node * limits.valueDecay.range();
+    rates.activDecay =           simpleMutationRate_node * limits.activDecay.range();
+
+    rates.pulseFast =            std::max<uint64_t>( 1, simpleMutationRate_node * limits.pulseFast.range() );
+    rates.pulseSlow =            std::max<uint64_t>( 1, simpleMutationRate_node * limits.pulseSlow.range() );
+
+    rates.weight =               simpleMutationRate_conn * limits.weight.range();
+    rates.length =               std::max<uint64_t>( 1, simpleMutationRate_conn * limits.length.range() );
+
+    speciationParams.excess =      1.0;
+    speciationParams.disjoint =    1.0;
+    speciationParams.weights =     1.5 / limits.weight.range();
+    speciationParams.lengths =     1.5 / limits.length.range();
+
+    speciationParams.activations = 1.5 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
+    speciationParams.decays =      1.5 / ( limits.valueDecay.range() + limits.activDecay.range() );
+    speciationParams.pulses =      1.5 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
+    speciationParams.nodes =       1.0;
+
+    speciationParams.threshold =   3.5*1.0;
+
+    neat::Mutations::Mutation_Multi mutator;
+
     {
-        sn::parseControllerConf("keybindings.conf", p1, p2);
-        //emulator.setKeys(p1, p2);
-        //emulator2.setKeys( p1,p2 );
+        auto nodeMutator = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nodeMutator_new = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto connMutator = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto connMutator_new = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nwtkMutator = std::make_shared< neat::Mutations::Mutation_Multi_one >();
 
-        //emulator.setControllerCallbackMap( controller_map, {} );
-        //emulator2.setControllerCallbackMap( controller_map, {} );
+        auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
-        //emulator.run(path);
+        nodeMutator->addMutator< neat::Mutations::Mutation_Node_thresh_min   >();
+        nodeMutator->addMutator< neat::Mutations::Mutation_Node_thresh_max   >();
+        nodeMutator->addMutator< neat::Mutations::Mutation_Node_decays_activ >();
+        nodeMutator->addMutator< neat::Mutations::Mutation_Node_decays_value >();
+        nodeMutator->addMutator< neat::Mutations::Mutation_Node_pulses_fast  >();
+        nodeMutator->addMutator< neat::Mutations::Mutation_Node_pulses_slow  >();
 
+        nodeMutator_new->addMutator< neat::Mutations::Mutation_Node_thresh_min_new   >();
+        nodeMutator_new->addMutator< neat::Mutations::Mutation_Node_thresh_max_new   >();
+        nodeMutator_new->addMutator< neat::Mutations::Mutation_Node_decays_activ_new >();
+        nodeMutator_new->addMutator< neat::Mutations::Mutation_Node_decays_value_new >();
+        nodeMutator_new->addMutator< neat::Mutations::Mutation_Node_pulses_fast_new  >();
+        nodeMutator_new->addMutator< neat::Mutations::Mutation_Node_pulses_slow_new  >();
+
+        connMutator->addMutator< neat::Mutations::Mutation_Conn_weight >();
+        connMutator->addMutator< neat::Mutations::Mutation_Conn_length >();
+        //connMutator->addMutator< neat::Mutations::Mutation_Conn_enable >();
+
+        connMutator_new->addMutator< neat::Mutations::Mutation_Conn_weight_new >();
+        connMutator_new->addMutator< neat::Mutations::Mutation_Conn_length_new >();
+        //connMutator_new->addMutator< neat::Mutations::Mutation_Conn_enable >();
+
+        nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
+        nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn        >();
+        nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
+        nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
+
+        mutator.addMutator( 0.0,   0.01,  0.0,   nodeMutator );
+        mutator.addMutator( 0.0,   0.008, 0.0,   nodeMutator_new );
+        mutator.addMutator( 0.0,   0.0,   0.01,  connMutator );
+        mutator.addMutator( 0.0,   0.0,   0.008, connMutator_new );
+        mutator.addMutator( 0.002, 0.0,   0.0,   nwtkMutator );
+        mutator.addMutator( 0.0,   0.0,   0.0002, connMutator_enable );
+    }
+
+    auto random = std::make_shared< Rand::Random_Safe >(  );
+
+    float pixelMultiplier = 2.0f;
+
+    tpl::pool thread_pool{ 4 };
+
+    auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", thread_pool.num_threads(), pixelMultiplier );
+
+    spkn::FitnessFactory fitnessFactory( rom_path, previewWindow, limits.thresholdMax.max, 100, 5 );
+
+    std::cout << "Population construct call" << std::endl;
+
+    neat::Population population(
+        150,
+        spkn::FitnessFactory::numInputs(),
+        spkn::FitnessFactory::numOutputs(),
+        limits,
+        rates,
+        mutator,
+        fitnessFactory,
+        speciationParams,
+        neat::SpeciationMethod::Closest,
+        3,
+        500,
+        1
+    );
+
+    std::cout << "Population Init call" << std::endl;
+
+    population.Init();
+
+    {
+        std::ofstream file( "out.csv", std::ofstream::trunc );
+
+        file << "Generation,";
+        file << "Min,Max,Avg,";
+        file << "MinNodesTotal,MaxNodesTotal,AvgNodesTotal,MinConnTotal,MaxConnTotal,AvgConnTotal,";
+        file << "MinNodesActive,MaxNodesActive,AvgNodesActive,MinConnActive,MaxConnActive,AvgConnActive,";
+        file << "numSpecies,numExtinct,numMassExtinct,calculation time,attrition rate\n";
+        file.close();
+    }
+
+    std::cout << "Population Evolution ..." << std::endl;
+
+    auto evolution_start_time = std::chrono::high_resolution_clock::now();
+
+    //while( population.getGenerationCount() < 100 )
+    while( true )
+    {
+        auto generation_start_time = std::chrono::high_resolution_clock::now();
+
+        std::cout << "\n\nGeneration " << population.getGenerationCount() << ":\n";
+
+        std::cout << "\n\tCalculating ...\n";
+
+        double base_attrition  = 0.75;
+        double attrition_range = 0.0125;
+        neat::MinMax<double> attritionRange( base_attrition - attrition_range, base_attrition + attrition_range );
+        double attritionRate = 0.5;
         {
-            sn::VirtualScreen screen;
-            sn::VirtualScreen screen2;
-            sn::VirtualScreen screen3;
-            screen.create(sn::NESVideoWidth,sn::NESVideoHeight,2.f,sf::Color::Magenta);
-            screen2.create(sn::NESVideoWidth/2,sn::NESVideoHeight/2,2.f,sf::Color::Magenta);
-            screen3.create(sn::NESVideoWidth/2,sn::NESVideoHeight/2,2.f,sf::Color::Magenta);
-            screen2.setScreenPosition( { sn::NESVideoWidth*2.f+4.f,0.f } );
-            screen3.setScreenPosition( { sn::NESVideoWidth*2.f+4.f,sn::NESVideoHeight } );
-
-            emulator.init( path );
-            //emulator2.init( path );
-
-            screen.setScreenData( emulator.getScreenData() );
-            //screen2.setScreenData( emulator2.getScreenData() );
-
-            sf::RenderWindow window;
-            window.create( sf::VideoMode((sn::NESVideoWidth*2.f+2.f)*2.f, sn::NESVideoHeight*2.f), "Spikey NES", sf::Style::Titlebar|sf::Style::Close );
-            window.setVerticalSyncEnabled(true);
-
-            bool run = true;
-
-            auto emu_steps1 = std::async( std::launch::async, [&]
-            {
-                //emulator.stepNFrames(50);
-
-                spkn::GameState_SuperMarioBros(emulator).InitGameToRunning();
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-
-
-
-                emulator.setControllerCallbackMap( controller_map, {} );
-
-                auto frameTimer = std::chrono::high_resolution_clock::now();
-                auto elapsed_time = std::chrono::duration<double>( frameTimer - frameTimer );
-
-                while(run)
-                {
-                    auto currentTime = std::chrono::high_resolution_clock::now();
-                    elapsed_time += currentTime - frameTimer;
-                    frameTimer = currentTime;
-
-                    while( run && elapsed_time > std::chrono::duration<double>( 1.0/60.0 ) )
-                    {
-                        emulator.stepNFrames(1);
-
-                        elapsed_time -= std::chrono::duration<double>( 1.0/60.0 );
-                    }
-
-                    std::this_thread::sleep_for(std::chrono::nanoseconds(500));
-
-                }
-            } );
-
-            auto emu_steps2 = std::async( std::launch::async, [&]
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-                while(run)
-                {
-                    //emulator2.stepNFrames(1);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-                    for(size_t y = 0; y < screen.screenSize().y; ++y)
-                    {
-                        for(size_t x = 0; x < screen.screenSize().x; ++x)
-                        {
-                            auto index = y * screen.screenSize().x + x;
-                            auto index2 = y/2 * screen2.screenSize().x + x/2;
-
-                            if( !(x%2) && !(y%2) )
-                            {
-                                (*screen2.getScreenData())[ index2 ] = sf::Color::Black;
-                            }
-
-                            auto c = (*screen.getScreenData())[ index ];
-
-                            c.r /= 4;
-                            c.g /= 4;
-                            c.b /= 4;
-
-                            (*screen2.getScreenData())[ index2 ] +=  c;
-
-                            if( (x%2) && (y%2) )
-                            {
-                                auto clr = (*screen2.getScreenData())[ index2 ];
-                                auto hsl = spkn::ConvertRGBtoHSL( clr );
-                                float v = spkn::ConvertHSLtoSingle( hsl, 5, true );
-                                //float v = spkn::ConvertRGBtoHSL( (*screen2.getScreenData())[ index2 ] ).l;
-                                uint8_t b = ( v )*255.0f;
-                                (*screen3.getScreenData())[ index2 ] = sf::Color{ b, b, b, 255 };
-                            }
-                        }
-                    }
-                }
-            } );
-
-            while (window.isOpen())
-            {
-                sf::Event event;
-                while (window.pollEvent(event))
-                {
-                    if (event.type == sf::Event::Closed )
-                    {
-                        run = false;
-                        window.close();
-                        emu_steps1.get();
-                        emu_steps2.get();
-                        return;
-                    }
-                }
-
-                /*emulator.stepNFrames(1);
-                emulator2.stepNFrames(2);*/
-
-                window.draw(screen);
-                window.draw(screen2);
-                window.draw(screen3);
-                window.display();
-            }
-            emu_steps1.get();
-            emu_steps2.get();
+            double x = double( population.getGenerationCount() ) / 100.0;
+            attritionRate = ( ( -cos( x * 3.14159 ) + 1.0 ) / 2.0 ) * attritionRange.range() + attritionRange.min;
+            //if( population.getLastGenerationData() ) { attritionRate = neat::MinMax<double>(0.05,0.95).clamp( population.getLastGenerationData()->getMaxFitness()/1000.0 ); }
         }
-    });
 
-    auto th2 = std::async( std::launch::async, [&]
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        // this is the only line in this loop that really matters *******************************************************
+        population.IterateGeneration( thread_pool, random, attritionRate );
 
-        auto start_time = std::chrono::high_resolution_clock::now();
-        auto prev_time = start_time;
+        std::cout << "\tDone. (~" << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count())/1000.0 << "s)\n\n";
 
-        uint64_t prev_numFrames = 0;
+        std::cout << "\tattrRate = " << attritionRate << "\n";
 
-        std::cout << "\n\n";
-        while(th.valid())
+        auto genData = population.getLastGenerationData();
+
+        if( !genData )
         {
-            system("cls");
+            continue;
+        }
 
-            auto current_time = std::chrono::high_resolution_clock::now();
+        auto fitVec = genData->getFitnessVector();
 
-            uint64_t numFrames = emulator.getNumVBlank() + emulator2.getNumVBlank();
+        size_t over = 0;
+        for( auto fitness : fitVec )
+        {
+            if( fitness > 990.0 )
+            {
+                over++;
+            }
+        }
 
-            double dt = std::chrono::duration<double>( current_time - prev_time ).count();
-            uint64_t dframes = numFrames - prev_numFrames;
+        double ratioHighPreformance = double(over)/double(fitVec.size());
 
-            std::cout << "numVBlanks = " << numFrames << " ";
-            std::cout << "(" << double(dframes)/dt << "/s)";
+        auto speciesPresent = genData->getSpeciesPresent();
+
+        double avgGenotypesPerSpecies = 0.0;
+
+        for( auto c : speciesPresent )
+        {
+            avgGenotypesPerSpecies += c.second;
+        }
+        avgGenotypesPerSpecies /= double( speciesPresent.size() );
+
+        std::cout << "\tFitness:\n";
+        std::cout << "\t\tMax: " << genData->getMaxFitness() << "\n";
+        std::cout << "\t\tMin: " << genData->getMinFitness() << "\n";
+        std::cout << "\t\tAvg: " << genData->getAvgFitness() << "\n";
+        std::cout << "\n";
+
+        auto specFitMap = genData->getSpeciesFitness();
+        long double maxSpeciesFitness = specFitMap.begin()->second;
+        long double minSpeciesFitness = specFitMap.begin()->second;
+        neat::SpeciesID maxFitSpeciesID = specFitMap.begin()->first;
+        neat::SpeciesID minFitSpeciesID = specFitMap.begin()->first;
+        for( auto f : specFitMap )
+        {
+            if( f.second > maxSpeciesFitness )
+            {
+                maxSpeciesFitness = f.second;
+                maxFitSpeciesID = f.first;
+            }
+            if( f.second < minSpeciesFitness )
+            {
+                minSpeciesFitness = f.second;
+                minFitSpeciesID = f.first;
+            }
+        }
+
+        std::cout << "\tSpecies:\n";
+        std::cout << "\t\tTracked: " << genData->getSpeciesManager().getNumTrackedSpecies() << "\n";
+        std::cout << "\t\tPresent: " << speciesPresent.size() << "\n";
+        std::cout << "\t\tExtinct: " << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << "(" << population.getNumMassExtinctions() << ")\n";
+        std::cout << "\t\t#/Spec:  " << round( 100.0*avgGenotypesPerSpecies )/100.0 << "(" << floor( double( avgGenotypesPerSpecies )*(1.0-attritionRate) ) << ")\n";
+        std::cout << "\t\tmaxFit:  " << maxSpeciesFitness << "(" << maxFitSpeciesID << ")\n";
+        std::cout << "\t\tminFit:  " << minSpeciesFitness << "(" << minFitSpeciesID << ")\n";
+        std::cout << "\n";
+
+        neat::MinMax<size_t> nodes;
+        neat::MinMax<size_t> conns;
+
+        neat::MinMax<size_t> nodes_active;
+        neat::MinMax<size_t> conns_active;
+
+        long double avgNodes = 0.0;
+        long double avgConns = 0.0;
+
+        long double avgNodes_active = 0.0;
+        long double avgConns_active = 0.0;
+
+        auto genotypePtrs = genData->getGenotypesVector();
+        if( !genotypePtrs.empty() )
+        {
+            auto front = genotypePtrs.front().lock();
+            nodes = neat::MinMax<size_t>( front->getNumNodes() );
+            conns = neat::MinMax<size_t>( front->getNumConnections() );
+
+            size_t numNodes;
+            size_t numConns;
+
+            front->getNumReachableNumActive( numNodes, numConns );
+
+            nodes_active = neat::MinMax<size_t>( numNodes );
+            conns_active = neat::MinMax<size_t>( numConns );
+
+            for( auto wp : genotypePtrs )
+            {
+                auto p = wp.lock();
+                numNodes = p->getNumNodes();
+                numConns = p->getNumConnections();
+
+                avgNodes += numNodes;
+                avgConns += numConns;
+
+                nodes.expand( numNodes );
+                conns.expand( numConns );
+
+                p->getNumReachableNumActive( numNodes, numConns );
+
+                avgNodes_active += numNodes;
+                avgConns_active += numConns;
+
+                nodes_active.expand( numNodes );
+                conns_active.expand( numConns );
+            }
+
+            avgNodes /= (long double)(genotypePtrs.size());
+            avgConns /= (long double)(genotypePtrs.size());
+
+            avgNodes_active /= (long double)(genotypePtrs.size());
+            avgConns_active /= (long double)(genotypePtrs.size());
+
+            std::cout << "\tGenotypes:\n";
+            std::cout << "\t\tminNodesT:" << nodes.min << "\n";
+            std::cout << "\t\tmaxNodesT:" << nodes.max << "\n";
+            std::cout << "\t\tavgNodesT:" << avgNodes << "\n";
+            std::cout << "\t\tminConnsT:" << conns.min << "\n";
+            std::cout << "\t\tmaxConnsT:" << conns.max << "\n";
+            std::cout << "\t\tavgConnsT:" << avgConns << "\n";
+            std::cout << "\n";
+            std::cout << "\t\tminNodesA:" << nodes_active.min << "\n";
+            std::cout << "\t\tmaxNodesA:" << nodes_active.max << "\n";
+            std::cout << "\t\tavgNodesA:" << avgNodes_active << "\n";
+            std::cout << "\t\tminConnsA:" << conns_active.min << "\n";
+            std::cout << "\t\tmaxConnsA:" << conns_active.max << "\n";
+            std::cout << "\t\tavgConnsA:" << avgConns_active << "\n";
+            std::cout << "\n";
+        }
+
+        {
+            double runtime_total_seconds = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - evolution_start_time).count();
+
+            double runtime_seconds = fmod( runtime_total_seconds, 60.0 );
+            int64_t runtime_minutes = fmod( runtime_total_seconds/60.0, 60.0 );
+            int64_t runtime_hours = runtime_total_seconds / ( 60.0 * 60.0 );
+
+            std::cout << "\tRuntime: (" << runtime_total_seconds << "s)\n\n";
+            if( runtime_hours ) std::cout <<   "\t\tHours:  " << std::setfill(' ') << std::setw(3) << runtime_hours << "\n";
+            if( runtime_minutes ) std::cout << "\t\tMinutes: " << std::setfill(' ') << std::setw(2) << runtime_minutes << "\n";
+
+            {
+                // HOLY HELL could C++ be more verbose in formatting a single fucking float
+
+                auto cout_fmt_flags = std::cout.flags(); // get flags before
+                auto precision = std::cout.precision(); // get precision before
+
+                std::cout << "\t\tSeconds: " << std::fixed << std::setfill( ' ' ) << std::setprecision( 1 ) << std::setw( 4 ) << runtime_seconds << "\n";
+
+                std::cout << std::setprecision( precision ); // reset precision
+                std::cout.flags( cout_fmt_flags ); // go back to old flags
+            }
 
             std::cout << "\n";
-
-            spkn::GameState_SuperMarioBros state( emulator );
-
-            std::cout << "High = ";
-            std::cout << state.Score_High();
-            std::cout << " Mario = ";
-            std::cout << state.Score_Mario();
-            std::cout << " Luigi = ";
-            std::cout << state.Score_Luigi();
-            std::cout << " coins = ";
-            std::cout << state.Coins_BCD();
-            std::cout << "(" << int(state.Coins_Byte()) << ")";
-            std::cout << " time = ";
-            std::cout << state.Time();
-            std::cout << " World-Level = ";
-            std::cout << state.World();
-            std::cout << "-";
-            std::cout << state.Level();
-            std::cout << " Lives = ";
-            std::cout << state.Lives();
-            std::cout << " screen = ";
-            std::cout << state.ScreenPosition() << "," << int(emulator.peakMemory(0x07A0));
-
-            std::cout << "         \n";
-
-            std::cout << " " << std::string(sf::Joystick::getIdentification(0).name);
-            std::cout << " " << sf::Joystick::getButtonCount(0) << "\n\t";
-
-            for( size_t i = 0; i < sf::Joystick::getButtonCount(0); ++i )
-            {
-                std::cout << " [" << i << ":" << sf::Joystick::isButtonPressed(0, i) << "], ";
-            }
-
-            std::cout << "\n\t";
-
-            std::cout << "[X:" << sf::Joystick::hasAxis(0,sf::Joystick::Axis::X) << ":" << sf::Joystick::getAxisPosition(0,sf::Joystick::Axis::X) << "], ";
-            std::cout << "[Y:" << sf::Joystick::hasAxis(0,sf::Joystick::Axis::Y) << ":" << sf::Joystick::getAxisPosition(0,sf::Joystick::Axis::Y) << "], ";
-
-            std::cout << "\n\n";
-
-            std::cout << std::flush;
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
-
-            prev_time = current_time;
-            prev_numFrames = numFrames;
         }
 
-        std::cout << "\n" << std::endl;
-    });
 
-    //_tests::Test7();
+        std::cout << "\t% Over 990.0 fitness: " << ratioHighPreformance*100.0 << "%\n\n";
 
-    th.get();
-    th2.get();
+        std::cout << "\t";
+        size_t i = 0;
+        for( auto s : speciesPresent )
+        {
+            ++i;
+            std::cout << "[" << std::setfill('0') << std::setw(4) << s.first;
+            std::cout << ":" << std::setfill(' ') << std::setw(4) << s.second << "], ";
+            if( i >= 10 )
+            {
+                i = 0;
+                std::cout << "\n\t";
+            }
+        }
+
+        std::cout << "\n\n\t";
+        auto endangered = population.getEndangeredSpecies();
+        std::vector< std::pair< neat::SpeciesID, size_t > > endangered_sorted;
+        endangered_sorted.reserve( endangered.size() );
+        for( auto s : endangered )
+        {
+            //std::cout << std::setfill('0') << std::setw(3) << s.first << ":" << s.second << ", ";
+            endangered_sorted.push_back( s );
+        }
+        std::stable_sort( endangered_sorted.begin(), endangered_sorted.end(), []( const auto& a, const auto& b ){ return std::less<size_t>()( a.second, b.second ); } );
+        i = 0;
+        for( auto s : endangered_sorted )
+        {
+            ++i;
+            std::cout << std::setfill('0') << std::setw(4) << s.first << ":" << std::setfill( ' ' ) << std::setw( 3 ) << s.second << ", ";
+            if( i >= 10 )
+            {
+                i = 0;
+                std::cout << "\n\t";
+            }
+        }
+
+        std::cout << std::endl;
+
+        //std::cout << std::flush;
+
+        {
+            auto generation_end_time = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> dur = generation_end_time - generation_start_time;
+
+            std::ofstream file( "out.csv", std::ofstream::app );
+
+            file << population.getGenerationCount() - 1 << ",";
+            file << genData->getMinFitness() << ",";
+            file << genData->getMaxFitness() << ",";
+            file << genData->getAvgFitness() << ",";
+            file << nodes.min << ",";
+            file << nodes.max << ",";
+            file << avgNodes << ",";
+            file << conns.min << ",";
+            file << conns.max << ",";
+            file << avgConns << ",";
+            file << nodes_active.min << ",";
+            file << nodes_active.max << ",";
+            file << avgNodes_active << ",";
+            file << conns_active.min << ",";
+            file << conns_active.max << ",";
+            file << avgConns_active << ",";
+            file << speciesPresent.size() << ",";
+            file << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << ",";
+            file << population.getNumMassExtinctions() << ",";
+            file << dur.count() << ",";
+            file << attritionRate << ",";
+            file << "\n";
+
+            file.close();
+        }
+
+        //std::this_thread::sleep_for( std::chrono::duration<double>( 0.05 ) );
+
+        //if( genData->getAvgFitness() >= 900.0 )
+        if( ratioHighPreformance >= 0.95 || genData->getMaxFitness() >= 1000.0 )
+        {
+            break;
+        }
+
+    }
+
+    std::cout << "\n\a";
+    std::ofstream success_file( "out.txt" );
+    //population.printSpeciesArchetypes( std::cout );
+    population.printSpeciesArchetypes( success_file );
+    success_file.close();
+
+    previewWindow->close();
 
     return 0;
 }
+
+
+
+
+
+
+
+
+
+/*
+auto _up =    [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) < -80.0; };
+auto _down =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::Y) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::Y) > 80.0; };
+auto _left =  [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) < -80.0; };
+auto _right = [](unsigned int j){ return sf::Joystick::hasAxis(j,sf::Joystick::Axis::X) && sf::Joystick::getAxisPosition(j,sf::Joystick::Axis::X) > 80.0; };
+
+std::map<sn::Controller::Buttons,std::function<bool(void)>> controller_map = {
+    { sn::Controller::A,      [&]{ return sf::Joystick::isButtonPressed(0, 1) || sf::Joystick::isButtonPressed(0, 2) || sf::Keyboard::isKeyPressed(sf::Keyboard::J); } },
+    { sn::Controller::B,      [&]{ return sf::Joystick::isButtonPressed(0, 0) || sf::Joystick::isButtonPressed(0, 3) || sf::Keyboard::isKeyPressed(sf::Keyboard::K); } },
+    { sn::Controller::Select, [&]{ return sf::Joystick::isButtonPressed(0, 6) || sf::Keyboard::isKeyPressed(sf::Keyboard::RShift); } },
+    { sn::Controller::Start,  [&]{ return sf::Joystick::isButtonPressed(0, 7) || sf::Keyboard::isKeyPressed(sf::Keyboard::Return); } },
+    { sn::Controller::Up,     [&]{ return _up(0)    || sf::Keyboard::isKeyPressed(sf::Keyboard::W); } },
+    { sn::Controller::Down,   [&]{ return _down(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::S); } },
+    { sn::Controller::Left,   [&]{ return _left(0)  || sf::Keyboard::isKeyPressed(sf::Keyboard::A); } },
+    { sn::Controller::Right,  [&]{ return _right(0) || sf::Keyboard::isKeyPressed(sf::Keyboard::D); } },
+};
+*/

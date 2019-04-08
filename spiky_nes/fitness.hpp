@@ -36,6 +36,7 @@ namespace spkn
             // screen settings
 
             size_t spiralRings;
+            double avtivationMaxValue;
 
             // book-keeping
 
@@ -43,7 +44,7 @@ namespace spkn
 
         public:
 
-            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings );
+            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight );
             virtual ~FitnessCalculator();
 
 
@@ -92,12 +93,17 @@ namespace spkn
 
             std::shared_ptr<PreviewWindow> preview_window;
 
+            double avtivationMaxValue;
+
         public:
 
-            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, uint64_t steps_per_frame = 100, size_t color_rings = 5 );
+            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame = 100, size_t color_rings = 5 );
             virtual ~FitnessFactory();
 
             uint64_t getTotalVBlanks() const;
+
+            static size_t numInputs();
+            static size_t numOutputs();
 
         protected:
 
