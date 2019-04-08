@@ -14,6 +14,11 @@ namespace sn
 //         m_keyBindings[Down] = sf::Keyboard::S;
 //         m_keyBindings[Left] = sf::Keyboard::A;
 //         m_keyBindings[Right] = sf::Keyboard::D;
+
+        for (size_t button = A; button < TotalButtons; ++button)
+        {
+            m_buttonCallbacks[ button ] = [](void) -> bool { return false; };
+        }
     }
 
     void Controller::setKeyBindings(const std::vector<sf::Keyboard::Key>& keys)
@@ -57,6 +62,11 @@ namespace sn
 
     void Controller::setCallbackMap(const std::map<Buttons,std::function<bool(void)>>& callbacks)
     {
+        while( m_buttonCallbacks.size() < TotalButtons )
+        {
+            m_buttonCallbacks.emplace_back( [](void) -> bool { return false; } );
+        }
+
         for (size_t button = A; button < TotalButtons; ++button)
         {
             auto it = callbacks.find( static_cast<Buttons>(button) );
