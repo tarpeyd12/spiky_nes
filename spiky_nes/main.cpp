@@ -129,25 +129,32 @@ main( int argc, char** argv )
         mutator.addMutator( 0.0,   0.0,   0.01,  connMutator );
         mutator.addMutator( 0.0,   0.0,   0.008, connMutator_new );
         mutator.addMutator( 0.002, 0.0,   0.0,   nwtkMutator );
-        mutator.addMutator( 0.0,   0.0,   0.0002, connMutator_enable );
+        mutator.addMutator( 0.0,   0.0,   0.002, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
 
-    float pixelMultiplier = 2.0f;
+    float pixelMultiplier = 1.5f;
 
     tpl::pool thread_pool{ 4 };
 
     auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", thread_pool.num_threads(), pixelMultiplier );
 
-    spkn::FitnessFactory fitnessFactory( rom_path, previewWindow, limits.thresholdMax.max, 1, 5 );
+    spkn::FitnessFactory fitnessFactory(
+        rom_path,
+        previewWindow,
+        limits.thresholdMax.max, // maximum activation value, used to scale input values
+        1, // network steps per NES frame
+        1000, // color winding value
+        16  // ratio of NES pixels (squared) to network inputs
+    );
 
     std::cout << "Population construct call" << std::endl;
 
     neat::Population population(
-        50,
-        spkn::FitnessFactory::numInputs(),
-        spkn::FitnessFactory::numOutputs(),
+        150,
+        fitnessFactory.numInputs(),
+        fitnessFactory.numOutputs(),
         limits,
         rates,
         mutator,
@@ -155,7 +162,7 @@ main( int argc, char** argv )
         speciationParams,
         neat::SpeciationMethod::Closest,
         3,
-        500,
+        20,
         1
     );
 

@@ -15,12 +15,13 @@ namespace spkn
         screen_data_queue_out(),
         blankScreenData( nullptr )
     {
-        blankScreenData = std::make_shared<std::vector<sf::Color>>( sn::NESVideoWidth * sn::NESVideoHeight, sf::Color::Magenta );
+        blankScreenData = std::make_shared<sf::Image>();
+        blankScreenData->create( sn::NESVideoWidth, sn::NESVideoHeight, sf::Color{ 127,127,127,255 } );
 
         while( virtual_screens.size() < num_previews )
         {
             virtual_screens.push_back( sn::VirtualScreen() );
-            virtual_screens.back().create( sn::NESVideoWidth, sn::NESVideoHeight, pixelSize, sf::Color::Cyan );
+            virtual_screens.back().create( sn::NESVideoWidth, sn::NESVideoHeight, pixelSize, sf::Color::Blue );
             virtual_screens.back().setScreenData( blankScreenData );
             virtual_screens.back().setScreenPosition( { (sn::NESVideoWidth + pixelGap) * pixelSize * ( virtual_screens.size() - 1 ), 0.0 } );
         }
@@ -36,13 +37,13 @@ namespace spkn
     }
 
     void
-    PreviewWindow::addScreenData( std::shared_ptr<std::vector<sf::Color>> data )
+    PreviewWindow::addScreenData( std::shared_ptr<sf::Image> data )
     {
         screen_data_queue_in.push( data );
     }
 
     void
-    PreviewWindow::removeScreenData( std::shared_ptr<std::vector<sf::Color>> data )
+    PreviewWindow::removeScreenData( std::shared_ptr<sf::Image> data )
     {
         screen_data_queue_out.push( data );
     }
@@ -74,7 +75,8 @@ namespace spkn
 
         sf::VideoMode videoMode( ( (sn::NESVideoWidth+pixelGap) * virtual_screens.size()-pixelGap ) * pixelSize, sn::NESVideoHeight * pixelSize );
         window.create( videoMode, windowName, sf::Style::Titlebar );
-        window.setVerticalSyncEnabled(true);
+        window.setVerticalSyncEnabled( true );
+        window.setFramerateLimit( 60 );
 
         sf::Event event;
         bool focus = true;
@@ -84,19 +86,25 @@ namespace spkn
             {
                 if( event.type == sf::Event::GainedFocus )
                 {
+                    window.setFramerateLimit( 60 );
                     focus = true;
                 }
                 else if( event.type == sf::Event::LostFocus )
                 {
+                    window.setFramerateLimit( 10 );
                     focus = false;
                 }
             }
 
+            processRemoveRequests();
+            processAddRequests();
+
             // draw the shit
             {
+                std::lock_guard<std::mutex> vs_lock( virtual_screens_mutex );
+
                 window.clear();
 
-                std::lock_guard<std::mutex> vs_lock( virtual_screens_mutex );
                 for( auto& vs : virtual_screens )
                 {
                     window.draw( vs );
@@ -104,10 +112,10 @@ namespace spkn
                 window.display();
             }
 
-            processRemoveRequests();
-            processAddRequests();
-
-            std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+            /*if( !focus )
+            {
+                std::this_thread::sleep_for( std::chrono::nanoseconds( 1000000/15 ) );
+            }*/
         }
     }
 
@@ -119,7 +127,7 @@ namespace spkn
         {
             for( auto& vs : virtual_screens )
             {
-                std::shared_ptr<std::vector<sf::Color>> target( nullptr );
+                std::shared_ptr<sf::Image> target( nullptr );
                 if( vs.getScreenData() == blankScreenData && screen_data_queue_in.try_pop( target ) && target != nullptr )
                 {
                     vs.setScreenData( target );
@@ -133,9 +141,9 @@ namespace spkn
     {
         std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
 
-        std::list< std::shared_ptr<std::vector<sf::Color>> > toReAdd;
+        std::list< std::shared_ptr<sf::Image> > toReAdd;
 
-        std::shared_ptr<std::vector<sf::Color>> target( nullptr );
+        std::shared_ptr<sf::Image> target( nullptr );
         while( screen_data_queue_out.try_pop( target ) && target != nullptr )
         {
             bool was_removed = false;

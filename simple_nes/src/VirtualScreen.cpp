@@ -5,43 +5,48 @@ namespace sn
     void VirtualScreen::create(unsigned int w, unsigned int h, float pixel_size, sf::Color color)
     {
         m_defaultColor = color;
-        m_pixelSize = pixel_size;
         m_screenSize = {w, h};
+
+        //m_sprite.setScale( m_screenSize.x * pixel_size, m_screenSize.y * pixel_size );
+        m_sprite.setScale( pixel_size, pixel_size );
+
+        m_texture.create( m_screenSize.x, m_screenSize.y );
+
+        m_texture.setSmooth( true );
 
         flushScreenData();
     }
 
     void VirtualScreen::setPixel(std::size_t x, std::size_t y, sf::Color color)
     {
-        auto index = y * screenSize().x + x;
-
-        if (index >= m_pixelColors->size())
+        if (x > m_pixelColors->getSize().x || y > m_pixelColors->getSize().y)
             return;
 
-        (*m_pixelColors)[index] = color;
+        m_pixelColors->setPixel( x, y, color );
     }
 
-    std::shared_ptr<std::vector<sf::Color>> VirtualScreen::getScreenData() const
+    std::shared_ptr<sf::Image> VirtualScreen::getScreenData() const
     {
         return m_pixelColors;
     }
 
-    std::shared_ptr<std::vector<sf::Color>> VirtualScreen::flushScreenData()
+    std::shared_ptr<sf::Image> VirtualScreen::flushScreenData()
     {
         auto currentScreenData = getScreenData();
-        m_pixelColors = std::make_shared<std::vector<sf::Color>>( screenSize().x * screenSize().y, m_defaultColor );
-
+        m_pixelColors = std::make_shared<sf::Image>();
+        m_pixelColors->create( m_screenSize.x, m_screenSize.y, m_defaultColor );
         return currentScreenData;
     }
 
     void VirtualScreen::setScreenPosition( sf::Vector2f pos )
     {
-        m_screenPosition = pos;
+        m_sprite.setPosition( pos );
     }
 
-    void VirtualScreen::setScreenData( std::shared_ptr<std::vector<sf::Color>> data )
+    void VirtualScreen::setScreenData( std::shared_ptr<sf::Image> data )
     {
         m_pixelColors = data;
+        m_texture.update( *m_pixelColors );
     }
 
     sf::Vector2u VirtualScreen::screenSize() const
@@ -51,42 +56,9 @@ namespace sn
 
     void VirtualScreen::draw(sf::RenderTarget& target, sf::RenderStates states) const
     {
-        sf::VertexArray vertices( sf::Quads, screenSize().x * screenSize().y * 4 );
-
-        for(size_t y = 0; y < screenSize().y; ++y)
-        {
-            for(size_t x = 0; x < screenSize().x; ++x)
-            {
-                auto index = y * screenSize().x + x;
-
-                auto color = (*m_pixelColors)[index];
-
-                index *= 4;
-
-                sf::Vector2f coord2d( x * m_pixelSize, y * m_pixelSize );
-                coord2d += m_screenPosition;
-
-                //quad
-                //top-left
-                vertices[index].position     = coord2d;
-                vertices[index].color        = color;
-
-                //top-right
-                vertices[index + 1].position = coord2d + sf::Vector2f{ m_pixelSize, 0 };
-                vertices[index + 1].color    = color;
-
-                //bottom-right
-                vertices[index + 2].position = coord2d + sf::Vector2f{ m_pixelSize, m_pixelSize };
-                vertices[index + 2].color    = color;
-
-                //bottom-left
-                vertices[index + 3].position = coord2d + sf::Vector2f{ 0, m_pixelSize };
-                vertices[index + 3].color    = color;
-
-            }
-        }
-
-        target.draw(vertices, states);
+        m_texture.update( *getScreenData() );
+        m_sprite.setTexture( m_texture );
+        target.draw( m_sprite, states );
     }
 }
 

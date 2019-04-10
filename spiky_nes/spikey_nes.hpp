@@ -1,7 +1,7 @@
 #ifndef SPKN_SPIKEY_NES_HPP_INCLUDED
 #define SPKN_SPIKEY_NES_HPP_INCLUDED
 
-#include <SFML/Graphics/Color.hpp>
+#include <SFML/Graphics.hpp>
 
 #include "../simple_nes/include/Log.h"
 
@@ -23,8 +23,7 @@ namespace spkn
 
     float ConvertHSLtoSingle( const ColorHSL& color, size_t rings = 3, bool smooth = true );
 
-    void SetProcessPriority_low();
-    void SetProcessPriority_lowest();
+    sf::Image ResizeImage( const sf::Image& image, size_t width, size_t height );
 }
 
 #include "fitness.hpp"

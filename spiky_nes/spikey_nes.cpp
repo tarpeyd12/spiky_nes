@@ -142,4 +142,23 @@ namespace spkn
         // stay
         return floor_l + hue_offset;
     }
+
+    sf::Image
+    ResizeImage( const sf::Image& image, size_t width, size_t height )
+    {
+        // https://en.sfml-dev.org/forums/index.php?topic=4119.0
+
+        sf::Texture tex;
+        tex.setSmooth( true );
+        tex.loadFromImage( image );
+        sf::Sprite spriteTmp( tex );
+        spriteTmp.setScale( width, height );
+        sf::RenderTexture  rtex;
+        rtex.create( width, height );
+        rtex.setSmooth( true );
+        rtex.clear();
+        rtex.draw( spriteTmp );
+        rtex.display();
+        return rtex.getTexture().copyToImage();
+    }
 }

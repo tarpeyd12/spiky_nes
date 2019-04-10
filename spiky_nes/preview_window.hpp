@@ -29,11 +29,11 @@ namespace spkn
             std::mutex virtual_screens_mutex;
             std::vector< sn::VirtualScreen > virtual_screens;
 
-            tpl::safe_queue< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_in;
+            tpl::safe_queue< std::shared_ptr<sf::Image> > screen_data_queue_in;
 
-            tpl::safe_queue< std::shared_ptr<std::vector<sf::Color>> > screen_data_queue_out;
+            tpl::safe_queue< std::shared_ptr<sf::Image> > screen_data_queue_out;
 
-            std::shared_ptr<std::vector<sf::Color>> blankScreenData;
+            std::shared_ptr<sf::Image> blankScreenData;
 
             std::thread window_thread;
 
@@ -42,8 +42,8 @@ namespace spkn
             PreviewWindow( const std::string& window_name, size_t num_previews, float screen_size_ratio = 2.0f );
             ~PreviewWindow();
 
-            void addScreenData( std::shared_ptr<std::vector<sf::Color>> data );
-            void removeScreenData( std::shared_ptr<std::vector<sf::Color>> data );
+            void addScreenData( std::shared_ptr<sf::Image> data );
+            void removeScreenData( std::shared_ptr<sf::Image> data );
 
             void close();
 

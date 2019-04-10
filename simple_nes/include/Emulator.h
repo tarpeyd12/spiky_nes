@@ -31,7 +31,7 @@ namespace sn
         void setControllerCallbackMap(const std::map<Controller::Buttons,std::function<bool(void)>>& p1, const std::map<Controller::Buttons,std::function<bool(void)>>& p2);
 
         Byte peakMemory(Address addr) const;
-        std::shared_ptr<std::vector<sf::Color>> getScreenData() const;
+        std::shared_ptr<sf::Image> getScreenData() const;
         uint64_t getNumVBlank() const;
     private:
         void DMA(Byte page);

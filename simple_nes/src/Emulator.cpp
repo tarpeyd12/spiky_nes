@@ -248,7 +248,7 @@ namespace sn
         return m_bus.peak( addr );
     }
 
-    std::shared_ptr<std::vector<sf::Color>> Emulator::getScreenData() const
+    std::shared_ptr<sf::Image> Emulator::getScreenData() const
     {
         return m_emulatorScreen.getScreenData();
     }

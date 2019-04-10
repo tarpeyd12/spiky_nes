@@ -21,6 +21,8 @@ namespace spkn
 
             sn::Emulator emulator;
             std::array< bool, size_t(sn::Controller::TotalButtons) > controllerState;
+            bool controllerSet;
+            uint64_t numVBlanksWithoutButtonpress;
 
             GameState_SuperMarioBros gameStateExtractor;
 
@@ -37,7 +39,8 @@ namespace spkn
 
             std::vector< double > screenInput;
             size_t spiralRings;
-            double avtivationMaxValue;
+            double activationMaxValue;
+            size_t NESpixelsPerNetworkPixel;
 
             // book-keeping
 
@@ -45,15 +48,15 @@ namespace spkn
 
         public:
 
-            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight );
+            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio );
             virtual ~FitnessCalculator();
 
 
-            static size_t numInputs();
-            static size_t numOutputs();
+            size_t numInputs();
+            size_t numOutputs();
 
             // emulator stuff
-            std::shared_ptr<std::vector<sf::Color>> getScreenData() const;
+            std::shared_ptr<sf::Image> getScreenData() const;
             uint64_t getNumVBlank() const;
 
         protected:
@@ -96,15 +99,17 @@ namespace spkn
 
             double avtivationMaxValue;
 
+            size_t NESpixelsPerNetworkPixel;
+
         public:
 
-            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame = 100, size_t color_rings = 5 );
+            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame = 100, size_t color_rings = 5, size_t downscaleRatio = 2 );
             virtual ~FitnessFactory();
 
             uint64_t getTotalVBlanks() const;
 
-            static size_t numInputs();
-            static size_t numOutputs();
+            size_t numInputs();
+            size_t numOutputs();
 
         protected:
 
@@ -114,8 +119,8 @@ namespace spkn
             // book-keeping stuff
 
             void addToTotalVBlanks( uint64_t num_vblanks );
-            void regesterScreenData( std::shared_ptr<std::vector<sf::Color>> data );
-            void unregesterScreenData( std::shared_ptr<std::vector<sf::Color>> data );
+            void regesterScreenData( std::shared_ptr<sf::Image> data );
+            void unregesterScreenData( std::shared_ptr<sf::Image> data );
 
             // friends
             friend class FitnessCalculator;

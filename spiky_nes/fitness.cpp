@@ -6,21 +6,26 @@
 
 namespace spkn
 {
-    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight )
+    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio )
          : neat::FitnessCalculator( net ),
         networkStepsPerFrame( stepsPerFrame ),
         emulator(),
         controllerState(),
+        controllerSet( false ),
+        numVBlanksWithoutButtonpress( 0 ),
         gameStateExtractor( emulator ),
         maxScreenPosPerLevel(),
         highestWorldLevel(0),
         networkOutputCallbacks(),
-        screenInput( numInputs(), 0.0 ),
+        screenInput(),
         spiralRings( colorRings ),
-        avtivationMaxValue( maxActivationWeight ),
+        activationMaxValue( maxActivationWeight ),
+        NESpixelsPerNetworkPixel( downscaleRatio ),
         parentFactory( nullptr )
     {
         networkStepsPerFrame = std::max<size_t>( 1, networkStepsPerFrame );
+
+        screenInput.resize( numInputs(), 0.0 );
 
         // init the emulator with the rom
         emulator.init( rom_path );
@@ -30,7 +35,10 @@ namespace spkn
         while( networkOutputCallbacks.size() < getNumOutputNodes() )
         {
             size_t i = networkOutputCallbacks.size();
-            networkOutputCallbacks.push_back( [&,i](const spnn::neuron&){ controllerState[i] = true; } );
+            auto func = [&,i](const spnn::neuron&){ controllerSet = controllerState[i] = true; };
+            networkOutputCallbacks.push_back( func );
+            if( i == size_t(sn::Controller::Start) || i == size_t(sn::Controller::Select) )
+                networkOutputCallbacks.back() = nullptr;
         }
 
         // hook the emulator input to the controller state
@@ -59,7 +67,7 @@ namespace spkn
     size_t
     FitnessCalculator::numInputs()
     {
-        return sn::NESVideoHeight * sn::NESVideoWidth / 4 + 1;
+        return sn::NESVideoHeight * sn::NESVideoWidth / ( NESpixelsPerNetworkPixel * NESpixelsPerNetworkPixel ) + 1;
     }
 
     size_t
@@ -68,7 +76,7 @@ namespace spkn
         return size_t(sn::Controller::TotalButtons);
     }
 
-    std::shared_ptr<std::vector<sf::Color>>
+    std::shared_ptr<sf::Image>
     FitnessCalculator::getScreenData() const
     {
         return emulator.getScreenData();
@@ -86,8 +94,7 @@ namespace spkn
         long double fitness = 0.0;
 
         fitness += (long double)( gameStateExtractor.Score_High() );
-        //fitness += (long double)( gameStateExtractor.Coins_BCD() );
-        fitness += (long double)( gameStateExtractor.Lives() ) * 1000.0;
+        fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0;
         fitness += highestWorldLevel;
 
         for( const auto& p : maxScreenPosPerLevel )
@@ -107,7 +114,11 @@ namespace spkn
     bool
     FitnessCalculator::stopTest() const
     {
-        if( gameStateExtractor.Lives() >= 3 )
+        if( numVBlanksWithoutButtonpress >= 2 * 60 )
+        {
+            return true;
+        }
+        if( gameStateExtractor.Lives() > 2 )
         {
             return false;
         }
@@ -139,12 +150,15 @@ namespace spkn
     std::vector< double >
     FitnessCalculator::getInputValues( uint64_t time )
     {
-        screenInput.back() = avtivationMaxValue;
+        screenInput.back() = activationMaxValue;
 
         auto emuScreen = emulator.getScreenData();
 
-        size_t scaled_width = sn::NESVideoWidth / 2;
-        size_t scaled_height = sn::NESVideoHeight / 2;
+        size_t downsizeSize = NESpixelsPerNetworkPixel;
+        double avgscl = downsizeSize*downsizeSize;
+
+        size_t scaled_width = sn::NESVideoWidth / downsizeSize;
+        size_t scaled_height = sn::NESVideoHeight / downsizeSize;
 
         for( size_t y = 0; y < scaled_height; ++y )
         {
@@ -154,22 +168,22 @@ namespace spkn
 
                 double r = 0.0, g = 0.0, b = 0.0;
 
-                for( size_t i = 0; i < 4; ++i )
+                for( size_t i = 0; i < downsizeSize*downsizeSize; ++i )
                 {
-                    size_t _x = x * 2 + ( (i & 1) ? 1 : 0 );
-                    size_t _y = y * 2 + ( (i & 2) ? 1 : 0 );
+                    size_t _x = x * downsizeSize + ( i % downsizeSize );
+                    size_t _y = y * downsizeSize + ( i / downsizeSize );
 
                     auto _index = _y * sn::NESVideoWidth + _x;
 
-                    auto color = (*emuScreen)[ _index ];
+                    auto color = emuScreen->getPixel( _x, _y );
 
                     r += color.r;
                     g += color.g;
                     b += color.b;
                 }
 
-                auto hsl = ConvertRGBtoHSL( { uint8_t(r/4.0), uint8_t(g/4.0), uint8_t(b/4.0), 255 } );
-                screenInput[ scaled_index ] = ConvertHSLtoSingle( hsl, spiralRings ) * avtivationMaxValue;
+                auto hsl = ConvertRGBtoHSL( { uint8_t(r/avgscl), uint8_t(g/avgscl), uint8_t(b/avgscl), 255 } );
+                screenInput[ scaled_index ] = ConvertHSLtoSingle( hsl, spiralRings ) * activationMaxValue;
             }
         }
 
@@ -185,6 +199,15 @@ namespace spkn
     void
     FitnessCalculator::resetControllerState()
     {
+        if( !controllerSet )
+        {
+            ++numVBlanksWithoutButtonpress;
+        }
+        else
+        {
+            numVBlanksWithoutButtonpress = 0;
+        }
+        controllerSet = false;
         for( size_t i = 0; i < controllerState.size(); ++i )
         {
             controllerState[i] = false;
@@ -204,13 +227,14 @@ namespace spkn
 
     // fitness factory
 
-    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame, size_t color_rings )
+    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame, size_t color_rings, size_t downscaleRatio )
          :
         rom_path( mario_rom ),
         stepsPerFrame( steps_per_frame ),
         colorRings( color_rings ),
         preview_window( window ),
-        avtivationMaxValue( maxWeightForActivation )
+        avtivationMaxValue( maxWeightForActivation ),
+        NESpixelsPerNetworkPixel( downscaleRatio )
     {
         /*  */
     }
@@ -224,7 +248,7 @@ namespace spkn
     FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const
     {
         std::shared_ptr< spkn::FitnessCalculator > calc;
-        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue );
+        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue, NESpixelsPerNetworkPixel );
 
         calc->setParentFactory( this );
 
@@ -244,7 +268,7 @@ namespace spkn
     }
 
     void
-    FitnessFactory::regesterScreenData( std::shared_ptr<std::vector<sf::Color>> data )
+    FitnessFactory::regesterScreenData( std::shared_ptr<sf::Image> data )
     {
         if( preview_window )
         {
@@ -253,7 +277,7 @@ namespace spkn
     }
 
     void
-    FitnessFactory::unregesterScreenData( std::shared_ptr<std::vector<sf::Color>> data )
+    FitnessFactory::unregesterScreenData( std::shared_ptr<sf::Image> data )
     {
         if( preview_window )
         {
@@ -270,12 +294,14 @@ namespace spkn
     size_t
     FitnessFactory::numInputs()
     {
-        return FitnessCalculator::numInputs();
+        //return FitnessCalculator::numInputs();
+        return sn::NESVideoHeight * sn::NESVideoWidth / ( NESpixelsPerNetworkPixel * NESpixelsPerNetworkPixel ) + 1;
     }
 
     size_t
     FitnessFactory::numOutputs()
     {
-        return FitnessCalculator::numOutputs();
+        //return FitnessCalculator::numOutputs();
+        return size_t(sn::Controller::TotalButtons);
     }
 }
