@@ -97,10 +97,14 @@ namespace spkn
         fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0;
         fitness += highestWorldLevel;
 
+        long double traversalScore = 0.0;
+
         for( const auto& p : maxScreenPosPerLevel )
         {
-            fitness += p.second;
+            traversalScore += p.second;
         }
+
+        fitness += traversalScore * 1000.0;
 
         return fitness;
     }
@@ -150,7 +154,7 @@ namespace spkn
     std::vector< double >
     FitnessCalculator::getInputValues( uint64_t time )
     {
-        screenInput.back() = activationMaxValue;
+        //screenInput.back() = activationMaxValue;
 
         auto emuScreen = emulator.getScreenData();
 
@@ -160,32 +164,11 @@ namespace spkn
         size_t scaled_width = sn::NESVideoWidth / downsizeSize;
         size_t scaled_height = sn::NESVideoHeight / downsizeSize;
 
-        for( size_t y = 0; y < scaled_height; ++y )
-        {
-            for( size_t x = 0; x < scaled_width; ++x )
-            {
-                auto scaled_index = y * scaled_width + x;
+        ImageToSingle( LaplacianEdgeDetection( ResizeImage( *emuScreen, scaled_width, scaled_height ) ), spiralRings, true, screenInput, activationMaxValue, 0 );
 
-                double r = 0.0, g = 0.0, b = 0.0;
-
-                for( size_t i = 0; i < downsizeSize*downsizeSize; ++i )
-                {
-                    size_t _x = x * downsizeSize + ( i % downsizeSize );
-                    size_t _y = y * downsizeSize + ( i / downsizeSize );
-
-                    auto _index = _y * sn::NESVideoWidth + _x;
-
-                    auto color = emuScreen->getPixel( _x, _y );
-
-                    r += color.r;
-                    g += color.g;
-                    b += color.b;
-                }
-
-                auto hsl = ConvertRGBtoHSL( { uint8_t(r/avgscl), uint8_t(g/avgscl), uint8_t(b/avgscl), 255 } );
-                screenInput[ scaled_index ] = ConvertHSLtoSingle( hsl, spiralRings ) * activationMaxValue;
-            }
-        }
+        /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
+        ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
+        ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
 
         return screenInput;
     }

@@ -91,13 +91,14 @@ namespace spkn
                 }
                 else if( event.type == sf::Event::LostFocus )
                 {
-                    window.setFramerateLimit( 10 );
+                    window.setFramerateLimit( 30 );
                     focus = false;
                 }
             }
 
-            processRemoveRequests();
             processAddRequests();
+            processRemoveRequests();
+
 
             // draw the shit
             {
@@ -111,11 +112,6 @@ namespace spkn
                 }
                 window.display();
             }
-
-            /*if( !focus )
-            {
-                std::this_thread::sleep_for( std::chrono::nanoseconds( 1000000/15 ) );
-            }*/
         }
     }
 

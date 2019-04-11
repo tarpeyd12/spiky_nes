@@ -1,6 +1,7 @@
 #ifndef POOL_THREAD_POOL_INL_INCLUDED
 #define POOL_THREAD_POOL_INL_INCLUDED
 
+#include <functional>
 #include <future>
 #include <list>
 

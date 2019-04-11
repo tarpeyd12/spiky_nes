@@ -26,6 +26,7 @@
 					<Add library="freetype" />
 					<Add library="winmm" />
 					<Add library="gdi32" />
+					<Add directory="../lib/SFML/lib" />
 					<Add directory="../lib/SFML/extlibs/libs-mingw/x86" />
 				</Linker>
 			</Target>
@@ -50,6 +51,7 @@
 					<Add library="freetype" />
 					<Add library="winmm" />
 					<Add library="gdi32" />
+					<Add directory="../lib/SFML/lib" />
 					<Add directory="../lib/SFML/extlibs/libs-mingw/x86" />
 				</Linker>
 			</Target>
@@ -58,7 +60,7 @@
 				<Option working_dir="../exec/" />
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
-				<Option compiler="tdm-gcc-64" />
+				<Option compiler="mingw64" />
 				<Option parameters="mario.nes" />
 				<Compiler>
 					<Add option="-O3" />
@@ -76,6 +78,7 @@
 					<Add library="freetype" />
 					<Add library="winmm" />
 					<Add library="gdi32" />
+					<Add directory="../lib/SFML-x64/lib" />
 					<Add directory="../lib/SFML/extlibs/libs-mingw/x64" />
 				</Linker>
 			</Target>
@@ -91,7 +94,6 @@
 			<Add option="-static-libstdc++" />
 			<Add option="-static-libgcc" />
 			<Add option="-static" />
-			<Add directory="../lib/SFML/lib" />
 			<Add directory="../spnn/bin" />
 			<Add directory="../simple_nes/bin" />
 		</Linker>

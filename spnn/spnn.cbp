@@ -36,7 +36,7 @@
 				<Option working_dir="" />
 				<Option object_output="obj/Release_x64/" />
 				<Option type="2" />
-				<Option compiler="tdm-gcc-64" />
+				<Option compiler="mingw64" />
 				<Compiler>
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-O3" />

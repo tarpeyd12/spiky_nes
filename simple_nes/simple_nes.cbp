@@ -39,7 +39,7 @@
 				<Option working_dir="" />
 				<Option object_output="obj/Release_x64/" />
 				<Option type="2" />
-				<Option compiler="tdm-gcc-64" />
+				<Option compiler="mingw64" />
 				<Option parameters="mario.nes -s 5" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />

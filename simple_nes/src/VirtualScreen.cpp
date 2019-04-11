@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "VirtualScreen.h"
 
 namespace sn
@@ -12,7 +14,10 @@ namespace sn
 
         m_texture.create( m_screenSize.x, m_screenSize.y );
 
-        m_texture.setSmooth( true );
+        if( fmod( pixel_size, 1.0 ) != 0.0 )
+        {
+            m_texture.setSmooth( true );
+        }
 
         flushScreenData();
     }

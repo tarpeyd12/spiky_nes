@@ -124,17 +124,17 @@ main( int argc, char** argv )
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
 
-        mutator.addMutator( 0.0,   0.01,  0.0,   nodeMutator );
-        mutator.addMutator( 0.0,   0.008, 0.0,   nodeMutator_new );
-        mutator.addMutator( 0.0,   0.0,   0.01,  connMutator );
-        mutator.addMutator( 0.0,   0.0,   0.008, connMutator_new );
-        mutator.addMutator( 0.002, 0.0,   0.0,   nwtkMutator );
-        mutator.addMutator( 0.0,   0.0,   0.002, connMutator_enable );
+        mutator.addMutator( 0.0,   0.05,  0.0,   nodeMutator );
+        mutator.addMutator( 0.0,   0.016, 0.0,   nodeMutator_new );
+        mutator.addMutator( 0.0,   0.0,   0.05,  connMutator );
+        mutator.addMutator( 0.0,   0.0,   0.016, connMutator_new );
+        mutator.addMutator( 0.01,  0.0,   0.0,   nwtkMutator );
+        mutator.addMutator( 0.0,   0.0,   0.007, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
 
-    float pixelMultiplier = 1.5f;
+    float pixelMultiplier = 2.0f;
 
     tpl::pool thread_pool{ 4 };
 
@@ -145,14 +145,14 @@ main( int argc, char** argv )
         previewWindow,
         limits.thresholdMax.max, // maximum activation value, used to scale input values
         1, // network steps per NES frame
-        1000, // color winding value
-        16  // ratio of NES pixels (squared) to network inputs
+        5, // color winding value
+        8  // ratio of NES pixels (squared) to network inputs
     );
 
     std::cout << "Population construct call" << std::endl;
 
     neat::Population population(
-        150,
+        1000,
         fitnessFactory.numInputs(),
         fitnessFactory.numOutputs(),
         limits,

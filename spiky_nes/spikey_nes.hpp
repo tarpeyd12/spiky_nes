@@ -23,7 +23,23 @@ namespace spkn
 
     float ConvertHSLtoSingle( const ColorHSL& color, size_t rings = 3, bool smooth = true );
 
+    sf::Vector3f ColorToVec3f( const sf::Color& color );
+    sf::Color Vec3fToColor( const sf::Vector3f& vec3f );
+
+    sf::Image SobelEdgeDetection( const sf::Image& image );
+    sf::Image LaplacianEdgeDetection( const sf::Image& image );
+
+    void ImageSobelEdgeDetectionToLightness( const sf::Image& image, std::vector<double>& destination, double scale, size_t startPos );
+
     sf::Image ResizeImage( const sf::Image& image, size_t width, size_t height );
+
+    void ResizeImageVec( const std::vector<double>& image, size_t width, size_t height, std::vector<double>& destination, size_t newWidth, size_t newHeight, size_t offset );
+
+    std::vector<double> ResizeImageVec( const std::vector<double>& image, size_t width, size_t height, size_t newWidth, size_t newHeight, size_t offset );
+
+    sf::Image ImageToGreyscale( const sf::Image& image );
+    std::vector<double> ImageToSingle( const sf::Image& image, size_t rings = 3, bool smooth = true );
+    void ImageToSingle( const sf::Image& image, size_t rings, bool smooth, std::vector<double>& destination, double scale, size_t startPos );
 }
 
 #include "fitness.hpp"
