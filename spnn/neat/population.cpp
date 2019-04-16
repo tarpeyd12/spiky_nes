@@ -139,7 +139,11 @@ namespace neat
         return out;
     }
 
-
+    size_t
+    Population::speciatePopulationAndCount( tpl::pool& thread_pool )
+    {
+        return getSpeciatedPopulationData( thread_pool ).size();
+    }
 
     void
     Population::IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand, const double attritionRate )
@@ -408,10 +412,7 @@ namespace neat
                 std::vector< mating_pair_data > matingPairs;
                 matingPairs.reserve( newGenotypesToMake );
 
-                if( newGenotypesToMake > 2 )
-                {
-                    matingPairs.push_back( { 0, 0, false } ); // elitism
-                }
+                matingPairs.push_back( { 0, 0, false } ); // elitism
 
                 size_t numIndexesToTake = MinMax<size_t>( 1, oldGenotypesVec.size() ).clamp( oldGenotypesVec.size() * ( 1.0 - attritionRate ) );
 

@@ -87,6 +87,7 @@ namespace neat
 
             std::vector< SpeciesID > getSpeciesIDsForPopulationData( tpl::pool& thread_pool, bool preSpeciate = true );
 
+            size_t getPopulationSize() const;
             size_t getNumTrackedSpecies() const;
             std::map< SpeciesID, size_t > getEndangeredSpecies() const;
             uint64_t getGenerationCount() const;
@@ -100,6 +101,8 @@ namespace neat
 
             uint64_t mutatePopulation( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand = nullptr );
             uint64_t mutatePopulation( tpl::pool& thread_pool, std::vector< NetworkGenotype* > genotypes_to_mutate, std::shared_ptr< Rand::RandomFunctor > rand = nullptr );
+
+            size_t speciatePopulationAndCount( tpl::pool& thread_pool );
 
             void IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand = nullptr, const double attritionRate = 0.5 );
 

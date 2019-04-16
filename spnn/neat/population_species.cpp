@@ -13,6 +13,12 @@ namespace neat
     }
 
     size_t
+    Population::getPopulationSize() const
+    {
+        return populationData.size();
+    }
+
+    size_t
     Population::getNumTrackedSpecies() const
     {
         return speciesTracker->getNumTrackedSpecies();
