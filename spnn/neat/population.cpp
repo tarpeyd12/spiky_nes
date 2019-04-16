@@ -222,7 +222,8 @@ namespace neat
                         speciesFitnesses.emplace_back( f.first, f.second.first );
                     }
 
-                    std::sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
+                    //std::sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
+                    std::stable_sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
 
                     std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > > newFitnessMap;
 
@@ -278,7 +279,8 @@ namespace neat
                 species_sort_futures.emplace_back( thread_pool.submit(
                 [&archetype_mutex,this,_rand]( SpeciesID species, auto& species_vec )
                 {
-                    std::sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
+                    //std::sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
+                    std::stable_sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
                     {
                         std::lock_guard<std::mutex> lock( archetype_mutex );
                         speciesTracker->updateSpeciesArchtype( species, *species_vec.front().second );
@@ -432,6 +434,13 @@ namespace neat
 
                 for( auto p : matingPairs )
                 {
+                    // elitism
+                    if( p.first == 0 && p.second == 0 && !p.do_mutate )
+                    {
+                        genotype_futures.push_back( { thread_pool.submit( [&,p]{ return *oldGenotypesVec[ p.first ].second; } ), p.do_mutate } );
+                        continue;
+                    }
+
                     //nextPopulation.push_back( SpliceGenotypes( *oldGenotypesVec[ p.first ].second, *oldGenotypesVec[ p.second ].second, rand ) );
                     auto _rand = std::make_shared< Rand::Random_Unsafe >( rand->Int() );
                     using overload_type = NetworkGenotype( const NetworkGenotype&, const NetworkGenotype&, std::shared_ptr< Rand::RandomFunctor > );
@@ -443,20 +452,26 @@ namespace neat
             while( !genotype_futures.empty() )
             {
                 nextPopulation.emplace_back( genotype_futures.front().future.get() );
+
+                // elitism
                 if( !genotype_futures.front().do_mutate )
                 {
-                    no_mutate_indexes.emplace( nextPopulation.size() );
+                    // since we add the new genotype to nextPopulation before taking the size for the index we must subtract one
+                    no_mutate_indexes.emplace( nextPopulation.size() - 1 );
                 }
+
                 genotype_futures.pop_front();
             }
 
             nextPopulation_to_mutate.reserve( nextPopulation.size() );
             for( size_t i = 0; i < nextPopulation.size(); ++i )
             {
+                // elitism
                 if( no_mutate_indexes.count( i ) )
                 {
                     continue;
                 }
+
                 nextPopulation_to_mutate.emplace_back( &nextPopulation[ i ] );
             }
         }

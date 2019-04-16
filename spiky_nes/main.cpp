@@ -153,7 +153,7 @@ main( int argc, char** argv )
     std::cout << "Population construct call ... " << std::flush;
 
     neat::Population population(
-        1000,
+        250,
         fitnessFactory.numInputs(),
         fitnessFactory.numOutputs(),
         limits,
