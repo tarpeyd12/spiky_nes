@@ -90,6 +90,16 @@ namespace spkn
         return hsl;
     }
 
+    inline
+    float
+    ConvertRGBtoL( const sf::Color& color )
+    {
+        uint8_t min = std::min(std::min(color.r, color.g), color.b);
+        uint8_t max = std::max(std::max(color.r, color.g), color.b);
+
+        return (max/255.0f + min/255.0f) / 2.0f;
+    }
+
     float
     ConvertHSLtoSingle( const ColorHSL& color, size_t rings, bool smooth )
     {
@@ -164,7 +174,7 @@ namespace spkn
             return {0.0f,0.0f,0.0f};
         }
 
-        auto clampXY = [&]( int32_t& _x, int32_t& _y ) -> void { if( _x < 0 ) _x = 0; if( _y < 0 ) _y = 0; if( _x >= image.getSize().x ) _x = image.getSize().x-1; if( _y >= image.getSize().y ) _y = image.getSize().y-1; };
+        auto clampXY = [&]( int32_t& _x, int32_t& _y ) -> void { if( _x < 0 ) _x = 0; if( _y < 0 ) _y = 0; if( size_t(_x) >= image.getSize().x ) _x = image.getSize().x-1; if( size_t(_y) >= image.getSize().y ) _y = image.getSize().y-1; };
         auto getPixel = [&]( int32_t _x, int32_t _y ) -> sf::Vector3f { return ColorToVec3f( image.getPixel( _x, _y ) ); };
 
         sf::Vector3f out = { 0.0f, 0.0f, 0.0f };
@@ -185,6 +195,49 @@ namespace spkn
                 clampXY( xvc, yvc );
 
                 out += getPixel( xvc, yvc ) * kernel[ xv-start_x ][ yv-start_y ];
+            }
+        }
+
+        return out;
+    }
+
+    inline
+    float
+    __KernelOp( size_t isWidth, size_t isHeight, const std::vector<float>& image, size_t x, size_t y, const std::vector<std::vector<float>>& kernel, size_t width, size_t height )
+    {
+        if( width % 2 == 0 || height % 2 == 0 )
+        {
+            return 0.0f;
+        }
+
+        auto clampXY = [&]( int32_t& _x, int32_t& _y ) -> void
+        {
+            if( _x < 0 )
+                _x = 0;
+            if( _y < 0 )
+                _y = 0;
+            if( size_t(_x) >= isWidth )
+                _x = isWidth-1;
+            if( size_t(_y) >= isHeight )
+                _y = isHeight-1;
+        };
+
+        float out = 0.0f;
+
+        int32_t start_x = x - width/2;
+        int32_t start_y = y - height/2;
+        int32_t end_x = start_x + width - 1;
+        int32_t end_y = start_y + height - 1;
+        for( int32_t xv = start_x; xv <= end_x; ++xv )
+        {
+            for( int32_t yv = start_y; yv <= end_y; ++yv )
+            {
+                float k = kernel[ xv-start_x ][ yv-start_y ];
+                if( !k ) { continue; }
+                int32_t xvc = xv;
+                int32_t yvc = yv;
+                clampXY( xvc, yvc );
+                out += image[ yvc * isWidth + xvc ] * k;
             }
         }
 
@@ -247,50 +300,137 @@ namespace spkn
     }
 
     void
-    ImageSobelEdgeDetectionToLightness( const sf::Image& image, std::vector<double>& destination, double scale, size_t startPos )
+    ImageLaplacianEdgeDetectionToLightness( const sf::Image& image, std::vector<double>& destination, double scale, size_t startPos )
     {
-        std::vector<double> temp( image.getSize().x * image.getSize().y, 0.0 );
+        std::vector<float> temp( image.getSize().x * image.getSize().y, 0.0f );
 
         auto index = [&image]( size_t x, size_t y ) -> size_t { return y * image.getSize().x + x; };
 
         for( size_t y = 0; y < image.getSize().y; ++y )
         {
+            size_t y1 = y - 1, y2 = y + 1;
+
+            bool N = ( y > 0 );
+            bool S = ( y < image.getSize().y - 2 );
+            bool not_edge_y = ( N && S );
+
             for( size_t x = 0; x < image.getSize().x; ++x )
             {
-                temp[ index( x, y ) ] = ConvertRGBtoHSL( image.getPixel( x, y ) ).l;
+                size_t x1 = x - 1, x2 = x + 1;
+
+                float value = ConvertRGBtoL( image.getPixel( x, y ) );
+
+                bool W = ( x > 0 );
+                bool E = ( x < image.getSize().x - 2 );
+                bool not_edge_x = ( W && E );
+
+                size_t i_NW = index( x1, y1 ) + startPos;
+                size_t i_N  = index( x,  y1 ) + startPos;
+                size_t i_NE = index( x2, y1 ) + startPos;
+                size_t i_W  = index( x1, y  ) + startPos;
+                size_t i_C  = index( x,  y  ) + startPos;
+                size_t i_E  = index( x2, y  ) + startPos;
+                size_t i_SW = index( x1, y2 ) + startPos;
+                size_t i_S  = index( x,  y2 ) + startPos;
+                size_t i_SE = index( x2, y2 ) + startPos;
+
+                temp[ i_C  ] += value * 8.0f;
+
+                if( not_edge_x && not_edge_y )
+                {
+                    temp[ i_NW ] -= value;
+                    temp[ i_N  ] -= value;
+                    temp[ i_NE ] -= value;
+                    temp[ i_W  ] -= value;
+                    temp[ i_E  ] -= value;
+                    temp[ i_SW ] -= value;
+                    temp[ i_S  ] -= value;
+                    temp[ i_SE ] -= value;
+                }
+                else
+                {
+                    if( N && W ) temp[ i_NW ] -= value;
+                    if( N )      temp[ i_N  ] -= value;
+                    if( N && E ) temp[ i_NE ] -= value;
+                    if( W )      temp[ i_W  ] -= value;
+                    if( E )      temp[ i_E  ] -= value;
+                    if( S && W ) temp[ i_SW ] -= value;
+                    if( S )      temp[ i_S  ] -= value;
+                    if( S && E ) temp[ i_SE ] -= value;
+                }
             }
         }
 
-        auto getGX = [&]( size_t x, size_t y ) -> float
+        neat::MinMax<float> minmax{ 0.0f };
+        for( size_t i = 0; i < image.getSize().x * image.getSize().y; ++i )
         {
-            size_t x1 = x - 1, x2 = x + 1;
-            size_t y1 = y - 1, y2 = y + 1;
+            minmax.expand( temp[ i ] );
+        }
 
-            return        ( -temp[ index( x1, y1 ) ] + temp[ index( x2, y1 ) ] )
-                 + 2.0f * ( -temp[ index( x1, y  ) ] + temp[ index( x2, y  ) ] )
-                 +        ( -temp[ index( x1, y2 ) ] + temp[ index( x2, y2 ) ] );
+        for( size_t i = 0; i < image.getSize().x * image.getSize().y; ++i )
+        {
+            destination[ i + startPos ] = ( ( temp[ i ] - minmax.min ) / minmax.range() ) * scale;
+        }
+    }
+
+    inline
+    void
+    __SobelKernelOp( bool doclamp, size_t isWidth, size_t isHeight, const std::vector<float>& image, size_t x, size_t y, float& gx, float& gy )
+    {
+        auto getPixel = [&]( int32_t _x, int32_t _y ) -> float
+        {
+            if( doclamp )
+            {
+                _x = neat::MinMax<int64_t>{ 0, int64_t(isWidth)-1 }.clamp( _x );
+                _y = neat::MinMax<int64_t>{ 0, int64_t(isHeight)-1 }.clamp( _y );
+            }
+            return image[ _y * isWidth + _x ];
         };
 
-        auto getGY = [&]( size_t x, size_t y ) -> float
+        float N = getPixel( x, y-1 );
+        float S = getPixel( x, y+1 );
+        float E = getPixel( x+1, y );
+        float W = getPixel( x-1, y );
+
+        float NE = getPixel( x+1, y-1 );
+        float SE = getPixel( x+1, y+1 );
+        float NW = getPixel( x-1, y-1 );
+        float SW = getPixel( x-1, y+1 );
+
+        gx = ( NE + E + E + SE ) - ( NW + W + W + SW );
+        gy = ( SW + S + S + SE ) - ( NW + N + N + NE );
+    }
+
+    void
+    ImageSobelEdgeDetectionToLightness( const sf::Image& image, std::vector<double>& destination, double scale, size_t startPos )
+    {
+        std::vector<float> temp( image.getSize().x * image.getSize().y, 0.0 );
+
+        for( size_t i = 0; i < temp.size(); ++i )
         {
-            size_t x1 = x - 1, x2 = x + 1;
-            size_t y1 = y - 1, y2 = y + 1;
+            temp[ i ] = ConvertRGBtoL( image.getPixel( i % image.getSize().x, i / image.getSize().x ) );
+        }
 
-            return        ( -temp[ index( x1, y1 ) ] + temp[ index( x1, y2 ) ] )
-                 + 2.0f * ( -temp[ index( x,  y1 ) ] + temp[ index( x,  y2 ) ] )
-                 +        ( -temp[ index( x1, y2 ) ] + temp[ index( x2, y2 ) ] );
-        };
-
+        neat::MinMax<float> minmax;
         for( size_t y = 0; y < image.getSize().y; ++y )
         {
-            size_t _y = std::min<size_t>( std::max<size_t>( 1, y ), image.getSize().y-2 );
+            bool yedge = ( !y || y==image.getSize().y-1 );
             for( size_t x = 0; x < image.getSize().x; ++x )
             {
-                size_t _x = std::min<size_t>( std::max<size_t>( 1, x ), image.getSize().x-2 );
-                float gx = getGX( _x, _y );
-                float gy = getGY( _x, _y );
-                destination[ index( x, y ) + startPos ] = sqrt( gx*gx + gy*gy ) * scale;
+                bool xedge = ( !x || x==image.getSize().x-1 );
+                float gx, gy;
+                __SobelKernelOp( yedge || xedge, image.getSize().x, image.getSize().y, temp, x, y, gx, gy );
+                float value = sqrt( gx * gx + gy * gy );
+                minmax.expand( value );
+                destination[ y * image.getSize().x + x + startPos ] = value;
             }
+        }
+
+        float range = minmax.range();
+        for( size_t i = 0; i < temp.size(); ++i )
+        {
+            double& v = destination[ i + startPos ];
+            v = ( ( v - minmax.min ) / range ) * scale;
         }
     }
 
@@ -369,6 +509,31 @@ namespace spkn
             result.a = blerp( c00.a, c10.a, c01.a, c11.a, gx - gxi, gy - gyi);
 
             out.setPixel( x, y, result );
+        }
+
+        return out;
+    }
+
+    sf::Image
+    QuarterImage( const sf::Image& image )
+    {
+        sf::Image out;
+        out.create( image.getSize().x / 2, image.getSize().y / 2 );
+
+        for( size_t x = 0; x < out.getSize().x; ++x )
+        {
+            size_t _x = x * 2;
+            for( size_t y = 0; y < out.getSize().y; ++y )
+            {
+                size_t _y = y * 2;
+                sf::Vector3f val;
+                val  = ColorToVec3f( image.getPixel( _x,     _y     ) );
+                val += ColorToVec3f( image.getPixel( _x,     _y + 1 ) );
+                val += ColorToVec3f( image.getPixel( _x + 1, _y     ) );
+                val += ColorToVec3f( image.getPixel( _x + 1, _y + 1 ) );
+
+                out.setPixel( x, y, Vec3fToColor( val / 4.0f ) );
+            }
         }
 
         return out;
@@ -458,5 +623,26 @@ namespace spkn
                 destination[ index + startPos ] = scale * ConvertHSLtoSingle( ConvertRGBtoHSL( image.getPixel( x, y ) ), rings, smooth );
             }
         }
+    }
+
+    sf::Image
+    ImageVecToImage( const std::vector<double>& imageVec, size_t width, size_t height, float scale )
+    {
+        sf::Image image;
+        image.create( width, height );
+
+        for( size_t y = 0; y < image.getSize().y; ++y )
+        {
+            for( size_t x = 0; x < image.getSize().x; ++x )
+            {
+                auto index = y * image.getSize().x + x;
+
+                uint8_t v = uint8_t( imageVec[ index ] /scale * 255.0f );
+
+                image.setPixel( x, y, { v, v, v, 255 } );
+            }
+        }
+
+        return image;
     }
 }

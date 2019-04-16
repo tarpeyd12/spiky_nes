@@ -25,17 +25,16 @@ namespace spkn
             float pixelSize;
 
             std::atomic_bool doRun;
-
             std::mutex virtual_screens_mutex;
             std::vector< sn::VirtualScreen > virtual_screens;
-
             tpl::safe_queue< std::shared_ptr<sf::Image> > screen_data_queue_in;
-
             tpl::safe_queue< std::shared_ptr<sf::Image> > screen_data_queue_out;
-
             std::shared_ptr<sf::Image> blankScreenData;
-
             std::thread window_thread;
+
+            uint64_t numKnownVBlanks;
+            uint64_t numIndividualsProcessed;
+            uint64_t numGenerationsProcessed;
 
         public:
 
@@ -48,6 +47,10 @@ namespace spkn
             void close();
 
             void clearAllScreenData();
+
+            void setNumVBlanks( uint64_t vblanks );
+            void setNumProcessed( uint64_t numProcessed );
+            void setNumGenerations( uint64_t numGenerations );
 
         private:
 

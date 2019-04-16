@@ -21,7 +21,10 @@ namespace spkn
 
             sn::Emulator emulator;
             std::array< bool, size_t(sn::Controller::TotalButtons) > controllerState;
+            std::array< bool, size_t(sn::Controller::TotalButtons) > previousControllerState;
             bool controllerSet;
+            long double actionsAvailable;
+            long double actionsPerMinute;
             uint64_t numVBlanksWithoutButtonpress;
 
             GameState_SuperMarioBros gameStateExtractor;
@@ -30,6 +33,7 @@ namespace spkn
 
             std::map< uint16_t, double > maxScreenPosPerLevel;
             uint16_t highestWorldLevel;
+            mutable bool controllStopped;
 
             // callbacks
 
@@ -48,7 +52,7 @@ namespace spkn
 
         public:
 
-            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio );
+            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio, double APM );
             virtual ~FitnessCalculator();
 
 
@@ -76,6 +80,7 @@ namespace spkn
             // controller stuff
 
             void resetControllerState();
+            void activateButton( size_t button );
 
             // book-keeping stuff
 
@@ -94,22 +99,28 @@ namespace spkn
             size_t colorRings;
 
             std::atomic<uint64_t> totalVBlanks;
+            std::atomic<uint64_t> individualsProcessed;
+            std::atomic<uint64_t> generationsProcessed;
 
             std::shared_ptr<PreviewWindow> preview_window;
 
             double avtivationMaxValue;
 
+            double actionsPerMinute;
+
             size_t NESpixelsPerNetworkPixel;
 
         public:
 
-            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame = 100, size_t color_rings = 5, size_t downscaleRatio = 2 );
+            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, uint64_t steps_per_frame = 100, size_t color_rings = 5, size_t downscaleRatio = 2 );
             virtual ~FitnessFactory();
 
             uint64_t getTotalVBlanks() const;
 
             size_t numInputs();
             size_t numOutputs();
+
+            void incrementGeneration();
 
         protected:
 

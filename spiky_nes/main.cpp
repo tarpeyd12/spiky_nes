@@ -55,7 +55,7 @@ main( int argc, char** argv )
     //limits.pulseSlow =    { 5, 100 };
 
     limits.weight =       { -1000.0, 1000.0 };
-    limits.length =       { 1, 1000 };
+    limits.length =       { 1, 100*60*10 };
 
 
 
@@ -125,11 +125,11 @@ main( int argc, char** argv )
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
 
         mutator.addMutator( 0.0,   0.05,  0.0,   nodeMutator );
-        mutator.addMutator( 0.0,   0.016, 0.0,   nodeMutator_new );
+        mutator.addMutator( 0.0,   0.008, 0.0,   nodeMutator_new );
         mutator.addMutator( 0.0,   0.0,   0.05,  connMutator );
-        mutator.addMutator( 0.0,   0.0,   0.016, connMutator_new );
-        mutator.addMutator( 0.01,  0.0,   0.0,   nwtkMutator );
-        mutator.addMutator( 0.0,   0.0,   0.007, connMutator_enable );
+        mutator.addMutator( 0.0,   0.0,   0.008, connMutator_new );
+        mutator.addMutator( 0.02,  0.0,   0.0,   nwtkMutator );
+        mutator.addMutator( 0.0,   0.0,   0.00001, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -144,12 +144,13 @@ main( int argc, char** argv )
         rom_path,
         previewWindow,
         limits.thresholdMax.max, // maximum activation value, used to scale input values
-        1, // network steps per NES frame
+        150.0, // APM allowed
+        100, // network steps per NES frame
         5, // color winding value
         8  // ratio of NES pixels (squared) to network inputs
     );
 
-    std::cout << "Population construct call" << std::endl;
+    std::cout << "Population construct call ... " << std::flush;
 
     neat::Population population(
         1000,
@@ -161,14 +162,29 @@ main( int argc, char** argv )
         fitnessFactory,
         speciationParams,
         neat::SpeciationMethod::Closest,
-        3,
-        20,
-        1
+        10, // num generations to buffer before species goes extinct
+        100, // min generations between mass extinctions
+        1 // num generation data to keep
     );
 
-    std::cout << "Population Init call" << std::endl;
+    std::cout << "Done." << std::endl;
+
+    std::cout << "Population Init call ... " << std::flush;
 
     population.Init();
+
+    std::cout << "Done." << std::endl;
+
+    std::cout << "Population First Mutation ... " << std::flush;
+
+    do
+    {
+        population.mutatePopulation( thread_pool, random );
+    }
+    while( population.speciatePopulationAndCount( thread_pool ) < 10 );
+
+
+    std::cout << "Done." << std::endl;
 
     {
         std::ofstream file( "out.csv", std::ofstream::trunc );
@@ -192,7 +208,7 @@ main( int argc, char** argv )
 
         std::cout << "\n\nGeneration " << population.getGenerationCount() << ":\n";
 
-        std::cout << "\n\tCalculating ...\n";
+        std::cout << "\n\tCalculating ...\n" << std::flush;
 
         double base_attrition  = 0.75;
         double attrition_range = 0.0125;
@@ -206,6 +222,7 @@ main( int argc, char** argv )
 
         // this is the only line in this loop that really matters *******************************************************
         population.IterateGeneration( thread_pool, random, attritionRate );
+        fitnessFactory.incrementGeneration();
 
         std::cout << "\tDone. (~" << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count())/1000.0 << "s)\n\n";
 

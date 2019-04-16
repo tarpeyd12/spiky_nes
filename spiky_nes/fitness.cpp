@@ -6,16 +6,20 @@
 
 namespace spkn
 {
-    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio )
+    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio, double APM )
          : neat::FitnessCalculator( net ),
         networkStepsPerFrame( stepsPerFrame ),
         emulator(),
         controllerState(),
+        previousControllerState(),
         controllerSet( false ),
+        actionsAvailable( 3.0 ),
+        actionsPerMinute( APM ),
         numVBlanksWithoutButtonpress( 0 ),
         gameStateExtractor( emulator ),
         maxScreenPosPerLevel(),
-        highestWorldLevel(0),
+        highestWorldLevel( 0 ),
+        controllStopped( false ),
         networkOutputCallbacks(),
         screenInput(),
         spiralRings( colorRings ),
@@ -32,13 +36,25 @@ namespace spkn
         gameStateExtractor.InitGameToRunning();
 
         // hook network output to the controller state
-        while( networkOutputCallbacks.size() < getNumOutputNodes() )
+        /*while( networkOutputCallbacks.size() < getNumOutputNodes() )
         {
             size_t i = networkOutputCallbacks.size();
             auto func = [&,i](const spnn::neuron&){ controllerSet = controllerState[i] = true; };
             networkOutputCallbacks.push_back( func );
             if( i == size_t(sn::Controller::Start) || i == size_t(sn::Controller::Select) )
                 networkOutputCallbacks.back() = nullptr;
+        }*/
+
+        networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::A ) ); } );
+        networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::B ) ); } );
+        networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::Up ) ); } );
+        networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::Down ) ); } );
+        networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::Left ) ); } );
+        networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::Right ) ); } );
+
+        while( networkOutputCallbacks.size() < getNumOutputNodes() )
+        {
+            networkOutputCallbacks.emplace_back( nullptr );
         }
 
         // hook the emulator input to the controller state
@@ -73,7 +89,7 @@ namespace spkn
     size_t
     FitnessCalculator::numOutputs()
     {
-        return size_t(sn::Controller::TotalButtons);
+        return size_t(sn::Controller::TotalButtons) - 2; // exclude start and select
     }
 
     std::shared_ptr<sf::Image>
@@ -94,8 +110,11 @@ namespace spkn
         long double fitness = 0.0;
 
         fitness += (long double)( gameStateExtractor.Score_High() );
-        fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0;
         fitness += highestWorldLevel;
+        if( !controllStopped )
+        {
+            fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0;
+        }
 
         long double traversalScore = 0.0;
 
@@ -118,8 +137,9 @@ namespace spkn
     bool
     FitnessCalculator::stopTest() const
     {
-        if( numVBlanksWithoutButtonpress >= 2 * 60 )
+        if( numVBlanksWithoutButtonpress >= 10 * 60 )
         {
+            controllStopped = true;
             return true;
         }
         if( gameStateExtractor.Lives() > 2 )
@@ -134,6 +154,8 @@ namespace spkn
     {
         if( time % networkStepsPerFrame == 0 )
         {
+            actionsAvailable += actionsPerMinute / 3600.0; // accumulate apm
+
             emulator.stepFrame();
             resetControllerState();
 
@@ -159,16 +181,36 @@ namespace spkn
         auto emuScreen = emulator.getScreenData();
 
         size_t downsizeSize = NESpixelsPerNetworkPixel;
-        double avgscl = downsizeSize*downsizeSize;
 
         size_t scaled_width = sn::NESVideoWidth / downsizeSize;
         size_t scaled_height = sn::NESVideoHeight / downsizeSize;
 
-        ImageToSingle( LaplacianEdgeDetection( ResizeImage( *emuScreen, scaled_width, scaled_height ) ), spiralRings, true, screenInput, activationMaxValue, 0 );
+        /*ImageToSingle( LaplacianEdgeDetection( ResizeImage( *emuScreen, scaled_width, scaled_height ) ), spiralRings, true, screenInput, activationMaxValue, 0 );*/
+
+        ImageSobelEdgeDetectionToLightness( ResizeImage( *emuScreen, scaled_width, scaled_height ), screenInput, activationMaxValue, 0 );
+
+        /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
+        exit(0);*/
 
         /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
         ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
         ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+
+
+
+        /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
+        ImageLaplacianEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
+        ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+
+        /*ImageVecToImage( tmp, emuScreen->getSize().x, emuScreen->getSize().y, activationMaxValue ).saveToFile( "tmp_edge.png" );
+        SobelEdgeDetection( ImageToGreyscale( *emuScreen ) ).saveToFile( "tmp_edge2.png" );
+        ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
+        exit(0);*/
+
+        /*sf::Image qimage = QuarterImage( *emuScreen );
+        std::vector<double> tmp( qimage.getSize().x * qimage.getSize().y, 0.0 );
+        ImageSobelEdgeDetectionToLightness( qimage, tmp, activationMaxValue, 0 );
+        ResizeImageVec( tmp, qimage.getSize().x, qimage.getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
 
         return screenInput;
     }
@@ -193,7 +235,23 @@ namespace spkn
         controllerSet = false;
         for( size_t i = 0; i < controllerState.size(); ++i )
         {
-            controllerState[i] = false;
+            previousControllerState[ i ] = controllerState[ i ];
+            controllerState[ i ] = false;
+        }
+    }
+
+    void
+    FitnessCalculator::activateButton( size_t button )
+    {
+        if( actionsAvailable >= 1.0 || previousControllerState[ button ] )
+        {
+            if( !previousControllerState[ button ] )
+            {
+                actionsAvailable -= 1.0;
+                controllerSet = true;
+            }
+
+            controllerState[ button ] = true;
         }
     }
 
@@ -210,13 +268,17 @@ namespace spkn
 
     // fitness factory
 
-    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, uint64_t steps_per_frame, size_t color_rings, size_t downscaleRatio )
+    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, uint64_t steps_per_frame, size_t color_rings, size_t downscaleRatio )
          :
         rom_path( mario_rom ),
         stepsPerFrame( steps_per_frame ),
         colorRings( color_rings ),
+        totalVBlanks( 0 ),
+        individualsProcessed( 0 ),
+        generationsProcessed( 0 ),
         preview_window( window ),
         avtivationMaxValue( maxWeightForActivation ),
+        actionsPerMinute( APM ),
         NESpixelsPerNetworkPixel( downscaleRatio )
     {
         /*  */
@@ -225,47 +287,6 @@ namespace spkn
     FitnessFactory::~FitnessFactory()
     {
         /*  */
-    }
-
-    std::shared_ptr< neat::FitnessCalculator >
-    FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const
-    {
-        std::shared_ptr< spkn::FitnessCalculator > calc;
-        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue, NESpixelsPerNetworkPixel );
-
-        calc->setParentFactory( this );
-
-        return calc;
-    }
-
-    size_t
-    FitnessFactory::numTimesToTest() const
-    {
-        return 1;
-    }
-
-    void
-    FitnessFactory::addToTotalVBlanks( uint64_t num_vblanks )
-    {
-        totalVBlanks += num_vblanks;
-    }
-
-    void
-    FitnessFactory::regesterScreenData( std::shared_ptr<sf::Image> data )
-    {
-        if( preview_window )
-        {
-            preview_window->addScreenData( data );
-        }
-    }
-
-    void
-    FitnessFactory::unregesterScreenData( std::shared_ptr<sf::Image> data )
-    {
-        if( preview_window )
-        {
-            preview_window->removeScreenData( data );
-        }
     }
 
     uint64_t
@@ -285,6 +306,63 @@ namespace spkn
     FitnessFactory::numOutputs()
     {
         //return FitnessCalculator::numOutputs();
-        return size_t(sn::Controller::TotalButtons);
+        return size_t(sn::Controller::TotalButtons) - 2; // exclude start and select
+    }
+
+    void
+    FitnessFactory::incrementGeneration()
+    {
+        ++generationsProcessed;
+        if( preview_window )
+        {
+            preview_window->setNumGenerations( generationsProcessed );
+        }
+    }
+
+    std::shared_ptr< neat::FitnessCalculator >
+    FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const
+    {
+        std::shared_ptr< spkn::FitnessCalculator > calc;
+        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue, NESpixelsPerNetworkPixel, actionsPerMinute );
+
+        calc->setParentFactory( this );
+
+        return calc;
+    }
+
+    size_t
+    FitnessFactory::numTimesToTest() const
+    {
+        return 1;
+    }
+
+    void
+    FitnessFactory::addToTotalVBlanks( uint64_t num_vblanks )
+    {
+        totalVBlanks += num_vblanks;
+        ++individualsProcessed;
+        if( preview_window )
+        {
+            preview_window->setNumVBlanks( totalVBlanks );
+            preview_window->setNumProcessed( individualsProcessed );
+        }
+    }
+
+    void
+    FitnessFactory::regesterScreenData( std::shared_ptr<sf::Image> data )
+    {
+        if( preview_window )
+        {
+            preview_window->addScreenData( data );
+        }
+    }
+
+    void
+    FitnessFactory::unregesterScreenData( std::shared_ptr<sf::Image> data )
+    {
+        if( preview_window )
+        {
+            preview_window->removeScreenData( data );
+        }
     }
 }

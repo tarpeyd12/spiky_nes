@@ -1,3 +1,7 @@
+#include <iomanip>
+#include <sstream>
+#include <cmath>
+
 #include "preview_window.hpp"
 
 #include "../simple_nes/include/Emulator.h"
@@ -69,6 +73,24 @@ namespace spkn
     }
 
     void
+    PreviewWindow::setNumVBlanks( uint64_t vblanks )
+    {
+        numKnownVBlanks = vblanks;
+    }
+
+    void
+    PreviewWindow::setNumProcessed( uint64_t numProcessed )
+    {
+        numIndividualsProcessed = numProcessed;
+    }
+
+    void
+    PreviewWindow::setNumGenerations( uint64_t numGenerations )
+    {
+        numGenerationsProcessed = numGenerations;
+    }
+
+    void
     PreviewWindow::run()
     {
         sf::RenderWindow window;
@@ -78,8 +100,15 @@ namespace spkn
         window.setVerticalSyncEnabled( true );
         window.setFramerateLimit( 60 );
 
+        uint64_t windowUpdates = 0;
+
+        auto startTime = std::chrono::steady_clock::now();
+
+        uint64_t lastKnownVBlank = 0;
+        auto lastUpdatedCurrentTime = startTime;
+
         sf::Event event;
-        bool focus = true;
+        //bool focus = true;
         while( window.isOpen() && doRun )
         {
             while( window.pollEvent( event ) )
@@ -87,12 +116,12 @@ namespace spkn
                 if( event.type == sf::Event::GainedFocus )
                 {
                     window.setFramerateLimit( 60 );
-                    focus = true;
+                    //focus = true;
                 }
                 else if( event.type == sf::Event::LostFocus )
                 {
                     window.setFramerateLimit( 30 );
-                    focus = false;
+                    //focus = false;
                 }
             }
 
@@ -111,6 +140,41 @@ namespace spkn
                     window.draw( vs );
                 }
                 window.display();
+            }
+
+            if( numKnownVBlanks > lastKnownVBlank )
+            {
+                lastKnownVBlank = numKnownVBlanks;
+                lastUpdatedCurrentTime = std::chrono::steady_clock::now();
+            }
+
+            ++windowUpdates;
+
+            if( windowUpdates >= 10 )
+            {
+                windowUpdates = 0;
+
+                auto currentTime = std::chrono::steady_clock::now();
+
+                long double runTime = std::chrono::duration<long double>(currentTime-startTime).count();
+                long double lastVBlankTime = std::chrono::duration<long double>(lastUpdatedCurrentTime-startTime).count();
+
+                std::stringstream ss;
+                ss << "SpikeyNES (";
+                ss << "Gen=" << numGenerationsProcessed << ", ";
+                ss << "Nets=" << numIndividualsProcessed << ", ";
+                ss << "VBlanks=" << numKnownVBlanks << "(";
+                ss << std::fixed << std::setprecision(2) << (long double)(numKnownVBlanks)/60.0 << "s), ";
+                ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(";
+                if( runTime >= 3600.0 ) ss << uint64_t(runTime/3600) << "h";
+                if( runTime >= 60.0 )   ss << std::setw(2) << std::setfill('0') << uint64_t(runTime/60) % 60 << "m";
+                                        ss << std::setw(4) << std::setfill('0') << fmod( runTime, 60.0 ) << "s";
+                ss << "), ";
+                ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0) / lastVBlankTime << "s:1s";
+                ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s)";
+                ss << ")";
+
+                window.setTitle( ss.str() );
             }
         }
     }
