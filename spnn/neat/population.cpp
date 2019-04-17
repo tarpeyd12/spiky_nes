@@ -222,8 +222,8 @@ namespace neat
                         speciesFitnesses.emplace_back( f.first, f.second.first );
                     }
 
-                    //std::sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
-                    std::stable_sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
+                    std::sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
+                    //std::stable_sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
 
                     std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > > newFitnessMap;
 
@@ -279,8 +279,8 @@ namespace neat
                 species_sort_futures.emplace_back( thread_pool.submit(
                 [&archetype_mutex,this,_rand]( SpeciesID species, auto& species_vec )
                 {
-                    //std::sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
-                    std::stable_sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
+                    std::sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
+                    //std::stable_sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
                     {
                         std::lock_guard<std::mutex> lock( archetype_mutex );
                         speciesTracker->updateSpeciesArchtype( species, *species_vec.front().second );
@@ -434,8 +434,8 @@ namespace neat
 
                 for( auto p : matingPairs )
                 {
-                    // elitism
-                    if( p.first == 0 && p.second == 0 && !p.do_mutate )
+                    // if the pair is the same, then just return one of them instead of splicing
+                    if( p.first == p.second )
                     {
                         genotype_futures.push_back( { thread_pool.submit( [&,p]{ return *oldGenotypesVec[ p.first ].second; } ), p.do_mutate } );
                         continue;
