@@ -124,11 +124,11 @@ main( int argc, char** argv )
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
 
-        mutator.addMutator( 0.0,   0.05,  0.0,   nodeMutator );
-        mutator.addMutator( 0.0,   0.008, 0.0,   nodeMutator_new );
-        mutator.addMutator( 0.0,   0.0,   0.05,  connMutator );
-        mutator.addMutator( 0.0,   0.0,   0.008, connMutator_new );
-        mutator.addMutator( 0.02,  0.0,   0.0,   nwtkMutator );
+        mutator.addMutator( 0.0,   0.1,  0.0,   nodeMutator );
+        mutator.addMutator( 0.0,   0.08, 0.0,   nodeMutator_new );
+        mutator.addMutator( 0.0,   0.0,   0.1,  connMutator );
+        mutator.addMutator( 0.0,   0.0,   0.08, connMutator_new );
+        mutator.addMutator( 0.08,  0.0,   0.0,   nwtkMutator );
         mutator.addMutator( 0.0,   0.0,   0.00001, connMutator_enable );
     }
 
@@ -180,6 +180,7 @@ main( int argc, char** argv )
     do
     {
         population.mutatePopulation( thread_pool, random );
+        std::cout << " ... " << std::flush;
     }
     while( population.speciatePopulationAndCount( thread_pool ) < 10 );
 
