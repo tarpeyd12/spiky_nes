@@ -123,7 +123,7 @@ namespace spkn
             traversalScore += p.second;
         }
 
-        fitness += traversalScore * 1000.0;
+        fitness += traversalScore * 1000000.0;
 
         return fitness;
     }

@@ -84,7 +84,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      1.5 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       1.0;
 
-    speciationParams.threshold =   3.5*1.0;
+    speciationParams.threshold =   3.5*5.0;
 
     neat::Mutations::Mutation_Multi mutator;
 
@@ -124,12 +124,12 @@ main( int argc, char** argv )
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
 
-        mutator.addMutator( 0.0,   0.1,  0.0,   nodeMutator );
-        mutator.addMutator( 0.0,   0.08, 0.0,   nodeMutator_new );
-        mutator.addMutator( 0.0,   0.0,   0.1,  connMutator );
-        mutator.addMutator( 0.0,   0.0,   0.08, connMutator_new );
-        mutator.addMutator( 0.08,  0.0,   0.0,   nwtkMutator );
-        mutator.addMutator( 0.0,   0.0,   0.00001, connMutator_enable );
+        mutator.addMutator( 0.0,  0.01,  0.0,     nodeMutator );
+        mutator.addMutator( 0.0,  0.008, 0.0,     nodeMutator_new );
+        mutator.addMutator( 0.0,  0.0,   0.01,    connMutator );
+        mutator.addMutator( 0.0,  0.0,   0.008,   connMutator_new );
+        mutator.addMutator( 0.08, 0.0,   0.0,     nwtkMutator );
+        mutator.addMutator( 0.0,  0.0,   0.00001, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -177,12 +177,12 @@ main( int argc, char** argv )
 
     std::cout << "Population First Mutation ... " << std::flush;
 
-    do
+    //do
     {
         population.mutatePopulation( thread_pool, random );
         std::cout << " ... " << std::flush;
     }
-    while( population.speciatePopulationAndCount( thread_pool ) < 10 );
+    //while( population.speciatePopulationAndCount( thread_pool ) < 10 );
 
 
     std::cout << "Done." << std::endl;
