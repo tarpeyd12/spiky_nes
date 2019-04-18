@@ -29,6 +29,7 @@ namespace spkn
             std::vector< sn::VirtualScreen > virtual_screens;
             tpl::safe_queue< std::shared_ptr<sf::Image> > screen_data_queue_in;
             tpl::safe_queue< std::shared_ptr<sf::Image> > screen_data_queue_out;
+            std::list< std::shared_ptr<sf::Image> > screen_data_to_remove;
             std::shared_ptr<sf::Image> blankScreenData;
             std::thread window_thread;
 

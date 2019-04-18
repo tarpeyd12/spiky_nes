@@ -17,6 +17,7 @@ namespace spkn
         virtual_screens(),
         screen_data_queue_in(),
         screen_data_queue_out(),
+        screen_data_to_remove(),
         blankScreenData( nullptr )
     {
         blankScreenData = std::make_shared<sf::Image>();
@@ -184,14 +185,12 @@ namespace spkn
     {
         std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
 
+        for( auto& vs : virtual_screens )
         {
-            for( auto& vs : virtual_screens )
+            std::shared_ptr<sf::Image> target( nullptr );
+            if( vs.getScreenData() == blankScreenData && screen_data_queue_in.try_pop( target ) && target != nullptr )
             {
-                std::shared_ptr<sf::Image> target( nullptr );
-                if( vs.getScreenData() == blankScreenData && screen_data_queue_in.try_pop( target ) && target != nullptr )
-                {
-                    vs.setScreenData( target );
-                }
+                vs.setScreenData( target );
             }
         }
     }
@@ -201,34 +200,36 @@ namespace spkn
     {
         std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
 
-        std::list< std::shared_ptr<sf::Image> > toReAdd;
-
         std::shared_ptr<sf::Image> target( nullptr );
         while( screen_data_queue_out.try_pop( target ) && target != nullptr )
+        {
+            screen_data_to_remove.push_back( target );
+            target = nullptr;
+        }
+
+        std::list< std::list< std::shared_ptr<sf::Image> >::iterator > wasRemovedIts;
+
+        for( auto it = screen_data_to_remove.begin(); it != screen_data_to_remove.end(); ++it )
         {
             bool was_removed = false;
             for( auto& vs : virtual_screens )
             {
-                if( vs.getScreenData() == target )
+                if( vs.getScreenData() == *it )
                 {
                     vs.setScreenData( blankScreenData );
                     was_removed = true;
-                    break;
                 }
             }
 
-            if( !was_removed )
+            if( was_removed )
             {
-                toReAdd.emplace_back( target );
+                wasRemovedIts.push_back( it );
             }
-
-            target = nullptr;
         }
 
-        while( !toReAdd.empty() )
+        for( auto it : wasRemovedIts )
         {
-            addScreenData( toReAdd.front() );
-            toReAdd.pop_front();
+            screen_data_to_remove.erase( it );
         }
     }
 
