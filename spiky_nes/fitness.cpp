@@ -110,7 +110,7 @@ namespace spkn
         long double fitness = 0.0;
 
         fitness += (long double)( gameStateExtractor.Score_High() );
-        fitness += highestWorldLevel;
+        fitness += highestWorldLevel - 11;
         if( !controllStopped )
         {
             fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0;
@@ -123,7 +123,7 @@ namespace spkn
             traversalScore += p.second;
         }
 
-        fitness += traversalScore * 1000000.0;
+        fitness += traversalScore * 1000.0;
 
         return fitness;
     }
@@ -176,41 +176,44 @@ namespace spkn
     std::vector< double >
     FitnessCalculator::getInputValues( uint64_t time )
     {
-        //screenInput.back() = activationMaxValue;
+        if( time % networkStepsPerFrame == 0 )
+        {
+            //screenInput.back() = activationMaxValue;
 
-        auto emuScreen = emulator.getScreenData();
+            auto emuScreen = emulator.getScreenData();
 
-        size_t downsizeSize = NESpixelsPerNetworkPixel;
+            size_t downsizeSize = NESpixelsPerNetworkPixel;
 
-        size_t scaled_width = sn::NESVideoWidth / downsizeSize;
-        size_t scaled_height = sn::NESVideoHeight / downsizeSize;
+            size_t scaled_width = sn::NESVideoWidth / downsizeSize;
+            size_t scaled_height = sn::NESVideoHeight / downsizeSize;
 
-        /*ImageToSingle( LaplacianEdgeDetection( ResizeImage( *emuScreen, scaled_width, scaled_height ) ), spiralRings, true, screenInput, activationMaxValue, 0 );*/
+            /*ImageToSingle( LaplacianEdgeDetection( ResizeImage( *emuScreen, scaled_width, scaled_height ) ), spiralRings, true, screenInput, activationMaxValue, 0 );*/
 
-        ImageSobelEdgeDetectionToLightness( ResizeImage( *emuScreen, scaled_width, scaled_height ), screenInput, activationMaxValue, 0 );
+            ImageSobelEdgeDetectionToLightness( ResizeImage( *emuScreen, scaled_width, scaled_height ), screenInput, activationMaxValue, 0 );
 
-        /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
-        exit(0);*/
+            /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
+            exit(0);*/
 
-        /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
-        ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
-        ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+            /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
+            ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
+            ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
 
 
 
-        /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
-        ImageLaplacianEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
-        ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+            /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
+            ImageLaplacianEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
+            ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
 
-        /*ImageVecToImage( tmp, emuScreen->getSize().x, emuScreen->getSize().y, activationMaxValue ).saveToFile( "tmp_edge.png" );
-        SobelEdgeDetection( ImageToGreyscale( *emuScreen ) ).saveToFile( "tmp_edge2.png" );
-        ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
-        exit(0);*/
+            /*ImageVecToImage( tmp, emuScreen->getSize().x, emuScreen->getSize().y, activationMaxValue ).saveToFile( "tmp_edge.png" );
+            SobelEdgeDetection( ImageToGreyscale( *emuScreen ) ).saveToFile( "tmp_edge2.png" );
+            ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
+            exit(0);*/
 
-        /*sf::Image qimage = QuarterImage( *emuScreen );
-        std::vector<double> tmp( qimage.getSize().x * qimage.getSize().y, 0.0 );
-        ImageSobelEdgeDetectionToLightness( qimage, tmp, activationMaxValue, 0 );
-        ResizeImageVec( tmp, qimage.getSize().x, qimage.getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+            /*sf::Image qimage = QuarterImage( *emuScreen );
+            std::vector<double> tmp( qimage.getSize().x * qimage.getSize().y, 0.0 );
+            ImageSobelEdgeDetectionToLightness( qimage, tmp, activationMaxValue, 0 );
+            ResizeImageVec( tmp, qimage.getSize().x, qimage.getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+        }
 
         return screenInput;
     }

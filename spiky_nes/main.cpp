@@ -59,8 +59,8 @@ main( int argc, char** argv )
 
 
 
-    const double simpleMutationRate_node = 0.01;
-    const double simpleMutationRate_conn = 0.01;
+    const double simpleMutationRate_node = 0.001;
+    const double simpleMutationRate_conn = 0.001;
 
     rates.thresholdMin =         simpleMutationRate_node * limits.thresholdMin.range();
     rates.thresholdMax =         simpleMutationRate_node * limits.thresholdMax.range();
@@ -84,7 +84,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      1.5 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       1.0;
 
-    speciationParams.threshold =   3.5*5.0;
+    speciationParams.threshold =   3.5*2.0;
 
     neat::Mutations::Mutation_Multi mutator;
 
@@ -124,12 +124,12 @@ main( int argc, char** argv )
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
 
-        mutator.addMutator( 0.0,  0.01,  0.0,     nodeMutator );
-        mutator.addMutator( 0.0,  0.008, 0.0,     nodeMutator_new );
-        mutator.addMutator( 0.0,  0.0,   0.01,    connMutator );
-        mutator.addMutator( 0.0,  0.0,   0.008,   connMutator_new );
-        mutator.addMutator( 0.08, 0.0,   0.0,     nwtkMutator );
-        mutator.addMutator( 0.0,  0.0,   0.00001, connMutator_enable );
+        mutator.addMutator( 0.0,  0.001,  0.0,    nodeMutator );
+        mutator.addMutator( 0.0,  0.0008, 0.0,    nodeMutator_new );
+        mutator.addMutator( 0.0,  0.0,    0.001,  connMutator );
+        mutator.addMutator( 0.0,  0.0,    0.0008, connMutator_new );
+        mutator.addMutator( 0.05, 0.0,    0.0,    nwtkMutator );
+        mutator.addMutator( 0.0,  0.0,    0.0001, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -144,7 +144,7 @@ main( int argc, char** argv )
         rom_path,
         previewWindow,
         limits.thresholdMax.max, // maximum activation value, used to scale input values
-        150.0, // APM allowed
+        180.0, // APM allowed
         100, // network steps per NES frame
         5, // color winding value
         8  // ratio of NES pixels (squared) to network inputs
@@ -153,7 +153,7 @@ main( int argc, char** argv )
     std::cout << "Population construct call ... " << std::flush;
 
     neat::Population population(
-        250,
+        1000,
         fitnessFactory.numInputs(),
         fitnessFactory.numOutputs(),
         limits,
@@ -162,8 +162,8 @@ main( int argc, char** argv )
         fitnessFactory,
         speciationParams,
         neat::SpeciationMethod::Closest,
-        10, // num generations to buffer before species goes extinct
-        100, // min generations between mass extinctions
+        5, // num generations to buffer before species goes extinct
+        50, // min generations between mass extinctions
         1 // num generation data to keep
     );
 
@@ -177,25 +177,26 @@ main( int argc, char** argv )
 
     std::cout << "Population First Mutation ... " << std::flush;
 
-    //do
+    if( false ) do
     {
         population.mutatePopulation( thread_pool, random );
         std::cout << " ... " << std::flush;
     }
-    //while( population.speciatePopulationAndCount( thread_pool ) < 10 );
+    while( population.speciatePopulationAndCount( thread_pool ) < 2 );
 
 
     std::cout << "Done." << std::endl;
 
+    std::ofstream logfile( "out.csv", std::ofstream::trunc );
     {
-        std::ofstream file( "out.csv", std::ofstream::trunc );
+        //std::ofstream logfile( "out.csv", std::ofstream::trunc );
 
-        file << "Generation,";
-        file << "Min,Max,Avg,";
-        file << "MinNodesTotal,MaxNodesTotal,AvgNodesTotal,MinConnTotal,MaxConnTotal,AvgConnTotal,";
-        file << "MinNodesActive,MaxNodesActive,AvgNodesActive,MinConnActive,MaxConnActive,AvgConnActive,";
-        file << "numSpecies,numExtinct,numMassExtinct,calculation time,attrition rate\n";
-        file.close();
+        logfile << "Generation,";
+        logfile << "Min,Max,Avg,";
+        logfile << "MinNodesTotal,MaxNodesTotal,AvgNodesTotal,MinConnTotal,MaxConnTotal,AvgConnTotal,";
+        logfile << "MinNodesActive,MaxNodesActive,AvgNodesActive,MinConnActive,MaxConnActive,AvgConnActive,";
+        logfile << "numSpecies,numExtinct,numMassExtinct,calculation time,attrition rate\n";
+        //logfile.close();
     }
 
     std::cout << "Population Evolution ..." << std::endl;
@@ -211,7 +212,7 @@ main( int argc, char** argv )
 
         std::cout << "\n\tCalculating ...\n" << std::flush;
 
-        double base_attrition  = 0.75;
+        double base_attrition  = 0.5;
         double attrition_range = 0.0125;
         neat::MinMax<double> attritionRange( base_attrition - attrition_range, base_attrition + attrition_range );
         double attritionRate = 0.5;
@@ -437,32 +438,32 @@ main( int argc, char** argv )
             auto generation_end_time = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> dur = generation_end_time - generation_start_time;
 
-            std::ofstream file( "out.csv", std::ofstream::app );
+            //std::ofstream logfile( "out.csv", std::ofstream::app );
 
-            file << population.getGenerationCount() - 1 << ",";
-            file << genData->getMinFitness() << ",";
-            file << genData->getMaxFitness() << ",";
-            file << genData->getAvgFitness() << ",";
-            file << nodes.min << ",";
-            file << nodes.max << ",";
-            file << avgNodes << ",";
-            file << conns.min << ",";
-            file << conns.max << ",";
-            file << avgConns << ",";
-            file << nodes_active.min << ",";
-            file << nodes_active.max << ",";
-            file << avgNodes_active << ",";
-            file << conns_active.min << ",";
-            file << conns_active.max << ",";
-            file << avgConns_active << ",";
-            file << speciesPresent.size() << ",";
-            file << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << ",";
-            file << population.getNumMassExtinctions() << ",";
-            file << dur.count() << ",";
-            file << attritionRate << ",";
-            file << "\n";
+            logfile << population.getGenerationCount() - 1 << ",";
+            logfile << genData->getMinFitness() << ",";
+            logfile << genData->getMaxFitness() << ",";
+            logfile << genData->getAvgFitness() << ",";
+            logfile << nodes.min << ",";
+            logfile << nodes.max << ",";
+            logfile << avgNodes << ",";
+            logfile << conns.min << ",";
+            logfile << conns.max << ",";
+            logfile << avgConns << ",";
+            logfile << nodes_active.min << ",";
+            logfile << nodes_active.max << ",";
+            logfile << avgNodes_active << ",";
+            logfile << conns_active.min << ",";
+            logfile << conns_active.max << ",";
+            logfile << avgConns_active << ",";
+            logfile << speciesPresent.size() << ",";
+            logfile << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << ",";
+            logfile << population.getNumMassExtinctions() << ",";
+            logfile << dur.count() << ",";
+            logfile << attritionRate << ",";
+            logfile << "\n" << std::flush;
 
-            file.close();
+            //logfile.close();
         }
 
         //std::this_thread::sleep_for( std::chrono::duration<double>( 0.05 ) );
@@ -474,6 +475,8 @@ main( int argc, char** argv )
         }*/
 
     }
+
+    logfile.close();
 
     std::cout << "\n\a";
     std::ofstream success_file( "out.txt" );
