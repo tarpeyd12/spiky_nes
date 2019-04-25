@@ -18,7 +18,10 @@ namespace spkn
         screen_data_queue_in(),
         screen_data_queue_out(),
         screen_data_to_remove(),
-        blankScreenData( nullptr )
+        blankScreenData( nullptr ),
+        numKnownVBlanks( 0 ),
+        numIndividualsProcessed( 0 ),
+        numGenerationsProcessed( 0 )
     {
         blankScreenData = std::make_shared<sf::Image>();
         blankScreenData->create( sn::NESVideoWidth, sn::NESVideoHeight, sf::Color{ 127,127,127,255 } );
@@ -109,7 +112,7 @@ namespace spkn
         auto lastUpdatedCurrentTime = startTime;
 
         sf::Event event;
-        //bool focus = true;
+        bool focus = true;
         while( window.isOpen() && doRun )
         {
             while( window.pollEvent( event ) )
@@ -117,12 +120,12 @@ namespace spkn
                 if( event.type == sf::Event::GainedFocus )
                 {
                     window.setFramerateLimit( 60 );
-                    //focus = true;
+                    focus = true;
                 }
                 else if( event.type == sf::Event::LostFocus )
                 {
                     window.setFramerateLimit( 30 );
-                    //focus = false;
+                    focus = false;
                 }
             }
 
@@ -151,7 +154,7 @@ namespace spkn
 
             ++windowUpdates;
 
-            if( windowUpdates >= 10 )
+            if( ( focus && windowUpdates >= 3 ) || ( !focus && windowUpdates >= 15 ) )
             {
                 windowUpdates = 0;
 
@@ -161,9 +164,11 @@ namespace spkn
                 long double lastVBlankTime = std::chrono::duration<long double>(lastUpdatedCurrentTime-startTime).count();
 
                 std::stringstream ss;
-                ss << "SpikeyNES (";
-                ss << "Gen=" << numGenerationsProcessed << ", ";
-                ss << "Nets=" << numIndividualsProcessed << ", ";
+                ss << "SpikeyNES [";
+                ss << "Gen=" << numGenerationsProcessed << "(";
+                ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h), ";
+                ss << "Nets=" << numIndividualsProcessed << "(";
+                ss << std::fixed << std::setprecision(2) << numIndividualsProcessed / (lastVBlankTime/3600.0) << "/h), ";
                 ss << "VBlanks=" << numKnownVBlanks << "(";
                 ss << std::fixed << std::setprecision(2) << (long double)(numKnownVBlanks)/60.0 << "s), ";
                 ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(";
@@ -173,7 +178,7 @@ namespace spkn
                 ss << "), ";
                 ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0) / lastVBlankTime << "s:1s";
                 ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s)";
-                ss << ")";
+                ss << "]";
 
                 window.setTitle( ss.str() );
             }
