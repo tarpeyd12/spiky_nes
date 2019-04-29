@@ -156,6 +156,8 @@ namespace spkn
         {
             actionsAvailable += actionsPerMinute / 3600.0; // accumulate apm
 
+            actionsAvailable = std::min( 12.0l, actionsAvailable );
+
             emulator.stepFrame();
             resetControllerState();
 
@@ -189,11 +191,13 @@ namespace spkn
 
             /*ImageToSingle( LaplacianEdgeDetection( ResizeImage( *emuScreen, scaled_width, scaled_height ) ), spiralRings, true, screenInput, activationMaxValue, 0 );*/
 
+            // fast and good enough
             ImageSobelEdgeDetectionToLightness( ResizeImage( *emuScreen, scaled_width, scaled_height ), screenInput, activationMaxValue, 0 );
 
             /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
             exit(0);*/
 
+            // a much better way, but waaaay slower
             /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
             ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
             ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/

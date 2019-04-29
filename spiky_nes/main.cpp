@@ -59,8 +59,8 @@ main( int argc, char** argv )
 
 
 
-    const double simpleMutationRate_node = 0.001;
-    const double simpleMutationRate_conn = 0.001;
+    const double simpleMutationRate_node = 0.0001;
+    const double simpleMutationRate_conn = 0.0001;
 
     rates.thresholdMin =         simpleMutationRate_node * limits.thresholdMin.range();
     rates.thresholdMax =         simpleMutationRate_node * limits.thresholdMax.range();
@@ -76,13 +76,13 @@ main( int argc, char** argv )
 
     speciationParams.excess =      1.0;
     speciationParams.disjoint =    1.0;
-    speciationParams.weights =     1.5 / limits.weight.range();
-    speciationParams.lengths =     1.5 / limits.length.range();
+    speciationParams.weights =     0.25 / limits.weight.range();
+    speciationParams.lengths =     0.25 / limits.length.range();
 
-    speciationParams.activations = 1.5 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
-    speciationParams.decays =      1.5 / ( limits.valueDecay.range() + limits.activDecay.range() );
-    speciationParams.pulses =      1.5 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
-    speciationParams.nodes =       1.0;
+    speciationParams.activations = 0.25 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
+    speciationParams.decays =      0.25 / ( limits.valueDecay.range() + limits.activDecay.range() );
+    speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
+    speciationParams.nodes =       0.0;
 
     speciationParams.threshold =   3.5*2.0;
 
@@ -144,16 +144,16 @@ main( int argc, char** argv )
         rom_path,
         previewWindow,
         limits.thresholdMax.max, // maximum activation value, used to scale input values
-        180.0, // APM allowed
+        3.0 * 60.0, // APM allowed
         100, // network steps per NES frame
         5, // color winding value
-        8  // ratio of NES pixels (squared) to network inputs
+        16  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
     );
 
     std::cout << "Population construct call ... " << std::flush;
 
     neat::Population population(
-        1000,
+        150,
         fitnessFactory.numInputs(),
         fitnessFactory.numOutputs(),
         limits,
@@ -163,7 +163,7 @@ main( int argc, char** argv )
         speciationParams,
         neat::SpeciationMethod::Closest,
         5, // num generations to buffer before species goes extinct
-        50, // min generations between mass extinctions
+        25, // min generations between mass extinctions
         1 // num generation data to keep
     );
 
@@ -188,6 +188,7 @@ main( int argc, char** argv )
     std::cout << "Done." << std::endl;
 
     std::ofstream logfile( "out.csv", std::ofstream::trunc );
+    std::ofstream popfile( "pop.csv", std::ofstream::trunc );
     {
         //std::ofstream logfile( "out.csv", std::ofstream::trunc );
 
@@ -197,6 +198,8 @@ main( int argc, char** argv )
         logfile << "MinNodesActive,MaxNodesActive,AvgNodesActive,MinConnActive,MaxConnActive,AvgConnActive,";
         logfile << "numSpecies,numExtinct,numMassExtinct,calculation time,attrition rate\n";
         //logfile.close();
+
+        popfile << "Generation,Fitness,Species\n";
     }
 
     std::cout << "Population Evolution ..." << std::endl;
@@ -282,6 +285,21 @@ main( int argc, char** argv )
             {
                 minSpeciesFitness = f.second;
                 minFitSpeciesID = f.first;
+            }
+        }
+
+        {
+            auto genSpeciesIDs = genData->getSpeciesIDVector();
+            auto genFitness = genData->getFitnessVector();
+
+            size_t len = std::min( genSpeciesIDs.size(), genFitness.size() );
+
+            for( size_t i = 0; i < len; ++i )
+            {
+                popfile << population.getGenerationCount() - 1 << ",";
+                popfile << genFitness[i] << ",";
+                popfile << genSpeciesIDs[i] << "\n";
+                popfile << std::flush;
             }
         }
 
@@ -477,6 +495,7 @@ main( int argc, char** argv )
     }
 
     logfile.close();
+    popfile.close();
 
     std::cout << "\n\a";
     std::ofstream success_file( "out.txt" );
