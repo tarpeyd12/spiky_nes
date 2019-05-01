@@ -28,6 +28,7 @@ namespace sn
             };
 
             Mapper(Cartridge& cart, Type t) : m_cartridge(cart), m_type(t) {};
+            virtual ~Mapper() = default;
             virtual void writePRG (Address addr, Byte value) = 0;
             virtual Byte readPRG (Address addr) = 0;
             virtual const Byte* getPagePtr (Address addr) = 0; //for DMAs

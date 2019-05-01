@@ -84,7 +84,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   3.5*2.0;
+    speciationParams.threshold =   7.0;
 
     neat::Mutations::Mutation_Multi mutator;
 
@@ -136,7 +136,17 @@ main( int argc, char** argv )
 
     float pixelMultiplier = 2.0f;
 
-    tpl::pool thread_pool{ 4 };
+    //tpl::pool thread_pool{ 4 };
+    tpl::pool thread_pool{ std::max< size_t >( 1, std::thread::hardware_concurrency() / 2 ) };
+
+    if( thread_pool.num_threads() > 16 )
+    {
+        pixelMultiplier = 0.25;
+    }
+    else if( thread_pool.num_threads() > 4 )
+    {
+        pixelMultiplier = 1.0;
+    }
 
     auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", thread_pool.num_threads(), pixelMultiplier );
 
