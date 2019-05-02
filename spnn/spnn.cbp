@@ -70,6 +70,13 @@
 			<Add option="-static-libgcc" />
 			<Add option="-static" />
 		</Linker>
+		<Unit filename="lib/base64.cpp" />
+		<Unit filename="lib/base64.hpp" />
+		<Unit filename="lib/rapidxml.hpp" />
+		<Unit filename="lib/rapidxml/rapidxml.hpp" />
+		<Unit filename="lib/rapidxml/rapidxml_iterators.hpp" />
+		<Unit filename="lib/rapidxml/rapidxml_print.hpp" />
+		<Unit filename="lib/rapidxml/rapidxml_utils.hpp" />
 		<Unit filename="neat/fitness.cpp" />
 		<Unit filename="neat/fitness.hpp" />
 		<Unit filename="neat/fitness.inl" />
@@ -110,6 +117,7 @@
 		<Unit filename="neat/thread_pool/thread_pool.cpp" />
 		<Unit filename="neat/thread_pool/thread_pool.hpp" />
 		<Unit filename="neat/thread_pool/thread_pool.inl" />
+		<Unit filename="neat/xml.hpp" />
 		<Unit filename="spnn.hpp" />
 		<Unit filename="spnn/network.hpp" />
 		<Unit filename="spnn/network.inl" />
