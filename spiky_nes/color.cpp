@@ -1,5 +1,7 @@
 #include <algorithm>
 
+#include "spikey_nes.hpp"
+
 #include "color.hpp"
 
 namespace spkn
