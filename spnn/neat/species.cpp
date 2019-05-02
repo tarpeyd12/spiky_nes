@@ -3,6 +3,8 @@
 
 #include "species.hpp"
 
+#include "xml.hpp"
+
 namespace neat
 {
 
@@ -295,11 +297,19 @@ namespace neat
         // lock for reading
         std::shared_lock< std::shared_timed_mutex > lock( speciesIDMap_mutex );
 
+        //rapidxml::xml_document<> doc;
+
         for( auto it : speciesIDMap )
         {
             out << "Species " << it.first << ":\n";
             it.second->printGenotype( out );
+
+            //xml::Encode_NetworkGenotype( *(it.second), &doc, &doc );
         }
+
+        //out << doc << std::flush;
+
+        //doc.clear();
     }
 
     SpeciesID

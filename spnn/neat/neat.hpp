@@ -129,5 +129,6 @@ namespace neat
 #include "innovation_generator.hpp"
 #include "mutations.hpp"
 #include "splice.hpp"
+#include "xml.hpp"
 
 #endif // NEAT_NEAT_HPP_INCLUDED

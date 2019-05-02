@@ -42,6 +42,18 @@ namespace neat
         return connectionGenotype.size();
     }
 
+    const std::vector< NodeDef >&
+    NetworkGenotype::getNodes() const
+    {
+        return nodeGenotype;
+    }
+
+    const std::vector< ConnectionDef >&
+    NetworkGenotype::getConnections() const
+    {
+        return connectionGenotype;
+    }
+
     size_t
     NetworkGenotype::getNumReachableNodes() const
     {

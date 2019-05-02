@@ -290,6 +290,8 @@ main( int argc, char** argv )
         logfile.close();
         popfile.close();
 
+        previewWindow->close();
+
         if( cmd.wasArgFound( "output" ) )
         {
             std::cout << "Saving Species Data ... " << std::flush;
@@ -298,10 +300,10 @@ main( int argc, char** argv )
             population.printSpeciesArchetypes( success_file );
             success_file.close();
 
-            std::cout << "Done." << std::endl;
+            std::cout << "Done.\n\n" << std::endl;
         }
 
-        previewWindow->close();
+
     };
 
     AtExit( onExit );

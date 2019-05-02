@@ -117,7 +117,9 @@
 		<Unit filename="neat/thread_pool/thread_pool.cpp" />
 		<Unit filename="neat/thread_pool/thread_pool.hpp" />
 		<Unit filename="neat/thread_pool/thread_pool.inl" />
+		<Unit filename="neat/xml.cpp" />
 		<Unit filename="neat/xml.hpp" />
+		<Unit filename="neat/xml.inl" />
 		<Unit filename="spnn.hpp" />
 		<Unit filename="spnn/network.hpp" />
 		<Unit filename="spnn/network.inl" />

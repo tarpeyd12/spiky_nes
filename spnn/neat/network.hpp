@@ -118,6 +118,9 @@ namespace neat
             size_t getNumNodes() const;
             size_t getNumConnections() const;
 
+            const std::vector< NodeDef >& getNodes() const;
+            const std::vector< ConnectionDef >& getConnections() const;
+
             size_t getNumReachableNodes() const;
             size_t gentNumActiveConnections() const;
             void getNumReachableNumActive( size_t& reachable, size_t& active ) const;
