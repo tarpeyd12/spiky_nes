@@ -1,68 +1,9 @@
-#include <sstream>
-#include <cassert>
-
 #include "cmd.hpp"
 
 namespace spkn
 {
-
-    Cmd::Arg::Arg( const std::list< std::string >& a, std::function<void(int)> func, const std::string& d )
-        : _int( func ), _float( nullptr ), _string( nullptr ), param( Type::Int ), arg( a ), description( d )
-    {
-        assert( !arg.empty() && func != nullptr );
-    }
-
-    Cmd::Arg::Arg( const std::list< std::string >& a, std::function<void(float)> func, const std::string& d )
-        : _int( nullptr ), _float( func ), _string( nullptr ), param( Type::Float ), arg( a ), description( d )
-    {
-        assert( !arg.empty() && func != nullptr );
-    }
-
-    Cmd::Arg::Arg( const std::list< std::string >& a, std::function<void(const std::string&)> func, const std::string& d )
-        : _int( nullptr ), _float( nullptr ), _string( func ), param( Type::String ), arg( a ), description( d )
-    {
-        assert( !arg.empty() && func != nullptr );
-    }
-
-
-    void
-    Cmd::Arg::call( const char * s )
-    {
-        std::stringstream ss;
-        ss.str( std::string{ s } );
-
-        switch( param )
-        {
-            case Type::Int:
-            {
-                int i = 0;
-                ss >> i;
-                _int( i );
-                break;
-            }
-
-            case Type::Float:
-            {
-                float f = 0.0f;
-                ss >> f;
-                _float( f );
-                break;
-            }
-
-            case Type::String:
-            {
-                std::string s = "";
-                ss >> s;
-                _string( s );
-                break;
-            }
-
-            default: break; // should never get here
-        }
-    }
-
     bool
-    Cmd::Arg::match( const char * s ) const
+    Cmd::Arg_base::match( const char * s ) const
     {
         std::string check_arg( s );
 
@@ -77,14 +18,41 @@ namespace spkn
         return false;
     }
 
-    Cmd::Cmd( std::list< Arg > args )
-        : argument_list( args )
+    Cmd::Arg_void::Arg_void( const std::list< std::string >& a, std::function<void()> func, const std::string& d )
+        : Arg_base{ a, d }, _callback( func )
+    {
+        assert( !arg.empty() && _callback != nullptr );
+    }
+
+    void
+    Cmd::Arg_void::call( const char * /*s*/ )
+    {
+        _callback();
+    }
+
+
+    Cmd::Cmd( std::list< Arg_base* > args )
+        : argument_list( args ), argsFound()
     {
         /*  */
     }
 
+    Cmd::~Cmd()
+    {
+        for( auto*& a : argsFound )
+        {
+            a = nullptr;
+        }
+        argsFound.clear();
+
+        for( auto* a : argument_list )
+        {
+            delete a;
+        }
+    }
+
     void
-    Cmd::add( Arg a )
+    Cmd::add( Arg_base* a )
     {
         argument_list.emplace_back( a );
     }
@@ -92,16 +60,18 @@ namespace spkn
     void
     Cmd::parse( int argc, char** argv, std::function<void(const std::string&)> defaultCheck )
     {
+        argsFound.clear();
+
         char ** begin = argv;
         char ** end = begin + argc;
 
         for( auto it = begin; it != end; ++it )
         {
-            std::list< Arg* > matchedArgs;
+            std::list< Arg_base* > matchedArgs;
 
-            for( Arg& arg : argument_list )
+            for( auto* arg : argument_list )
             {
-                if( arg.match( *it ) )
+                if( arg->match( *it ) )
                 {
                     ++it; // increment iterator
                     if( it == end )
@@ -109,12 +79,13 @@ namespace spkn
                         // error
                         return;
                     }
-                    matchedArgs.emplace_back( &arg );
+                    matchedArgs.emplace_back( arg );
                 }
             }
 
             if( !matchedArgs.empty() )
             {
+                argsFound.emplace_back( matchedArgs.front() );
                 matchedArgs.front()->call( *it );
             }
             else if( defaultCheck != nullptr )
@@ -124,5 +95,19 @@ namespace spkn
         }
 
         //end
+    }
+
+    bool
+    Cmd::wasArgFound( const std::string& arg ) const
+    {
+        for( Arg_base* a : argsFound )
+        {
+            if( a->match( arg.c_str() ) )
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

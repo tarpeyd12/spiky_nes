@@ -8,10 +8,12 @@
 
 namespace spkn
 {
-    PreviewWindow::PreviewWindow( const std::string& window_name, size_t num_previews, float screen_size_ratio )
+    PreviewWindow::PreviewWindow( const std::string& window_name, size_t num_previews, size_t num_columns, float screen_size_ratio )
          :
         windowName( window_name ),
         pixelSize( screen_size_ratio ),
+        width_inNES( std::max<size_t>( 1, num_columns ) ),
+        height_inNES( std::max<size_t>( 1, num_previews ) / std::max<size_t>( 1, num_columns ) + ( std::max<size_t>( 1, num_previews ) % std::max<size_t>( 1, num_columns ) ? 1 : 0 ) ),
         doRun( true ),
         virtual_screens_mutex(),
         virtual_screens(),
@@ -26,12 +28,20 @@ namespace spkn
         blankScreenData = std::make_shared<sf::Image>();
         blankScreenData->create( sn::NESVideoWidth, sn::NESVideoHeight, sf::Color{ 127,127,127,255 } );
 
+        /*size_t width_inNES = num_columns;
+        size_t height_inNES = num_previews / num_columns + ( num_previews % num_columns ? 1 : 0 );*/
+
         while( virtual_screens.size() < num_previews )
         {
             virtual_screens.push_back( sn::VirtualScreen() );
             virtual_screens.back().create( sn::NESVideoWidth, sn::NESVideoHeight, pixelSize, sf::Color::Blue );
             virtual_screens.back().setScreenData( blankScreenData );
-            virtual_screens.back().setScreenPosition( { (sn::NESVideoWidth + pixelGap) * pixelSize * ( virtual_screens.size() - 1 ), 0.0 } );
+
+            size_t i = virtual_screens.size() - 1;
+            size_t wX = i % width_inNES;
+            size_t wY = i / width_inNES;
+
+            virtual_screens.back().setScreenPosition( { (sn::NESVideoWidth + pixelGap) * pixelSize * wX, (sn::NESVideoHeight + pixelGap) * pixelSize * wY } );
         }
 
         window_thread = std::thread( [&]{ run(); } );
@@ -99,7 +109,7 @@ namespace spkn
     {
         sf::RenderWindow window;
 
-        sf::VideoMode videoMode( ( (sn::NESVideoWidth+pixelGap) * virtual_screens.size()-pixelGap ) * pixelSize, sn::NESVideoHeight * pixelSize );
+        sf::VideoMode videoMode( ( (sn::NESVideoWidth+pixelGap) * width_inNES - pixelGap ) * pixelSize, ( (sn::NESVideoHeight+pixelGap) * height_inNES - pixelGap ) * pixelSize );
         window.create( videoMode, windowName, sf::Style::Titlebar );
         window.setVerticalSyncEnabled( true );
         window.setFramerateLimit( 60 );

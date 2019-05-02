@@ -1,0 +1,30 @@
+#ifndef SPKN_CMD_INL_INCLUDED
+#define SPKN_CMD_INL_INCLUDED
+
+#include <sstream>
+#include <cassert>
+
+namespace spkn
+{
+    template < typename ArgType >
+    Cmd::Arg< ArgType >::Arg( const std::list< std::string >& a, std::function<void(ArgType)> func, const std::string& d )
+        : Arg_base{ a, d }, _callback( func )
+    {
+        assert( !arg.empty() && _callback != nullptr );
+    }
+
+    template < typename ArgType >
+    void
+    Cmd::Arg< ArgType >::call( const char * s )
+    {
+        std::stringstream ss;
+        ss.str( std::string{ s } );
+
+        ArgType v{};
+        ss >> v;
+
+        _callback( v );
+    }
+}
+
+#endif // SPKN_CMD_INL_INCLUDED

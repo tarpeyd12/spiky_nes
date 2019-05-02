@@ -23,6 +23,8 @@ namespace spkn
 
             std::string windowName;
             float pixelSize;
+            size_t width_inNES;
+            size_t height_inNES;
 
             std::atomic_bool doRun;
             std::mutex virtual_screens_mutex;
@@ -39,7 +41,7 @@ namespace spkn
 
         public:
 
-            PreviewWindow( const std::string& window_name, size_t num_previews, float screen_size_ratio = 2.0f );
+            PreviewWindow( const std::string& window_name, size_t num_previews, size_t num_columns, float screen_size_ratio = 2.0f );
             ~PreviewWindow();
 
             void addScreenData( std::shared_ptr<sf::Image> data );

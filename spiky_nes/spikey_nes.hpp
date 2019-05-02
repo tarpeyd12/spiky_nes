@@ -13,6 +13,7 @@ namespace spkn
     void InitEmulatorLogs( sn::Level log_level = sn::None );
 }
 
+#include "cmd.hpp"
 #include "color.hpp"
 #include "fitness.hpp"
 #include "game_state.hpp"

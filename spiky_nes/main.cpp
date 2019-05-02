@@ -18,9 +18,37 @@ main( int argc, char** argv )
 
     spkn::InitEmulatorLogs();
 
-    std::string rom_path;
+    std::string rom_path = "";
+    int   arg_numThreads = 0;
+    float arg_windowScale = 0.0f;
+    int   arg_numColums = 0;
+    int   arg_populationSize = 0;
 
-    for( int i = 1; i < argc; ++i )
+    spkn::Cmd cmd;
+    {
+        auto help_func = [&]() -> void
+        {
+            std::cout << "-h   Help\n";
+            std::cout << "-f rom_path\n";
+            std::cout << "-t num_threads\n";
+            std::cout << "-s pixel_scale\n";
+            std::cout << "-w num_columns\n";
+            std::cout << "-n size_population\n";
+            exit(0);
+        };
+
+        cmd.add( new spkn::Cmd::Arg<std::string>{ { "-f", "path" }, [&]( const std::string& s ){ rom_path = s; },  "Path to rom file" } );
+        cmd.add( new spkn::Cmd::Arg<int>{ { "-t", "threads" },    [&]( int i ){ arg_numThreads = i; },     "Number of threads" } );
+        cmd.add( new spkn::Cmd::Arg<float>{ { "-s", "scale" },    [&]( float f ){ arg_windowScale = f; },    "Scale of NES preview windows" } );
+        cmd.add( new spkn::Cmd::Arg<int>{ { "-w", "columns" },    [&]( int i ){ arg_numColums = i; },      "Number of NES preview Windows per row" } );
+        cmd.add( new spkn::Cmd::Arg<int>{ { "-n", "population" }, [&]( int i ){ arg_populationSize = i; }, "Number of NES preview Windows per row" } );
+        cmd.add( new spkn::Cmd::Arg_void{ { "?", "-h", "help" }, help_func, "Prints help" } );
+
+
+        cmd.parse( argc, argv, [&]( const std::string& s ){ rom_path = s; } );
+    }
+
+    /*for( int i = 1; i < argc; ++i )
     {
         std::string arg( argv[i] );
         if( argv[i][0] != '-' )
@@ -31,7 +59,7 @@ main( int argc, char** argv )
         {
             std::cerr << "Unrecognized argument: " << argv[i] << std::endl;
         }
-    }
+    }*/
 
     if( rom_path.empty() )
     {
@@ -135,20 +163,40 @@ main( int argc, char** argv )
     auto random = std::make_shared< Rand::Random_Safe >(  );
 
     float pixelMultiplier = 2.0f;
+    size_t numThreads = std::max<size_t>( 1, std::thread::hardware_concurrency() / 2 );
+    size_t numColumns = std::max<size_t>( 1, numThreads / 2 );
+    uint64_t populationSize = 150;
+
+    {
+        if( cmd.wasArgFound( "scale" ) )
+        {
+            pixelMultiplier = arg_windowScale;
+            pixelMultiplier = std::max<float>( 0.125f, pixelMultiplier );
+        }
+
+        if( cmd.wasArgFound( "threads" ) )
+        {
+            numThreads = arg_numThreads;
+            numThreads = neat::MinMax<size_t>{ 1, std::max< size_t >( 2, std::thread::hardware_concurrency() ) - 1 }.clamp( numThreads );
+        }
+
+        if( cmd.wasArgFound( "population" ) )
+        {
+            populationSize = arg_populationSize;
+            populationSize = std::max<size_t>( 50, populationSize );
+        }
+
+        if( cmd.wasArgFound( "columns" ) )
+        {
+            numColumns = arg_numColums;
+            numColumns = neat::MinMax<size_t>{ 1, 256 }.clamp( numColumns );
+        }
+    }
 
     //tpl::pool thread_pool{ 4 };
-    tpl::pool thread_pool{ std::max< size_t >( 1, std::thread::hardware_concurrency() / 2 ) };
+    tpl::pool thread_pool{ numThreads };
 
-    if( thread_pool.num_threads() > 16 )
-    {
-        pixelMultiplier = 0.25;
-    }
-    else if( thread_pool.num_threads() > 4 )
-    {
-        pixelMultiplier = 1.0;
-    }
-
-    auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", thread_pool.num_threads(), pixelMultiplier );
+    auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", thread_pool.num_threads(), numColumns, pixelMultiplier );
 
     spkn::FitnessFactory fitnessFactory(
         rom_path,
@@ -163,7 +211,7 @@ main( int argc, char** argv )
     std::cout << "Population construct call ... " << std::flush;
 
     neat::Population population(
-        150,
+        populationSize,
         fitnessFactory.numInputs(),
         fitnessFactory.numOutputs(),
         limits,

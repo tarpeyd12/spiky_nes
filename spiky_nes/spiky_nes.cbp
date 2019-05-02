@@ -63,7 +63,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters="mario.nes" />
+				<Option parameters="mario.nes -t 5 -w 3" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-m64" />
@@ -101,6 +101,7 @@
 		</Linker>
 		<Unit filename="cmd.cpp" />
 		<Unit filename="cmd.hpp" />
+		<Unit filename="cmd.inl" />
 		<Unit filename="color.cpp" />
 		<Unit filename="color.hpp" />
 		<Unit filename="fitness.cpp" />
