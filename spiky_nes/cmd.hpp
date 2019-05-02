@@ -23,6 +23,7 @@ namespace spkn
                 protected:
 
                     virtual void call( const char * s ) {};
+                    virtual bool hasParam() const { return false; }
                     bool match( const char * s ) const;
 
                     friend class Cmd;
@@ -44,7 +45,7 @@ namespace spkn
                 protected:
 
                     void call( const char * s ) override;
-
+                    bool hasParam() const override { return true; }
                     friend class Cmd;
             };
 
@@ -61,7 +62,7 @@ namespace spkn
                 protected:
 
                     void call( const char * s ) override;
-
+                    bool hasParam() const override { return false; }
                     friend class Cmd;
             };
 

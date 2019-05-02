@@ -73,20 +73,24 @@ namespace spkn
             {
                 if( arg->match( *it ) )
                 {
-                    ++it; // increment iterator
-                    if( it == end )
-                    {
-                        // error
-                        return;
-                    }
                     matchedArgs.emplace_back( arg );
                 }
             }
 
             if( !matchedArgs.empty() )
             {
-                argsFound.emplace_back( matchedArgs.front() );
-                matchedArgs.front()->call( *it );
+                auto arg = matchedArgs.front();
+                argsFound.emplace_back( arg );
+                if( arg->hasParam() )
+                {
+                    ++it; // increment iterator
+                    if( it == end )
+                    {
+                        // error
+                        return;
+                    }
+                }
+                arg->call( *it );
             }
             else if( defaultCheck != nullptr )
             {

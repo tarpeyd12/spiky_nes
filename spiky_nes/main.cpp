@@ -62,7 +62,7 @@ main( int argc, char** argv )
         cmd.add( new spkn::Cmd::Arg<int>{ { "-t", "threads" },    [&]( int i ){ arg_numThreads = i; },     "Number of threads" } );
         cmd.add( new spkn::Cmd::Arg<float>{ { "-s", "scale" },    [&]( float f ){ arg_windowScale = f; },    "Scale of NES preview windows" } );
         cmd.add( new spkn::Cmd::Arg<int>{ { "-w", "columns" },    [&]( int i ){ arg_numColums = i; },      "Number of NES preview Windows per row" } );
-        cmd.add( new spkn::Cmd::Arg<int>{ { "-n", "population" }, [&]( int i ){ arg_populationSize = i; }, "Number of NES preview Windows per row" } );
+        cmd.add( new spkn::Cmd::Arg<int>{ { "-n", "population" }, [&]( int i ){ arg_populationSize = i; }, "Number of networks" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "?", "-h", "help" }, help_func, "Prints help" } );
 
 
