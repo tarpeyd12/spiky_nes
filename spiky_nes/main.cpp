@@ -8,10 +8,29 @@
 
 #include "spikey_nes.hpp"
 
+std::list< std::function<void()> > __atexit_CPP;
+
+void
+AtExit( std::function<void()>& f )
+{
+    __atexit_CPP.emplace_back( f );
+}
+
+void
+__atexit_callback()
+{
+    while( !__atexit_CPP.empty() )
+    {
+        __atexit_CPP.back()();
+        __atexit_CPP.pop_back();
+    }
+}
 
 int
 main( int argc, char** argv )
 {
+    atexit( __atexit_callback );
+
     std::ios_base::sync_with_stdio( false );
 
     spkn::SetProcessPriority_lowest();
@@ -19,6 +38,7 @@ main( int argc, char** argv )
     spkn::InitEmulatorLogs();
 
     std::string rom_path = "";
+    std::string output_path = "";
     int   arg_numThreads = 0;
     float arg_windowScale = 0.0f;
     int   arg_numColums = 0;
@@ -34,10 +54,11 @@ main( int argc, char** argv )
             std::cout << "-s pixel_scale\n";
             std::cout << "-w num_columns\n";
             std::cout << "-n size_population\n";
-            exit(0);
+            exit( 0 );
         };
 
         cmd.add( new spkn::Cmd::Arg<std::string>{ { "-f", "path" }, [&]( const std::string& s ){ rom_path = s; },  "Path to rom file" } );
+        cmd.add( new spkn::Cmd::Arg<std::string>{ { "-o", "output" }, [&]( const std::string& s ){ output_path = s; },  "Path to file to save output" } );
         cmd.add( new spkn::Cmd::Arg<int>{ { "-t", "threads" },    [&]( int i ){ arg_numThreads = i; },     "Number of threads" } );
         cmd.add( new spkn::Cmd::Arg<float>{ { "-s", "scale" },    [&]( float f ){ arg_windowScale = f; },    "Scale of NES preview windows" } );
         cmd.add( new spkn::Cmd::Arg<int>{ { "-w", "columns" },    [&]( int i ){ arg_numColums = i; },      "Number of NES preview Windows per row" } );
@@ -261,6 +282,29 @@ main( int argc, char** argv )
     }
 
     std::cout << "Population Evolution ..." << std::endl;
+
+    std::function<void()> onExit = [&]() -> void
+    {
+        std::cout << "Closing log files." << std::endl;
+
+        logfile.close();
+        popfile.close();
+
+        if( cmd.wasArgFound( "output" ) )
+        {
+            std::cout << "Saving Species Data ... " << std::flush;
+
+            std::ofstream success_file( output_path );
+            population.printSpeciesArchetypes( success_file );
+            success_file.close();
+
+            std::cout << "Done." << std::endl;
+        }
+
+        previewWindow->close();
+    };
+
+    AtExit( onExit );
 
     auto evolution_start_time = std::chrono::high_resolution_clock::now();
 

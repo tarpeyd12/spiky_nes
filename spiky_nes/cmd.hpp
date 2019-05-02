@@ -44,7 +44,6 @@ namespace spkn
                 protected:
 
                     void call( const char * s ) override;
-                    //bool match( const char * s ) const override;
 
                     friend class Cmd;
             };
@@ -62,7 +61,6 @@ namespace spkn
                 protected:
 
                     void call( const char * s ) override;
-                    //bool match( const char * s ) const override;
 
                     friend class Cmd;
             };
