@@ -43,8 +43,12 @@ namespace neat
                 kill_delay->append_attribute( xml::Attribute( "N", std::to_string( speciesKillDelay.size() ), mem_pool ) );
                 for( auto kd : speciesKillDelay )
                 {
-                    auto kn_node = xml::Node( "delay", "", mem_pool );
-                    kn_node->append_attribute( xml::Attribute( "species", std::to_string( kd.first ), mem_pool ) );
+                    if( !kd.second )
+                    {
+                        continue;
+                    }
+                    auto kn_node = xml::Node( "species", "", mem_pool );
+                    kn_node->append_attribute( xml::Attribute( "ID", std::to_string( kd.first ), mem_pool ) );
                     kn_node->append_attribute( xml::Attribute( "delay", std::to_string( kd.second ), mem_pool ) );
                     kill_delay->append_node( kn_node );
                 }
