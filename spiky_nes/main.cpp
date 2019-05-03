@@ -291,19 +291,6 @@ main( int argc, char** argv )
         popfile.close();
 
         previewWindow->close();
-
-        if( cmd.wasArgFound( "output" ) )
-        {
-            std::cout << "Saving Species Data ... " << std::flush;
-
-            std::ofstream success_file( output_path );
-            population.printSpeciesArchetypes( success_file );
-            success_file.close();
-
-            std::cout << "Done.\n\n" << std::endl;
-        }
-
-
     };
 
     AtExit( onExit );
@@ -316,6 +303,26 @@ main( int argc, char** argv )
         auto generation_start_time = std::chrono::high_resolution_clock::now();
 
         std::cout << "\n\nGeneration " << population.getGenerationCount() << ":\n";
+
+        if( cmd.wasArgFound( "output" ) )
+        {
+            // this is the PLEASE DON'T CRASH section
+
+            std::cout << "\n\tSaving Population Data ... " << std::flush;
+
+            std::ofstream success_file( output_path, std::ofstream::trunc );
+            //population.printSpeciesArchetypes( success_file );
+
+            rapidxml::xml_document<> doc;
+
+            population.SaveToXML( &doc, &doc );
+
+            success_file << doc << std::flush;
+
+            success_file.close();
+
+            std::cout << "Done.\n" << std::flush;
+        }
 
         std::cout << "\n\tCalculating ...\n" << std::flush;
 

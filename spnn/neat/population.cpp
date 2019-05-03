@@ -8,7 +8,7 @@
 namespace neat
 {
     Population::Population( size_t numNets, size_t inNodes, size_t outNodes, const MutationLimits& initLimits, const MutationRates& mutRate, Mutations::Mutation_base& mutator, FitnessFactory& fitFactory, const SpeciesDistanceParameters& speciationParameters, SpeciationMethod specMethod, size_t killDelay, size_t massExtinction, size_t gensToKeep )
-         : innovationCounter(), numNetworks( numNets ), numInputNodes( inNodes ), numOutputNodes( outNodes ), generationCount( 0 ), initialGenotypeTemplate( new NetworkGenotype() ), populationData(), inputNodeIDs(), outputNodeIDs(), speciesTracker( new SpeciesManager( speciationParameters, specMethod ) ), mutationLimits( initLimits ), mutationRates( mutRate ), mutatorFunctor( mutator ), fitnessCalculatorFactory( fitFactory ), generationDataToKeep( gensToKeep ), generationLog(), speciesKillDelay(), killDelayLimit( killDelay ), massExtinctionTimer( massExtinction ), pastFitness(), massExtinctionCount( 0 )
+         : innovationCounter( new InnovationGenerator() ), numNetworks( numNets ), numInputNodes( inNodes ), numOutputNodes( outNodes ), generationCount( 0 ), initialGenotypeTemplate( new NetworkGenotype() ), populationData(), inputNodeIDs(), outputNodeIDs(), speciesTracker( new SpeciesManager( speciationParameters, specMethod ) ), mutationLimits( initLimits ), mutationRates( mutRate ), mutatorFunctor( mutator ), fitnessCalculatorFactory( fitFactory ), generationDataToKeep( gensToKeep ), generationLog(), speciesKillDelay(), killDelayLimit( killDelay ), massExtinctionTimer( massExtinction ), pastFitness(), massExtinctionCount( 0 )
     {
         assert( massExtinctionTimer > killDelayLimit );
         //assert( generationDataToKeep > 0 );
@@ -34,7 +34,7 @@ namespace neat
             bool isInput = ( i < numInputNodes );
 
             // generate the node, 0's are for data we don't care about
-            NodeDef node = innovationCounter.GetNextNode( 0.0, 0.0, 0.0, 0.0, 0, 0, isInput ? NodeType::Input : NodeType::Output );
+            NodeDef node = innovationCounter->GetNextNode( 0.0, 0.0, 0.0, 0.0, 0, 0, isInput ? NodeType::Input : NodeType::Output );
 
             // add the node to the template genotype, and add the nodes ID into the node ID lists for later use
             initialGenotypeTemplate->nodeGenotype.push_back( node );
@@ -48,7 +48,7 @@ namespace neat
             for( auto outNodeID : outNodesIDMade )
             {
                 // each connection for the default template goes from the input to the output nodes, and is enabled
-                ConnectionDef connDef = innovationCounter.GetNextConnection( inNodeID, outNodeID, 0.0, 0.0 );
+                ConnectionDef connDef = innovationCounter->GetNextConnection( inNodeID, outNodeID, 0.0, 0.0 );
 
                 // and add the connection to the default template
                 initialGenotypeTemplate->connectionGenotype.push_back( connDef );
@@ -94,7 +94,7 @@ namespace neat
         tpl::for_each( thread_pool, populationData.begin(), populationData.end(), [&]( auto& genotype )
         {
             auto _rand = std::make_shared< Rand::Random_Unsafe >( rand->Int() );
-            num_muts += mutatorFunctor( genotype, innovationCounter, mutationRates, mutationLimits, _rand );
+            num_muts += mutatorFunctor( genotype, *innovationCounter, mutationRates, mutationLimits, _rand );
         } );
 
         return num_muts;
@@ -112,7 +112,7 @@ namespace neat
         tpl::for_each( thread_pool, genotypes_to_mutate.begin(), genotypes_to_mutate.end(), [&]( auto * genotype )
         {
             auto _rand = std::make_shared< Rand::Random_Unsafe >( rand->Int() );
-            num_muts += mutatorFunctor( *genotype, innovationCounter, mutationRates, mutationLimits, _rand );
+            num_muts += mutatorFunctor( *genotype, *innovationCounter, mutationRates, mutationLimits, _rand );
         } );
 
         return num_muts;
@@ -477,7 +477,7 @@ namespace neat
         }
 
         // make sure the mutations are classified as new
-        innovationCounter.clearGenerationConnections();
+        innovationCounter->clearGenerationConnections();
 
         // mutate the population
         mutatePopulation( thread_pool, nextPopulation_to_mutate, rand );

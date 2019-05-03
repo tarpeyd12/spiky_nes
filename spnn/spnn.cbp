@@ -82,6 +82,7 @@
 		<Unit filename="neat/fitness.inl" />
 		<Unit filename="neat/generation.cpp" />
 		<Unit filename="neat/generation.hpp" />
+		<Unit filename="neat/innovation_generator.cpp" />
 		<Unit filename="neat/innovation_generator.hpp" />
 		<Unit filename="neat/innovation_generator.inl" />
 		<Unit filename="neat/mutations.cpp" />
@@ -99,6 +100,7 @@
 		<Unit filename="neat/population.hpp" />
 		<Unit filename="neat/population_init.cpp" />
 		<Unit filename="neat/population_species.cpp" />
+		<Unit filename="neat/population_xml.cpp" />
 		<Unit filename="neat/random.hpp" />
 		<Unit filename="neat/random/random_functor.cpp" />
 		<Unit filename="neat/random/random_functor.hpp" />

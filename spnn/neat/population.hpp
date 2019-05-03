@@ -20,6 +20,7 @@ namespace neat
 #include "generation.hpp"
 #include "neat.hpp"
 #include "thread_pool.hpp"
+#include "xml.hpp"
 
 namespace neat
 {
@@ -27,7 +28,7 @@ namespace neat
     {
         private:
 
-            InnovationGenerator innovationCounter;
+            std::unique_ptr< InnovationGenerator > innovationCounter;
 
             size_t numNetworks;
 
@@ -105,6 +106,8 @@ namespace neat
             size_t speciatePopulationAndCount( tpl::pool& thread_pool );
 
             void IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand = nullptr, const double attritionRate = 0.5 );
+
+            void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
 
         protected:
 

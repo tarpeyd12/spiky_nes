@@ -32,7 +32,7 @@ namespace neat
             populationData.push_back( getDefaultNetworkCopy( initLimits ) );
         }
 
-        innovationCounter.clearGenerationConnections();
+        innovationCounter->clearGenerationConnections();
     }
 
     NetworkGenotype

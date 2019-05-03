@@ -80,4 +80,5 @@ spiky_nes/bin/
 *.layout
 *.depend
 *.csv
+*.xml
 exec/simplenes.log

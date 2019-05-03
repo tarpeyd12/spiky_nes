@@ -303,13 +303,33 @@ namespace neat
         {
             out << "Species " << it.first << ":\n";
             it.second->printGenotype( out );
-
-            //xml::Encode_NetworkGenotype( *(it.second), &doc, &doc );
         }
+    }
 
-        //out << doc << std::flush;
+    void
+    SpeciesManager::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
+    {
+        std::unique_lock< std::shared_timed_mutex > map_lock( speciesIDMap_mutex, std::defer_lock );
+        std::unique_lock< std::mutex > count_lock( speciesCounter_mutex, std::defer_lock );
+        std::lock( map_lock, count_lock );
 
-        //doc.clear();
+        // note: classificationParameters should already be handled by neat::Population
+
+        auto node = xml::Node( "species_tracker", "", mem_pool );
+        xml::appendSimpleValueNode( "species_counter", speciesCounter, node, mem_pool );
+
+        auto species_node = xml::Node( "species_archetypes", "", mem_pool );
+        species_node->append_attribute( xml::Attribute( "N", std::to_string( speciesIDMap.size() ), mem_pool ) );
+
+        for( const auto& s : speciesIDMap )
+        {
+            auto archtype = xml::Node( "species", "", mem_pool );
+            archtype->append_attribute( xml::Attribute( "ID", std::to_string( s.first ), mem_pool ) );
+            xml::Encode_NetworkGenotype( *s.second, archtype, mem_pool );
+            species_node->append_node( archtype );
+        }
+        node->append_node( species_node );
+        destination->append_node( node );
     }
 
     SpeciesID

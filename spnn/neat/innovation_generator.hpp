@@ -10,6 +10,7 @@ namespace neat
 }
 
 #include "neat.hpp"
+#include "xml.hpp"
 
 namespace neat
 {
@@ -34,6 +35,8 @@ namespace neat
             inline ConnectionDef GetNextConnection( NodeID src, NodeID dst, double weight, uint64_t length );
 
             inline void clearGenerationConnections();
+
+            void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
 
         protected:
 

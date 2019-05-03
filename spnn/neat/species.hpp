@@ -15,6 +15,7 @@ namespace neat
 #include "network.hpp"
 #include "neat.hpp"
 #include "thread_pool.hpp"
+#include "xml.hpp"
 
 namespace neat
 {
@@ -76,6 +77,8 @@ namespace neat
             size_t getNumTrackedSpecies() const;
 
             void printSpeciesArchetypes( std::ostream& out );
+
+            void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
 
         private:
 

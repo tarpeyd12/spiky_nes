@@ -2,6 +2,7 @@
 #define NEAT_XML_INL_INCLUDED
 
 #include <cstring>
+#include <sstream>
 
 #include "../lib/base64.hpp"
 
@@ -25,6 +26,160 @@ namespace neat
             size_t size = std::min<size_t>( sizeof( T ), decoded.size() );
             std::memcpy( &out, reinterpret_cast<void*>( decoded.c_str() ), size );
             return out;
+        }
+
+        template < typename T >
+        std::string
+        Encode_VectorData( const std::vector<T>& data )
+        {
+            return base64_encode( reinterpret_cast<const unsigned char*>( data.data() ), data.size() * sizeof( T ) );
+        }
+
+        template < typename T >
+        void
+        Decode_VectorData( const std::string& encoded, size_t size, std::vector<T>& out )
+        {
+            out.clear();
+            out.resize( size );
+            std::string decoded = base64_decode( encoded );
+            size_t len = std::min<size_t>( sizeof( T ) * size, decoded.size() );
+            std::memcpy( out.data(), reinterpret_cast<const void*>( decoded.c_str() ), len );
+        }
+    }
+
+    namespace xml
+    {
+        template < typename T >
+        T from_string( const std::string& s )
+        {
+            std::stringstream ss;
+            ss.str( s );
+
+            T v{};
+            ss >> v;
+
+            return v;
+        }
+
+
+        std::string
+        Name( const rapidxml::xml_base<> * base )
+        {
+            return std::string( base->name(), base->name_size() );
+        }
+
+        std::string
+        Value( const rapidxml::xml_base<> * base )
+        {
+            return std::string( base->value(), base->value_size() );
+        }
+
+        char *
+        Str( const std::string& input, rapidxml::memory_pool<> * mem_pool )
+        {
+            return mem_pool->allocate_string( input.data(), input.size() );
+        }
+
+        rapidxml::xml_node<> *
+        Node( const char * name, const std::string& data, rapidxml::memory_pool<> * mem_pool, rapidxml::node_type type )
+        {
+            if( data.size() )
+            {
+                return mem_pool->allocate_node( type, name, Str( data, mem_pool ), 0, data.size() );
+            }
+            return mem_pool->allocate_node( type, name, nullptr, 0, 0 );
+        }
+
+        rapidxml::xml_attribute<> *
+        Attribute( const char * name, const std::string& data, rapidxml::memory_pool<> * mem_pool )
+        {
+            if( data.size() )
+            {
+                return mem_pool->allocate_attribute( name, Str( data, mem_pool ), 0, data.size() );
+            }
+            return mem_pool->allocate_attribute( name, nullptr, 0, 0 );
+        }
+
+        rapidxml::xml_node<> *
+        FindNode( const std::string& name, rapidxml::xml_node<> * node )
+        {
+            if( name.empty() )
+            {
+                return node->first_node();
+            }
+            return node->first_node( name.c_str(), name.size() );
+        }
+
+        rapidxml::xml_attribute<> *
+        FindAttribute( const std::string& name, rapidxml::xml_node<> * node )
+        {
+            if( name.empty() )
+            {
+                return node->first_attribute();
+            }
+            return node->first_attribute( name.c_str(), name.size() );
+        }
+
+        template < typename T >
+        void
+        appendSimpleValueNode( const char * name, const T& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
+        {
+            auto node = Node( name, "", mem_pool );
+            node->append_attribute( Attribute( "value", std::to_string( value ), mem_pool ) );
+            destination->append_node( node );
+        }
+
+        template < typename T >
+        void
+        readSimpleValueNode( const char * name, T& value, rapidxml::xml_node<> * source )
+        {
+            auto node = FindNode( name, source );
+            if( node )
+            {
+                value = from_string<T>( Value( FindAttribute( "value", node ) ) );
+            }
+        }
+
+        template < typename T >
+        void
+        appendMinMaxValueNode( const char * name, const MinMax<T>& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
+        {
+            auto node = Node( name, "", mem_pool );
+            node->append_attribute( Attribute( "min", std::to_string( value.min ), mem_pool ) );
+            node->append_attribute( Attribute( "max", std::to_string( value.max ), mem_pool ) );
+            destination->append_node( node );
+        }
+
+        template < typename T >
+        void
+        readMinMaxValueNode( const char * name, MinMax<T>& value, rapidxml::xml_node<> * source )
+        {
+            auto node = FindNode( name, source );
+            if( node )
+            {
+                value.min = from_string<T>( Value( FindAttribute( "min", node ) ) );
+                value.max = from_string<T>( Value( FindAttribute( "max", node ) ) );
+            }
+        }
+
+        template < typename T >
+        void
+        appendVectorData( const char * name, const std::vector<T>& data, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
+        {
+            auto node = Node( name, "", mem_pool );
+            node->append_attribute( Attribute( "N", std::to_string( data.size() ), mem_pool ) );
+            node->append_attribute( Attribute( "data", b64::Encode_VectorData( data ), mem_pool ) );
+            destination->append_node( node );
+        }
+
+        template < typename T >
+        void
+        readVectorData( const char * name, std::vector<T>& data, rapidxml::xml_node<> * source )
+        {
+            size_t size = 0;
+            auto node = FindNode( name, source );
+            size = from_string<size_t>( Value( FindAttribute( "N", node ) ) );
+            b64::Decode_VectorData( Value( FindAttribute( "data", node ) ), size, data );
         }
     }
 }
