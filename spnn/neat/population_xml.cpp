@@ -40,7 +40,7 @@ namespace neat
             // speciesKillDelay
             {
                 auto kill_delay = xml::Node( "species_kill_delay", "", mem_pool );
-                kill_delay->append_attribute( xml::Attribute( "N", std::to_string( speciesKillDelay.size() ), mem_pool ) );
+                //kill_delay->append_attribute( xml::Attribute( "N", xml::to_string( speciesKillDelay.size() ), mem_pool ) );
                 for( auto kd : speciesKillDelay )
                 {
                     if( !kd.second )
@@ -48,8 +48,8 @@ namespace neat
                         continue;
                     }
                     auto kn_node = xml::Node( "species", "", mem_pool );
-                    kn_node->append_attribute( xml::Attribute( "ID", std::to_string( kd.first ), mem_pool ) );
-                    kn_node->append_attribute( xml::Attribute( "delay", std::to_string( kd.second ), mem_pool ) );
+                    kn_node->append_attribute( xml::Attribute( "ID", xml::to_string( kd.first ), mem_pool ) );
+                    kn_node->append_attribute( xml::Attribute( "delay", xml::to_string( kd.second ), mem_pool ) );
                     kill_delay->append_node( kn_node );
                 }
                 state->append_node( kill_delay );
@@ -62,7 +62,7 @@ namespace neat
             // pastFitness
             {
                 auto past_fitness = xml::Node( "past_fitness", "", mem_pool );
-                past_fitness->append_attribute( xml::Attribute( "N", std::to_string( pastFitness.size() ), mem_pool ) );
+                past_fitness->append_attribute( xml::Attribute( "N", xml::to_string( pastFitness.size() ), mem_pool ) );
                 for( auto fitness : pastFitness )
                 {
                     xml::appendSimpleValueNode( "fitness", fitness, past_fitness, mem_pool );
@@ -77,7 +77,7 @@ namespace neat
         // populationData
         {
             auto pop_data = xml::Node( "population_data", "", mem_pool );
-            pop_data->append_attribute( xml::Attribute( "N", std::to_string( populationData.size() ), mem_pool ) );
+            pop_data->append_attribute( xml::Attribute( "N", xml::to_string( populationData.size() ), mem_pool ) );
             for( const auto& genotype : populationData )
             {
                 xml::Encode_NetworkGenotype( genotype, pop_data, mem_pool );

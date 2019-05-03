@@ -32,6 +32,9 @@ namespace neat
         template < typename T >
         T from_string( const std::string& s );
 
+        template < typename T >
+        std::string to_string( const T& v );
+
         inline std::string Name( const rapidxml::xml_base<> * base );
         inline std::string Value( const rapidxml::xml_base<> * base );
         inline char * Str( const std::string& input, rapidxml::memory_pool<> * mem_pool );

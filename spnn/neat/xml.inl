@@ -2,7 +2,9 @@
 #define NEAT_XML_INL_INCLUDED
 
 #include <cstring>
+#include <iomanip>
 #include <sstream>
+#include <limits>
 
 #include "../lib/base64.hpp"
 
@@ -52,7 +54,7 @@ namespace neat
         template < typename T >
         T from_string( const std::string& s )
         {
-            std::stringstream ss;
+            std::istringstream ss;
             ss.str( s );
 
             T v{};
@@ -61,6 +63,27 @@ namespace neat
             return v;
         }
 
+        template < typename T >
+        std::string to_string( const T& v )
+        {
+            std::ostringstream ss;
+            ss << v;
+            std::string result = ss.str();
+            if( std::is_floating_point<T>::value )
+            {
+                std::ostringstream ss2;
+                ss2 << std::setprecision( std::numeric_limits<T>::max_digits10 + 2 );
+                ss2 << v;
+                std::string result2 = ss2.str();
+                if( result2.find('.') == std::string::npos ) { result2 += ".0"; }
+                if( fabs( v - from_string<T>( result2 ) ) < fabs( v - from_string<T>( result ) ) )
+                {
+                    return result2;
+                }
+                if( result.find('.') == std::string::npos ) { result += ".0"; }
+            }
+            return result;
+        }
 
         std::string
         Name( const rapidxml::xml_base<> * base )
@@ -125,7 +148,7 @@ namespace neat
         appendSimpleValueNode( const char * name, const T& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
         {
             auto node = Node( name, "", mem_pool );
-            node->append_attribute( Attribute( "value", std::to_string( value ), mem_pool ) );
+            node->append_attribute( Attribute( "value", xml::to_string( value ), mem_pool ) );
             destination->append_node( node );
         }
 
@@ -145,8 +168,8 @@ namespace neat
         appendMinMaxValueNode( const char * name, const MinMax<T>& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
         {
             auto node = Node( name, "", mem_pool );
-            node->append_attribute( Attribute( "min", std::to_string( value.min ), mem_pool ) );
-            node->append_attribute( Attribute( "max", std::to_string( value.max ), mem_pool ) );
+            node->append_attribute( Attribute( "min", xml::to_string( value.min ), mem_pool ) );
+            node->append_attribute( Attribute( "max", xml::to_string( value.max ), mem_pool ) );
             destination->append_node( node );
         }
 
@@ -167,7 +190,7 @@ namespace neat
         appendVectorData( const char * name, const std::vector<T>& data, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
         {
             auto node = Node( name, "", mem_pool );
-            node->append_attribute( Attribute( "N", std::to_string( data.size() ), mem_pool ) );
+            node->append_attribute( Attribute( "N", xml::to_string( data.size() ), mem_pool ) );
             node->append_attribute( Attribute( "data", b64::Encode_VectorData( data ), mem_pool ) );
             destination->append_node( node );
         }

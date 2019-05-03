@@ -12,8 +12,8 @@ namespace neat
 
         auto node = xml::Node( "innovation_generator", "", mem_pool );
 
-        node->append_attribute( xml::Attribute( "innovation_counter", std::to_string( innovationCounter ), mem_pool ) );
-        node->append_attribute( xml::Attribute( "node_counter", std::to_string( nodeCounter ), mem_pool ) );
+        node->append_attribute( xml::Attribute( "innovation_counter", xml::to_string( innovationCounter ), mem_pool ) );
+        node->append_attribute( xml::Attribute( "node_counter", xml::to_string( nodeCounter ), mem_pool ) );
 
         destination->append_node( node );
     }

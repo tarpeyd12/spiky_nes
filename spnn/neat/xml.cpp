@@ -174,11 +174,11 @@ namespace neat
             auto nodes_node    = Node( "nodes", "", mem_pool );
             auto conns_node    = Node( "connections", "", mem_pool );
 
-            nodes_node->append_attribute( Attribute( "N", std::to_string( genotype.getNumNodes() ), mem_pool ) );
+            nodes_node->append_attribute( Attribute( "N", xml::to_string( genotype.getNumNodes() ), mem_pool ) );
             nodes_node->append_attribute( Attribute( "data", b64::Encode_NodeGenotype( genotype.getNodes() ), mem_pool ) );
             genotype_node->append_node( nodes_node );
 
-            conns_node->append_attribute( Attribute( "N", std::to_string( genotype.getNumConnections() ), mem_pool ) );
+            conns_node->append_attribute( Attribute( "N", xml::to_string( genotype.getNumConnections() ), mem_pool ) );
             conns_node->append_attribute( Attribute( "data", b64::Encode_ConnectionGenotype( genotype.getConnections() ), mem_pool ) );
             genotype_node->append_node( conns_node );
 
