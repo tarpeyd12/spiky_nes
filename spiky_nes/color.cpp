@@ -348,15 +348,35 @@ namespace spkn
 
     inline
     void
-    __SobelKernelOp( bool doclamp, size_t isWidth, size_t isHeight, const std::vector<float>& image, size_t x, size_t y, float& gx, float& gy )
+    __SobelKernelOp( size_t isWidth, size_t isHeight, const std::vector<float>& image, size_t x, size_t y, float& gx, float& gy )
     {
         auto getPixel = [&]( int32_t _x, int32_t _y ) -> float
         {
-            if( doclamp )
-            {
-                _x = neat::MinMax<int64_t>{ 0, int64_t(isWidth)-1 }.clamp( _x );
-                _y = neat::MinMax<int64_t>{ 0, int64_t(isHeight)-1 }.clamp( _y );
-            }
+            return image[ _y * isWidth + _x ];
+        };
+
+        float N = getPixel( x, y-1 );
+        float S = getPixel( x, y+1 );
+        float E = getPixel( x+1, y );
+        float W = getPixel( x-1, y );
+
+        float NE = getPixel( x+1, y-1 );
+        float SE = getPixel( x+1, y+1 );
+        float NW = getPixel( x-1, y-1 );
+        float SW = getPixel( x-1, y+1 );
+
+        gx = ( NE + E + E + SE ) - ( NW + W + W + SW );
+        gy = ( SW + S + S + SE ) - ( NW + N + N + NE );
+    }
+
+    inline
+    void
+    __SobelKernelOp_Edge( size_t isWidth, size_t isHeight, const std::vector<float>& image, size_t x, size_t y, float& gx, float& gy )
+    {
+        auto getPixel = [&]( int32_t _x, int32_t _y ) -> float
+        {
+            _x = neat::MinMax<int64_t>{ 0, int64_t(isWidth)-1 }.clamp( _x );
+            _y = neat::MinMax<int64_t>{ 0, int64_t(isHeight)-1 }.clamp( _y );
             return image[ _y * isWidth + _x ];
         };
 
@@ -377,29 +397,40 @@ namespace spkn
     void
     ImageSobelEdgeDetectionToLightness( const sf::Image& image, std::vector<double>& destination, double scale, size_t startPos )
     {
-        std::vector<float> temp( image.getSize().x * image.getSize().y, 0.0 );
+        const size_t size_x = image.getSize().x;
+        const size_t size_y = image.getSize().y;
+
+        std::vector<float> temp( size_x * size_y, 0.0 );
 
         for( size_t i = 0; i < temp.size(); ++i )
         {
-            temp[ i ] = ConvertRGBtoL( image.getPixel( i % image.getSize().x, i / image.getSize().x ) );
+            temp[ i ] = ConvertRGBtoL( image.getPixel( i % size_x, i / size_x ) );
         }
 
-        neat::MinMax<float> minmax;
-        for( size_t y = 0; y < image.getSize().y; ++y )
+        neat::MinMax<double> minmax;
+        for( size_t y = 0; y < size_y; ++y )
         {
-            bool yedge = ( !y || y==image.getSize().y-1 );
-            for( size_t x = 0; x < image.getSize().x; ++x )
+            bool yedge = ( !y || y == size_y - 1 );
+            size_t y_index_offset = y * size_x + startPos;
+            for( size_t x = 0; x < size_x; ++x )
             {
-                bool xedge = ( !x || x==image.getSize().x-1 );
+                bool xedge = ( !x || x == size_x - 1 );
                 float gx, gy;
-                __SobelKernelOp( yedge || xedge, image.getSize().x, image.getSize().y, temp, x, y, gx, gy );
+                if( yedge || xedge )
+                {
+                    __SobelKernelOp_Edge( size_x, size_y, temp, x, y, gx, gy );
+                }
+                else
+                {
+                    __SobelKernelOp( size_x, size_y, temp, x, y, gx, gy );
+                }
                 float value = sqrt( gx * gx + gy * gy );
                 minmax.expand( value );
-                destination[ y * image.getSize().x + x + startPos ] = value;
+                destination[ y_index_offset + x ] = value;
             }
         }
 
-        float range = minmax.range();
+        double range = minmax.range();
         for( size_t i = 0; i < temp.size(); ++i )
         {
             double& v = destination[ i + startPos ];
@@ -488,6 +519,60 @@ namespace spkn
     }
 
     sf::Image
+    DownsizeImage_Multiple( const sf::Image& image, size_t downscaleFactor )
+    {
+        assert( downscaleFactor != 0 );
+
+        if( downscaleFactor == 1 )
+        {
+            return image;
+        }
+
+        auto index = []( size_t x, size_t y, size_t w ) -> size_t { return y * w + x; };
+
+        float downscaledPixeltoPixelRatio = (float)( downscaleFactor * downscaleFactor );
+
+        size_t width = image.getSize().x;
+        size_t height = image.getSize().y;
+
+        size_t newWidth = width / downscaleFactor;
+        size_t newHeight = height / downscaleFactor;
+
+        std::vector<sf::Vector3f> tmp( newWidth * newHeight );
+
+        sf::Image out;
+        out.create( newWidth, newHeight );
+
+        for( size_t y = 0; y < height; ++y )
+        {
+            size_t newY = y / downscaleFactor;
+            bool y_end = ( y % downscaleFactor == downscaleFactor - 1 );
+            for( size_t x = 0; x < width; ++x )
+            {
+                size_t newX = x / downscaleFactor;
+                bool x_end = ( x % downscaleFactor == downscaleFactor - 1 );
+                tmp[ index( newX, newY, newWidth ) ] += ColorToVec3f( image.getPixel( x, y ) ) / downscaledPixeltoPixelRatio;
+                if( y_end && x_end )
+                {
+                    out.setPixel( newX, newY, Vec3fToColor( tmp[ index( newX, newY, newWidth ) ] ) );
+                }
+            }
+        }
+
+
+
+        /*for( size_t y = 0; y < newHeight; ++y )
+        {
+            for( size_t x = 0; x < newWidth; ++x )
+            {
+                out.setPixel( x, y, Vec3fToColor( tmp[ index( x, y, newWidth ) ] ) );
+            }
+        }*/
+
+        return out;
+    }
+
+    sf::Image
     QuarterImage( const sf::Image& image )
     {
         sf::Image out;
@@ -528,7 +613,7 @@ namespace spkn
             if( x > newWidth )
             {
                 x = 0;
-                y++;
+                ++y;
             }
             double gx = x / (double)(newWidth) * (width-1);
             double gy = y / (double)(newHeight) * (height-1);
@@ -543,6 +628,41 @@ namespace spkn
             double result = blerp( c00, c10, c01, c11, gx - gxi, gy - gyi);
 
             destination[ offset + index( x, y, newWidth ) ] = result;
+        }
+    }
+
+    void
+    DownsizeImageVec_Multiple( const std::vector<double>& image, size_t width, size_t height, std::vector<double>& destination, size_t downscaleFactor, size_t offset )
+    {
+        assert( downscaleFactor != 0 );
+
+        if( downscaleFactor == 1 )
+        {
+            for( size_t i = 0; i < width*height; ++i )
+            {
+                destination[ i + offset ] = image[ i ];
+            }
+            return;
+        }
+
+        double downscaledPixeltoPixelRatio = (double)( downscaleFactor * downscaleFactor );
+
+        size_t newWidth = width / downscaleFactor;
+        //size_t newHeight = height / downscaleFactor;
+
+        for( size_t y = 0; y < height; ++y )
+        {
+            size_t newY = y / downscaleFactor;
+
+            size_t y_offset_index = y * width;
+            size_t newY_offset_index = newY * newWidth + offset;
+
+            for( size_t x = 0; x < width; ++x )
+            {
+                size_t newX = x / downscaleFactor;
+
+                destination[ newY_offset_index + newX ] += image[ y_offset_index + x ] / downscaledPixeltoPixelRatio;
+            }
         }
     }
 
@@ -566,7 +686,7 @@ namespace spkn
         {
             for( size_t x = 0; x < image.getSize().x; ++x )
             {
-                uint8_t l = ConvertRGBtoHSL( image.getPixel( x, y ) ).l * 255;
+                uint8_t l = ConvertRGBtoL( image.getPixel( x, y ) ) * 255;
                 out.setPixel( x, y, { l, l, l, 255 } );
             }
         }

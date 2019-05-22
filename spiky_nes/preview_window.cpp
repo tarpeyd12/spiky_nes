@@ -109,8 +109,11 @@ namespace spkn
     {
         sf::RenderWindow window;
 
+        sf::ContextSettings contextSettings;
+        contextSettings.antialiasingLevel = 2;
+
         sf::VideoMode videoMode( ( (sn::NESVideoWidth+pixelGap) * width_inNES - pixelGap ) * pixelSize, ( (sn::NESVideoHeight+pixelGap) * height_inNES - pixelGap ) * pixelSize );
-        window.create( videoMode, windowName, sf::Style::Titlebar );
+        window.create( videoMode, windowName, sf::Style::Titlebar, contextSettings );
         window.setVerticalSyncEnabled( true );
         window.setFramerateLimit( 60 );
 

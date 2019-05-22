@@ -16,6 +16,8 @@ namespace spkn
         actionsAvailable( 3.0 ),
         actionsPerMinute( APM ),
         numVBlanksWithoutButtonpress( 0 ),
+        lastKnownScreenPosition( 0.0 ),
+        numVBlanksWithoutMoving( 0 ),
         gameStateExtractor( emulator ),
         maxScreenPosPerLevel(),
         highestWorldLevel( 0 ),
@@ -109,7 +111,7 @@ namespace spkn
     {
         long double fitness = 0.0;
 
-        fitness += (long double)( gameStateExtractor.Score_High() );
+        fitness += (long double)( gameStateExtractor.Score_High() ) * 1.0;
         fitness += highestWorldLevel - 11;
         if( !controllStopped )
         {
@@ -125,6 +127,15 @@ namespace spkn
 
         fitness += traversalScore * 1000.0;
 
+        if( controllStopped )
+        {
+            fitness *= 0.9;
+        }
+
+        //return fitness / sqrt( (long double)( getNumVBlank() ) / 60.0 );
+        //return fitness / ( (long double)( getNumVBlank() ) / 60.0 );
+        //return fitness / ( (long double)( getNumVBlank() ) / 3600.0 );
+        //return fitness / sqrt( (long double)( getNumVBlank() ) / 3600.0 );
         return fitness;
     }
 
@@ -137,7 +148,12 @@ namespace spkn
     bool
     FitnessCalculator::stopTest() const
     {
-        if( numVBlanksWithoutButtonpress >= 10 * 60 )
+        if( numVBlanksWithoutButtonpress / 60.0 >= 15.0 )
+        {
+            controllStopped = true;
+            return true;
+        }
+        if( numVBlanksWithoutMoving / 60.0 >= 30.0 )
         {
             controllStopped = true;
             return true;
@@ -163,7 +179,19 @@ namespace spkn
 
             uint16_t worldLevel = gameStateExtractor.WorldLevel();
             highestWorldLevel = std::max( highestWorldLevel, worldLevel );
-            maxScreenPosPerLevel[ worldLevel ] = std::max( maxScreenPosPerLevel[ worldLevel ], gameStateExtractor.ScreenPosition() );
+
+            double current_screen_position = gameStateExtractor.ScreenPosition();
+            maxScreenPosPerLevel[ worldLevel ] = std::max( maxScreenPosPerLevel[ worldLevel ], current_screen_position );
+
+            if( lastKnownScreenPosition != current_screen_position )
+            {
+                numVBlanksWithoutMoving = 0;
+            }
+            else
+            {
+                ++numVBlanksWithoutMoving;
+            }
+            lastKnownScreenPosition = current_screen_position;
         }
     }
 
@@ -180,7 +208,7 @@ namespace spkn
     {
         if( time % networkStepsPerFrame == 0 )
         {
-            //screenInput.back() = activationMaxValue;
+            screenInput.back() = activationMaxValue;
 
             auto emuScreen = emulator.getScreenData();
 
@@ -190,18 +218,22 @@ namespace spkn
             size_t scaled_height = sn::NESVideoHeight / downsizeSize;
 
             /*ImageToSingle( LaplacianEdgeDetection( ResizeImage( *emuScreen, scaled_width, scaled_height ) ), spiralRings, true, screenInput, activationMaxValue, 0 );*/
+            //ImageToSingle( ResizeImage( *emuScreen, scaled_width, scaled_height ), spiralRings, true, screenInput, activationMaxValue, 0 );
 
             // fast and good enough
             ImageSobelEdgeDetectionToLightness( ResizeImage( *emuScreen, scaled_width, scaled_height ), screenInput, activationMaxValue, 0 );
 
-            /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
-            exit(0);*/
-
-            // a much better way, but waaaay slower
+            // a much better way, but waaaay slower, and somehow not as effective
             /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
             ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
-            ResizeImageVec( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+            DownsizeImageVec_Multiple( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, downsizeSize, 0 );
+            // double the values, but clamp to max value, this is because the sobel edge image is predominantly dark, thus the downscale
+            // darkens the pixels, and thus the network will only be operating on a partial value space per input pixel.
+            for( double& v : screenInput ) { v = std::min<double>( v * 2.0, activationMaxValue ); }*/
 
+            /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
+            ImageVecToImage( tmp, sn::NESVideoWidth, sn::NESVideoHeight, activationMaxValue ).saveToFile( "tmp.png" );
+            exit(0);*/
 
 
             /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );

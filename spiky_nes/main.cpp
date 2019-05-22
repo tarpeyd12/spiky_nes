@@ -48,12 +48,14 @@ main( int argc, char** argv )
     {
         auto help_func = [&]() -> void
         {
-            std::cout << "-h   Help\n";
-            std::cout << "-f rom_path\n";
-            std::cout << "-t num_threads\n";
-            std::cout << "-s pixel_scale\n";
-            std::cout << "-w num_columns\n";
-            std::cout << "-n size_population\n";
+            std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl;
+            std::cout << "\t-h   Help\n";
+            std::cout << "\t-v   Version\n";
+            std::cout << "\t-f rom_path\n";
+            std::cout << "\t-t num_threads\n";
+            std::cout << "\t-s pixel_scale\n";
+            std::cout << "\t-w num_columns\n";
+            std::cout << "\t-n size_population\n";
             exit( 0 );
         };
 
@@ -64,10 +66,12 @@ main( int argc, char** argv )
         cmd.add( new spkn::Cmd::Arg<int>{ { "-w", "columns" },    [&]( int i ){ arg_numColums = i; },      "Number of NES preview Windows per row" } );
         cmd.add( new spkn::Cmd::Arg<int>{ { "-n", "population" }, [&]( int i ){ arg_populationSize = i; }, "Number of networks" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "?", "-h", "help" }, help_func, "Prints help" } );
-
+        cmd.add( new spkn::Cmd::Arg_void{ { "-v", "version" }, []{ std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl; exit( 0 ); }, "Prints version" } );
 
         cmd.parse( argc, argv, [&]( const std::string& s ){ rom_path = s; } );
     }
+
+    std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl;
 
     /*for( int i = 1; i < argc; ++i )
     {
@@ -104,12 +108,12 @@ main( int argc, char** argv )
     //limits.pulseSlow =    { 5, 100 };
 
     limits.weight =       { -1000.0, 1000.0 };
-    limits.length =       { 1, 100*60*10 };
+    limits.length =       { 1, 100*60*60 };
 
 
 
-    const double simpleMutationRate_node = 0.0001;
-    const double simpleMutationRate_conn = 0.0001;
+    const double simpleMutationRate_node = 0.001;
+    const double simpleMutationRate_conn = 0.001;
 
     rates.thresholdMin =         simpleMutationRate_node * limits.thresholdMin.range();
     rates.thresholdMax =         simpleMutationRate_node * limits.thresholdMax.range();
@@ -133,16 +137,16 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   7.0;
+    speciationParams.threshold =   14.0;
 
     neat::Mutations::Mutation_Multi mutator;
 
     {
-        auto nodeMutator = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nodeMutator     = std::make_shared< neat::Mutations::Mutation_Multi_one >();
         auto nodeMutator_new = std::make_shared< neat::Mutations::Mutation_Multi_one >();
-        auto connMutator = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto connMutator     = std::make_shared< neat::Mutations::Mutation_Multi_one >();
         auto connMutator_new = std::make_shared< neat::Mutations::Mutation_Multi_one >();
-        auto nwtkMutator = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nwtkMutator     = std::make_shared< neat::Mutations::Mutation_Multi_one >();
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
@@ -177,8 +181,8 @@ main( int argc, char** argv )
         mutator.addMutator( 0.0,  0.0008, 0.0,    nodeMutator_new );
         mutator.addMutator( 0.0,  0.0,    0.001,  connMutator );
         mutator.addMutator( 0.0,  0.0,    0.0008, connMutator_new );
-        mutator.addMutator( 0.05, 0.0,    0.0,    nwtkMutator );
-        mutator.addMutator( 0.0,  0.0,    0.0001, connMutator_enable );
+        mutator.addMutator( 0.10, 0.0,    0.0,    nwtkMutator );
+        mutator.addMutator( 0.0,  0.0,    0.0015, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );

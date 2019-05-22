@@ -27,11 +27,12 @@ namespace spkn
     void ImageSobelEdgeDetectionToLightness( const sf::Image& image, std::vector<double>& destination, double scale, size_t startPos );
 
     sf::Image ResizeImage( const sf::Image& image, size_t width, size_t height );
+    sf::Image DownsizeImage_Multiple( const sf::Image& image, size_t downscaleFactor );
 
     sf::Image QuarterImage( const sf::Image& image );
 
-
     void ResizeImageVec( const std::vector<double>& image, size_t width, size_t height, std::vector<double>& destination, size_t newWidth, size_t newHeight, size_t offset );
+    void DownsizeImageVec_Multiple( const std::vector<double>& image, size_t width, size_t height, std::vector<double>& destination, size_t downscaleFactor, size_t offset );
     std::vector<double> ResizeImageVec( const std::vector<double>& image, size_t width, size_t height, size_t newWidth, size_t newHeight, size_t offset );
 
     sf::Image ImageToGreyscale( const sf::Image& image );

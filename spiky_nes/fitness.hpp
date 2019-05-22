@@ -26,6 +26,8 @@ namespace spkn
             long double actionsAvailable;
             long double actionsPerMinute;
             uint64_t numVBlanksWithoutButtonpress;
+            double lastKnownScreenPosition;
+            uint64_t numVBlanksWithoutMoving;
 
             GameState_SuperMarioBros gameStateExtractor;
 
