@@ -272,7 +272,7 @@ namespace neat
 
             // can't duplicate a connection to a genotype with no connections
             // we should also not duplicate a connection if there aren't enough different lengths
-            if( connList.empty() || limits.length.range() < 1 )
+            if( connList.empty() || limits.length.range() <= 1 )
             {
                 return 0;
             }
@@ -302,5 +302,141 @@ namespace neat
             return 1;
         }
 
+
+        uint64_t
+        Mutation_Add_conn_multi_in::operator()(  NetworkGenotype& genotypeToMutate, InnovationGenerator& innovationTracker, const MutationRates&, const MutationLimits& limits, std::shared_ptr< Rand::RandomFunctor > rand ) const
+        {
+            if( !rand ) rand = std::make_shared< Rand::Random_Safe >( Rand::Int() );
+
+            // get references for the genotypes nodes and connections
+            auto& nodeList = GetNodeList( genotypeToMutate );
+            auto& connList = GetConnList( genotypeToMutate );
+
+            // can't add a connection to a genotype with no nodes
+            if( nodeList.empty() )
+            {
+                return 0;
+            }
+
+            uint64_t numNewConns = 0;
+
+            {
+                std::vector<NodeID> inputNodeIDs;
+                std::vector<NodeID> destinationNodeIDs;
+                for( const auto& node : nodeList )
+                {
+                    if( node.type == NodeType::Input )
+                    {
+                        inputNodeIDs.emplace_back( node.ID );
+                    }
+                    else if( node.type == NodeType::Output || node.type == NodeType::Hidden )
+                    {
+                        destinationNodeIDs.emplace_back( node.ID );
+                    }
+                }
+
+                if( destinationNodeIDs.empty() )
+                {
+                    return 0;
+                }
+
+                NodeID destinationNodeID = destinationNodeIDs[ rand->Int( 0, destinationNodeIDs.size() - 1 ) ];
+
+                std::set< NodeID > existingConnections;
+                for( const auto& connDef : connList )
+                {
+                    if( connDef.destinationID == destinationNodeID )
+                    {
+                        existingConnections.emplace( connDef.sourceID );
+                    }
+                }
+
+                for( NodeID nodeID : inputNodeIDs )
+                {
+                    if( existingConnections.count( nodeID ) != 0 )
+                    {
+                        continue;
+                    }
+
+                    // set the random connection parameters within the prescribed limits
+                    double weight   = rand->Float( limits.weight.min, limits.weight.max );
+                    uint64_t length = rand->Int( limits.length.min, limits.length.max );
+
+                    connList.emplace_back( innovationTracker.GetNextConnection( nodeID, destinationNodeID, weight, length ) );
+
+                    ++numNewConns;
+                }
+            }
+
+            return numNewConns;
+        }
+
+        uint64_t
+        Mutation_Add_conn_multi_out::operator()(  NetworkGenotype& genotypeToMutate, InnovationGenerator& innovationTracker, const MutationRates&, const MutationLimits& limits, std::shared_ptr< Rand::RandomFunctor > rand ) const
+        {
+            if( !rand ) rand = std::make_shared< Rand::Random_Safe >( Rand::Int() );
+
+            // get references for the genotypes nodes and connections
+            auto& nodeList = GetNodeList( genotypeToMutate );
+            auto& connList = GetConnList( genotypeToMutate );
+
+            // can't add a connection to a genotype with no nodes
+            if( nodeList.empty() )
+            {
+                return 0;
+            }
+
+            uint64_t numNewConns = 0;
+
+            {
+                std::vector<NodeID> outputNodeIDs;
+                std::vector<NodeID> sourceNodeIDs;
+                for( const auto& node : nodeList )
+                {
+                    if( node.type == NodeType::Output )
+                    {
+                        outputNodeIDs.emplace_back( node.ID );
+                    }
+                    else if( node.type == NodeType::Input || node.type == NodeType::Hidden )
+                    {
+                        sourceNodeIDs.emplace_back( node.ID );
+                    }
+                }
+
+                if( sourceNodeIDs.empty() )
+                {
+                    return 0;
+                }
+
+                NodeID sourceNodeID = sourceNodeIDs[ rand->Int( 0, sourceNodeIDs.size() - 1 ) ];
+
+                std::set< NodeID > existingConnections;
+                for( const auto& connDef : connList )
+                {
+                    if( connDef.sourceID == sourceNodeID )
+                    {
+                        existingConnections.emplace( connDef.destinationID );
+                    }
+                }
+
+                for( NodeID nodeID : outputNodeIDs )
+                {
+                    if( existingConnections.count( nodeID ) != 0 )
+                    {
+                        continue;
+                    }
+
+                    // set the random connection parameters within the prescribed limits
+                    double weight   = rand->Float( limits.weight.min, limits.weight.max );
+                    uint64_t length = rand->Int( limits.length.min, limits.length.max );
+
+                    connList.emplace_back( innovationTracker.GetNextConnection( sourceNodeID, nodeID, weight, length ) );
+
+                    ++numNewConns;
+                }
+            }
+
+            return numNewConns;
+        }
     }
 }

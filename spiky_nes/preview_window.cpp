@@ -8,12 +8,13 @@
 
 namespace spkn
 {
-    PreviewWindow::PreviewWindow( const std::string& window_name, size_t num_previews, size_t num_columns, float screen_size_ratio )
+    PreviewWindow::PreviewWindow( const std::string& window_name, size_t population_size, size_t num_previews, size_t num_columns, float screen_size_ratio )
          :
         windowName( window_name ),
         pixelSize( screen_size_ratio ),
         width_inNES( std::max<size_t>( 1, num_columns ) ),
         height_inNES( std::max<size_t>( 1, num_previews ) / std::max<size_t>( 1, num_columns ) + ( std::max<size_t>( 1, num_previews ) % std::max<size_t>( 1, num_columns ) ? 1 : 0 ) ),
+        populationSize( population_size ),
         doRun( true ),
         virtual_screens_mutex(),
         virtual_screens(),
@@ -137,7 +138,7 @@ namespace spkn
                 }
                 else if( event.type == sf::Event::LostFocus )
                 {
-                    window.setFramerateLimit( 30 );
+                    window.setFramerateLimit( 20 );
                     focus = false;
                 }
             }
@@ -179,7 +180,8 @@ namespace spkn
                 std::stringstream ss;
                 ss << "SpikeyNES [";
                 ss << "Gen=" << numGenerationsProcessed << "(";
-                ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h), ";
+                ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h";
+                ss << ", " << std::fixed << std::setprecision(2) << (long double)( numIndividualsProcessed % populationSize ) / (long double)( populationSize ) * 100.0 << "%), ";
                 ss << "Nets=" << numIndividualsProcessed << "(";
                 ss << std::fixed << std::setprecision(2) << numIndividualsProcessed / (lastVBlankTime/3600.0) << "/h), ";
                 ss << "VBlanks=" << numKnownVBlanks << "(";

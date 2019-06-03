@@ -110,18 +110,21 @@ namespace neat
 
         // Connection property mutations
 
-        struct Mutation_Conn_weight       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_weight_new   : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_length       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_length_new   : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_enable       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Conn_weight        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Conn_weight_new    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Conn_length        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Conn_length_new    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Conn_enable        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
 
         // Structural mutations
 
-        struct Mutation_Add_node          : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Add_conn          : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Add_conn_unique   : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Add_conn_dup      : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Add_node           : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Add_conn           : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Add_conn_unique    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Add_conn_dup       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+
+        struct Mutation_Add_conn_multi_in  : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Add_conn_multi_out : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
 
     }
 }

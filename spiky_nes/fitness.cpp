@@ -111,7 +111,7 @@ namespace spkn
     {
         long double fitness = 0.0;
 
-        fitness += (long double)( gameStateExtractor.Score_High() ) * 1.0;
+        fitness += (long double)( gameStateExtractor.Score_High() ) * 0.01;
         fitness += highestWorldLevel - 11;
         if( !controllStopped )
         {

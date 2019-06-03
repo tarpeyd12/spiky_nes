@@ -142,11 +142,12 @@ main( int argc, char** argv )
     neat::Mutations::Mutation_Multi mutator;
 
     {
-        auto nodeMutator     = std::make_shared< neat::Mutations::Mutation_Multi_one >();
-        auto nodeMutator_new = std::make_shared< neat::Mutations::Mutation_Multi_one >();
-        auto connMutator     = std::make_shared< neat::Mutations::Mutation_Multi_one >();
-        auto connMutator_new = std::make_shared< neat::Mutations::Mutation_Multi_one >();
-        auto nwtkMutator     = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nodeMutator       = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nodeMutator_new   = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto connMutator       = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto connMutator_new   = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nwtkMutator       = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+        auto nwtkMutator_multi = std::make_shared< neat::Mutations::Mutation_Multi_one >();
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
@@ -177,12 +178,16 @@ main( int argc, char** argv )
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
 
-        mutator.addMutator( 0.0,  0.001,  0.0,    nodeMutator );
-        mutator.addMutator( 0.0,  0.0008, 0.0,    nodeMutator_new );
-        mutator.addMutator( 0.0,  0.0,    0.001,  connMutator );
-        mutator.addMutator( 0.0,  0.0,    0.0008, connMutator_new );
-        mutator.addMutator( 0.10, 0.0,    0.0,    nwtkMutator );
-        mutator.addMutator( 0.0,  0.0,    0.0015, connMutator_enable );
+        nwtkMutator_multi->addMutator< neat::Mutations::Mutation_Add_conn_multi_in  >();
+        nwtkMutator_multi->addMutator< neat::Mutations::Mutation_Add_conn_multi_out >();
+
+        mutator.addMutator( 0.0,   0.001,  0.0,    nodeMutator );
+        mutator.addMutator( 0.0,   0.0008, 0.0,    nodeMutator_new );
+        mutator.addMutator( 0.0,   0.0,    0.001,  connMutator );
+        mutator.addMutator( 0.0,   0.0,    0.0008, connMutator_new );
+        mutator.addMutator( 0.250, 0.0,    0.0,    nwtkMutator );
+        mutator.addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
+        mutator.addMutator( 0.0,   0.0,    0.0002, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -221,7 +226,7 @@ main( int argc, char** argv )
     //tpl::pool thread_pool{ 4 };
     tpl::pool thread_pool{ numThreads };
 
-    auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", thread_pool.num_threads(), numColumns, pixelMultiplier );
+    auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, pixelMultiplier );
 
     spkn::FitnessFactory fitnessFactory(
         rom_path,
