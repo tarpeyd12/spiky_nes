@@ -177,22 +177,38 @@ namespace spkn
                 long double runTime = std::chrono::duration<long double>(currentTime-startTime).count();
                 long double lastVBlankTime = std::chrono::duration<long double>(lastUpdatedCurrentTime-startTime).count();
 
+                long double netsPerHour = numIndividualsProcessed / (lastVBlankTime/3600.0);
+                long double gensPerHour = netsPerHour / (long double)( populationSize );
+                uint64_t netsInGen = numIndividualsProcessed % populationSize;
+                uint64_t netsLeftInGen = populationSize - netsInGen;
+                long double percentThroughGen = (long double)( netsInGen ) / (long double)( populationSize );
+
+
                 std::stringstream ss;
                 ss << "SpikeyNES [";
+
                 ss << "Gen=" << numGenerationsProcessed << "(";
-                ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h";
-                ss << ", " << std::fixed << std::setprecision(2) << (long double)( numIndividualsProcessed % populationSize ) / (long double)( populationSize ) * 100.0 << "%), ";
+                //ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h";
+                ss << std::fixed << std::setprecision(2) << gensPerHour << "/h";
+                ss << ", " << std::fixed << std::setprecision(2) << percentThroughGen * 100.0 << "%";
+                ss << ", eta:" << std::fixed << std::setprecision(2) << (long double)(netsLeftInGen) * 60.0L/netsPerHour << "m";
+                ss << "), ";
+
                 ss << "Nets=" << numIndividualsProcessed << "(";
-                ss << std::fixed << std::setprecision(2) << numIndividualsProcessed / (lastVBlankTime/3600.0) << "/h), ";
+                ss << std::fixed << std::setprecision(2) << netsPerHour << "/h), ";
+
                 ss << "VBlanks=" << numKnownVBlanks << "(";
                 ss << std::fixed << std::setprecision(2) << (long double)(numKnownVBlanks)/60.0 << "s), ";
+
                 ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(";
-                if( runTime >= 3600.0 ) ss << uint64_t(runTime/3600) << "h";
-                if( runTime >= 60.0 )   ss << std::setw(2) << std::setfill('0') << uint64_t(runTime/60) % 60 << "m";
-                                        ss << std::setw(4) << std::setfill('0') << fmod( runTime, 60.0 ) << "s";
+                if( runTime >= 3600.0 ) { ss << uint64_t(runTime/3600) << "h"; }
+                if( runTime >= 60.0 )   { ss << std::setw(2) << std::setfill('0') << uint64_t(runTime/60) % 60 << "m"; }
+                                        { ss << std::setw(4) << std::setfill('0') << fmod( runTime, 60.0 ) << "s"; }
                 ss << "), ";
+
                 ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0) / lastVBlankTime << "s:1s";
                 ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s)";
+
                 ss << "]";
 
                 window.setTitle( ss.str() );
