@@ -7,17 +7,20 @@
 
 namespace neat
 {
-    Population::Population( size_t numNets, size_t inNodes, size_t outNodes, const MutationLimits& initLimits, const MutationRates& mutRate, Mutations::Mutation_base& mutator, FitnessFactory& fitFactory, const SpeciesDistanceParameters& speciationParameters, SpeciationMethod specMethod, size_t killDelay, size_t massExtinction, size_t gensToKeep )
-         : innovationCounter( new InnovationGenerator() ), numNetworks( numNets ), numInputNodes( inNodes ), numOutputNodes( outNodes ), generationCount( 0 ), initialGenotypeTemplate( new NetworkGenotype() ), populationData(), inputNodeIDs(), outputNodeIDs(), speciesTracker( new SpeciesManager( speciationParameters, specMethod ) ), mutationLimits( initLimits ), mutationRates( mutRate ), mutatorFunctor( mutator ), fitnessCalculatorFactory( fitFactory ), generationDataToKeep( gensToKeep ), generationLog(), speciesKillDelay(), killDelayLimit( killDelay ), massExtinctionTimer( massExtinction ), pastFitness(), massExtinctionCount( 0 )
+    Population::Population( size_t numNets, size_t inNodes, size_t outNodes, const MutationLimits& initLimits, const MutationRates& mutRate, Mutations::Mutation_base& mutator, FitnessFactory& fitFactory, const SpeciesDistanceParameters& speciationParameters, SpeciationMethod specMethod, size_t minSpec, size_t killDelay, size_t massExtinction, size_t gensToKeep )
+         : innovationCounter( new InnovationGenerator() ), numNetworks( numNets ), numInputNodes( inNodes ), numOutputNodes( outNodes ), generationCount( 0 ), initialGenotypeTemplate( new NetworkGenotype() ), populationData(), inputNodeIDs(), outputNodeIDs(), speciesTracker( new SpeciesManager( speciationParameters, specMethod ) ), mutationLimits( initLimits ), mutationRates( mutRate ), mutatorFunctor( mutator ), fitnessCalculatorFactory( fitFactory ), generationDataToKeep( gensToKeep ), generationLog(), minSpeciesSize( minSpec ), speciesKillDelay(), killDelayLimit( killDelay ), massExtinctionTimer( massExtinction ), pastFitness(), massExtinctionCount( 0 )
     {
         assert( massExtinctionTimer > killDelayLimit );
         //assert( generationDataToKeep > 0 );
-        generationDataToKeep = std::max<size_t>( generationDataToKeep, 1 );
+        generationDataToKeep = std::max<size_t>( generationDataToKeep, 1 ); // must be min 1 for iterate generation to work correctly
 
         // make sure that we have appropriate parameters for the networks, and the population as a whole
-        assert( numNets > 0 );
-        assert( inNodes > 0 );
-        assert( outNodes > 0 );
+        assert( numNetworks > 0 );
+        assert( numInputNodes > 0 );
+        assert( numOutputNodes > 0 );
+
+        // make sure that we have reasonable minimum species size
+        assert( minSpeciesSize > 0 && minSpeciesSize <= numNetworks/2 );
 
         // define temporary default input and output nodes for the template network
         std::vector< NodeID > inNodesIDMade;
@@ -26,6 +29,8 @@ namespace neat
         // reserve the space for them
         inNodesIDMade.reserve( numInputNodes );
         outNodesIDMade.reserve( numOutputNodes );
+
+        // TODO(dot##6/17/2019): move the construction of the template genotype to Init functions
 
         // make our input and output nodes and add them into the default genotype, at the same time
         for( size_t i = 0; i < numInputNodes + numOutputNodes; ++i )
@@ -260,6 +265,7 @@ namespace neat
         // fitness pair sorting function lambda
         //auto sortFunc = []( const std::pair< long double, const NetworkGenotype * >& a, const std::pair< long double, const NetworkGenotype * >& b ){ return bool( a.first > b.first ); };
 
+        // calculate the sizes of the next generations species
         std::map< SpeciesID, long double > speciesFitnessRatio;
         std::map< SpeciesID, size_t > speciesNextGenCount;
         {
@@ -306,18 +312,23 @@ namespace neat
 
                 size_t speciesNextPopSize = f.second * populationSize;
 
-                if( !speciesNextPopSize )
+                if( speciesNextPopSize < 1 && minSpeciesSize > 1 )
                 {
-                    speciesKillDelay[ f.first ]++;
+                    speciesKillDelay[ f.first ] += 2;
+                }
+                else if( speciesNextPopSize < minSpeciesSize )
+                {
+                    speciesKillDelay[ f.first ] += 1;
                 }
 
                 if( speciesKillDelay[ f.first ] < killDelayLimit )
                 {
-                    speciesNextPopSize = std::max<size_t>( speciesNextPopSize, 1 );
+                    speciesNextPopSize = std::max<size_t>( speciesNextPopSize, minSpeciesSize );
                 }
                 else
                 {
                     speciesKillDelay[ f.first ] = 0;
+                    speciesNextPopSize = 0;
                 }
 
                 speciesNextGenCount.emplace( f.first, speciesNextPopSize );
@@ -329,7 +340,7 @@ namespace neat
             {
                 if( nextCount.second < 1 )
                 {
-                    countSum += nextCount.second;
+                    countSum += nextCount.second; // paranoid
                     continue;
                 }
 
@@ -374,6 +385,7 @@ namespace neat
             }
         }
 
+        // splice the current population of genotypes to create the next generation of genotypes. and identify which ones to mutate
         std::vector< NetworkGenotype > nextPopulation;
         std::vector< NetworkGenotype * > nextPopulation_to_mutate;
         {
@@ -476,11 +488,14 @@ namespace neat
             }
         }
 
-        // make sure the mutations are classified as new
-        innovationCounter->clearGenerationConnections();
-
         // mutate the population
-        mutatePopulation( thread_pool, nextPopulation_to_mutate, rand );
+        {
+            // make sure the mutations are classified as new
+            innovationCounter->clearGenerationConnections();
+
+            // mutate the population
+            mutatePopulation( thread_pool, nextPopulation_to_mutate, rand );
+        }
 
         // if we royally screwed up the population sizing and got too big, randomly reduce
         while( nextPopulation.size() > populationData.size() )

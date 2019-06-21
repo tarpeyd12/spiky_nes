@@ -35,6 +35,8 @@ namespace neat
             // innovationCounter
             innovationCounter->SaveToXML( state, mem_pool );
 
+            // minSpeciesSize
+            xml::appendSimpleValueNode( "min_species_size", minSpeciesSize, state, mem_pool );
             // killDelayLimit
             xml::appendSimpleValueNode( "kill_delay_limit", killDelayLimit, state, mem_pool );
             // speciesKillDelay

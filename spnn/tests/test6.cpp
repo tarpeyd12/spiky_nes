@@ -260,7 +260,7 @@ namespace _tests
         std::cout << "Population construct call" << std::endl;
 
         //neat::Population population( 500, 256*240/(16*16), 6, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::FirstForward, 2 );
-        neat::Population population( 120, 3, 2, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::FirstForward, 100, 200, 10 );
+        neat::Population population( 120, 3, 2, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::FirstForward, 1, 100, 200, 10 );
 
         tpl::pool thread_pool( 1 );
 

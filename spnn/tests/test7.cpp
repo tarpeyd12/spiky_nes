@@ -487,7 +487,7 @@ namespace _tests
         uint64_t numInNodes = fitnessFactory.numInputNodes();
         uint64_t numOutNodes = fitnessFactory.numOutputNodes();
 
-        neat::Population population( 1000, numInNodes, numOutNodes, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::Closest, 3, 500, 1 );
+        neat::Population population( 1000, numInNodes, numOutNodes, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::Closest, 1, 3, 500, 1 );
 
         tpl::pool thread_pool{ 4 };
 

@@ -59,6 +59,7 @@ namespace neat
             size_t generationDataToKeep;
             std::deque< std::shared_ptr< Generation > > generationLog;
 
+            size_t minSpeciesSize;
             std::map< SpeciesID, size_t > speciesKillDelay;
             size_t killDelayLimit;
 
@@ -77,6 +78,7 @@ namespace neat
                         FitnessFactory& fitFactory,
                         const SpeciesDistanceParameters& speciationParameters,
                         SpeciationMethod specMethod = SpeciationMethod::FirstForward,
+                        size_t minSpec = 1,
                         size_t killDelay = 100,
                         size_t massExtinction = 200,
                         size_t gensToKeep = 10 );

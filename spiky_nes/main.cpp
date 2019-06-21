@@ -108,7 +108,7 @@ main( int argc, char** argv )
     //limits.pulseSlow =    { 5, 100 };
 
     limits.weight =       { -1000.0, 1000.0 };
-    limits.length =       { 1, 100*60*60 };
+    limits.length =       { 1, 100*60*60*4 };
 
 
 
@@ -149,8 +149,6 @@ main( int argc, char** argv )
         auto nwtkMutator       = std::make_shared< neat::Mutations::Mutation_Multi_one >();
         auto nwtkMutator_multi = std::make_shared< neat::Mutations::Mutation_Multi_one >();
 
-        auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
-
         nodeMutator->addMutator< neat::Mutations::Mutation_Node_thresh_min   >();
         nodeMutator->addMutator< neat::Mutations::Mutation_Node_thresh_max   >();
         nodeMutator->addMutator< neat::Mutations::Mutation_Node_decays_activ >();
@@ -180,6 +178,8 @@ main( int argc, char** argv )
 
         nwtkMutator_multi->addMutator< neat::Mutations::Mutation_Add_conn_multi_in  >();
         nwtkMutator_multi->addMutator< neat::Mutations::Mutation_Add_conn_multi_out >();
+
+        auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
         mutator.addMutator( 0.0,   0.001,  0.0,    nodeMutator );
         mutator.addMutator( 0.0,   0.0008, 0.0,    nodeMutator_new );
@@ -250,7 +250,8 @@ main( int argc, char** argv )
         fitnessFactory,
         speciationParams,
         neat::SpeciationMethod::Closest,
-        5, // num generations to buffer before species goes extinct
+        5, // min species size to not be considered endangered
+        5, // num generations to buffer before endangered species goes extinct
         25, // min generations between mass extinctions
         1 // num generation data to keep
     );
