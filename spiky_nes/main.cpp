@@ -137,7 +137,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   14.0;
+    speciationParams.threshold =   30.0;
 
     neat::Mutations::Mutation_Multi mutator;
 
@@ -187,7 +187,7 @@ main( int argc, char** argv )
         mutator.addMutator( 0.0,   0.0,    0.0008, connMutator_new );
         mutator.addMutator( 0.250, 0.0,    0.0,    nwtkMutator );
         mutator.addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
-        mutator.addMutator( 0.0,   0.0,    0.0002, connMutator_enable );
+        mutator.addMutator( 0.0,   0.0,    0.0020, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -207,7 +207,7 @@ main( int argc, char** argv )
         if( cmd.wasArgFound( "threads" ) )
         {
             numThreads = arg_numThreads;
-            numThreads = neat::MinMax<size_t>{ 1, std::max< size_t >( 2, std::thread::hardware_concurrency() ) - 1 }.clamp( numThreads );
+            numThreads = neat::MinMax<size_t>{ 1, std::max<size_t>( 2, std::thread::hardware_concurrency() ) - 1 }.clamp( numThreads );
         }
 
         if( cmd.wasArgFound( "population" ) )
@@ -235,7 +235,7 @@ main( int argc, char** argv )
         3.0 * 60.0, // APM allowed
         100, // network steps per NES frame
         5, // color winding value
-        16  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
+        8  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
     );
 
     std::cout << "Population construct call ... " << std::flush;
@@ -250,7 +250,7 @@ main( int argc, char** argv )
         fitnessFactory,
         speciationParams,
         neat::SpeciationMethod::Closest,
-        5, // min species size to not be considered endangered
+        50, // min species size to not be considered endangered
         5, // num generations to buffer before endangered species goes extinct
         25, // min generations between mass extinctions
         1 // num generation data to keep
