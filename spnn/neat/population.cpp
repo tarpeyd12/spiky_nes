@@ -151,37 +151,57 @@ namespace neat
     }
 
     void
-    Population::IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand, const double attritionRate )
+    Population::IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand, const double attritionRate, std::shared_ptr< DbgGenerationCallbacks > dbg_callbacks )
     {
         // TODO(dot##1/22/2019): rewrite the comments in this function
 
-        //const double attritionRate = 0.95; // portion to eliminate from each species
-
         assert( attritionRate > 0.0 && attritionRate < 1.0 );
+
+        const bool dbg = bool( dbg_callbacks != nullptr );
+
+        // callback for starting calculations
+        if( dbg && dbg_callbacks->begin ) dbg_callbacks->begin();
+
 
         const size_t populationSize = populationData.size();
 
         // make sure we have a functioning random number generator
         if( !rand ) rand = std::make_shared< Rand::Random_Safe >( Rand::Int() );
 
+
+        if( dbg && dbg_callbacks->fitness_begin ) dbg_callbacks->fitness_begin();
+
         // std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > >
         // std::map< SpeciesID, std::pair< avgFitness, std::vector< std::pair< fitness, const NetworkGenotype * > > > >
         auto fitnessMap = getSpeciesAndNetworkFitness( thread_pool );
 
-        // log the generation and iterate the generation count
-        //if( generationDataToKeep )
+        if( dbg && dbg_callbacks->fitness_end ) dbg_callbacks->fitness_end();
+
+
+        // archive the generation data
         {
-            generationLog.push_back( std::shared_ptr< Generation >( new Generation( generationCount++, true, *speciesTracker, fitnessMap ) ) );
-            while( generationLog.size() > generationDataToKeep )
+            if( dbg && dbg_callbacks->archive_begin ) dbg_callbacks->archive_begin();
+
+            // log the generation and iterate the generation count
+            //if( generationDataToKeep )
             {
-                generationLog.pop_front();
+                generationLog.push_back( std::shared_ptr< Generation >( new Generation( generationCount++, true, *speciesTracker, fitnessMap ) ) );
+                while( generationLog.size() > generationDataToKeep )
+                {
+                    generationLog.pop_front();
+                }
             }
+
+            speciesTracker->archiveSpeciesArchetypes( generationCount-1 );
+
+            if( dbg && dbg_callbacks->archive_end ) dbg_callbacks->archive_end();
         }
 
-        speciesTracker->archiveSpeciesArchetypes( generationCount-1 );
 
         // mass extinction stuff
         {
+            if( dbg && dbg_callbacks->extinction_begin ) dbg_callbacks->extinction_begin();
+
             bool check = false;
             auto gen = getLastGenerationData();
             long double currentFitness = gen->getAvgFitness();
@@ -216,6 +236,8 @@ namespace neat
 
                 if( avgNew - avgOld < 0.1 )
                 {
+                    if( dbg && dbg_callbacks->extinction_event ) dbg_callbacks->extinction_event();
+
                     // ok, we are going extinct now!
                     ++massExtinctionCount;
 
@@ -259,6 +281,8 @@ namespace neat
                     }
                 } // end actual extinction
             }
+
+            if( dbg && dbg_callbacks->extinction_end ) dbg_callbacks->extinction_end();
         } // end mass extinction code
 
 
@@ -269,6 +293,8 @@ namespace neat
         std::map< SpeciesID, long double > speciesFitnessRatio;
         std::map< SpeciesID, size_t > speciesNextGenCount;
         {
+            if( dbg && dbg_callbacks->matching_begin ) dbg_callbacks->matching_begin();
+
             MinMax< long double > fitnessBounds( fitnessMap.begin()->second.first );
 
             std::mutex archetype_mutex;
@@ -383,12 +409,16 @@ namespace neat
             {
                 species_sort_futures.pop_front();
             }
+
+            if( dbg && dbg_callbacks->matching_end ) dbg_callbacks->matching_end();
         }
 
         // splice the current population of genotypes to create the next generation of genotypes. and identify which ones to mutate
         std::vector< NetworkGenotype > nextPopulation;
         std::vector< NetworkGenotype * > nextPopulation_to_mutate;
         {
+            if( dbg && dbg_callbacks->splicing_begin ) dbg_callbacks->splicing_begin();
+
             struct future_package
             {
                 tpl::future< NetworkGenotype > future;
@@ -486,28 +516,44 @@ namespace neat
 
                 nextPopulation_to_mutate.emplace_back( &nextPopulation[ i ] );
             }
+
+            if( dbg && dbg_callbacks->splicing_end ) dbg_callbacks->splicing_end();
         }
 
         // mutate the population
         {
+            if( dbg && dbg_callbacks->mutation_begin ) dbg_callbacks->mutation_begin();
+
             // make sure the mutations are classified as new
             innovationCounter->clearGenerationConnections();
 
             // mutate the population
             mutatePopulation( thread_pool, nextPopulation_to_mutate, rand );
+
+            if( dbg && dbg_callbacks->mutation_end ) dbg_callbacks->mutation_end();
         }
 
-        // if we royally screwed up the population sizing and got too big, randomly reduce
-        while( nextPopulation.size() > populationData.size() )
+        // swap out the old population for the new population
         {
-            nextPopulation.erase( nextPopulation.begin() + rand->Int( 0, nextPopulation.size() - 1 ) );
+            if( dbg && dbg_callbacks->swap_begin ) dbg_callbacks->swap_begin();
+
+            // if we royally screwed up the population sizing and got too big, randomly reduce
+            while( nextPopulation.size() > populationData.size() )
+            {
+                nextPopulation.erase( nextPopulation.begin() + rand->Int( 0, nextPopulation.size() - 1 ) );
+            }
+
+            // double check we didn't screw up
+            assert( nextPopulation.size() == populationData.size() );
+
+            // we now assign the population data to the new population that we just created
+            populationData = nextPopulation;
+
+            if( dbg && dbg_callbacks->swap_end ) dbg_callbacks->swap_end();
         }
 
-        // double check we didn't screw up
-        assert( nextPopulation.size() == populationData.size() );
-
-        // we now assign the population data to the new population that we just created
-        populationData = nextPopulation;
+        // callback for ending calculations
+        if( dbg && dbg_callbacks->end ) dbg_callbacks->end();
 
         // and done
     }

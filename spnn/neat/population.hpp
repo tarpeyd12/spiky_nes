@@ -107,7 +107,36 @@ namespace neat
 
             size_t speciatePopulationAndCount( tpl::pool& thread_pool );
 
-            void IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand = nullptr, const double attritionRate = 0.5 );
+            struct DbgGenerationCallbacks
+            {
+                std::function<void()> begin;
+
+                std::function<void()> fitness_begin;
+                std::function<void()> fitness_end;
+
+                std::function<void()> archive_begin;
+                std::function<void()> archive_end;
+
+                std::function<void()> extinction_begin;
+                std::function<void()> extinction_end;
+                std::function<void()> extinction_event;
+
+                std::function<void()> matching_begin;
+                std::function<void()> matching_end;
+
+                std::function<void()> splicing_begin;
+                std::function<void()> splicing_end;
+
+                std::function<void()> mutation_begin;
+                std::function<void()> mutation_end;
+
+                std::function<void()> swap_begin;
+                std::function<void()> swap_end;
+
+                std::function<void()> end;
+            };
+
+            void IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand = nullptr, const double attritionRate = 0.5, std::shared_ptr< DbgGenerationCallbacks > dbg_callbacks = nullptr );
 
             void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
 

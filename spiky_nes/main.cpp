@@ -223,6 +223,29 @@ main( int argc, char** argv )
         }
     }
 
+    auto dbg_start_time = std::chrono::high_resolution_clock::now();
+    auto dbg_time_set = [&]{ dbg_start_time = std::chrono::high_resolution_clock::now(); };
+    auto dbg_time_get = [&]{ return round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - dbg_start_time).count())/1000.0; };
+
+    auto gen_dbg_callbacks = std::make_shared< neat::Population::DbgGenerationCallbacks >();
+    gen_dbg_callbacks->begin            = [&]{ std::cout << "\t  Start Generation Calculations ... \n" << std::flush; };
+    gen_dbg_callbacks->fitness_begin    = [&]{ std::cout << "\t    Calculating Fitness ...     " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->fitness_end      = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->archive_begin    = [&]{ std::cout << "\t    Archiving Generation ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->archive_end      = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->extinction_begin = [&]{ std::cout << "\t    Checking for Extinction ... " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->extinction_event = [&]{ std::cout << "Going Extinct! ... " << std::flush; };
+    gen_dbg_callbacks->extinction_end   = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->matching_begin   = [&]{ std::cout << "\t    Matching Individuals ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->matching_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->splicing_begin   = [&]{ std::cout << "\t    Splicing Individuals ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->splicing_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->mutation_begin   = [&]{ std::cout << "\t    Mutating Population ...     " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->mutation_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->swap_begin       = [&]{ std::cout << "\t    Swapping Populations ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->swap_end         = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->end              = [&]{ std::cout << "\t  End Generation Calculations. \n" << std::flush; };
+
     //tpl::pool thread_pool{ 4 };
     tpl::pool thread_pool{ numThreads };
 
@@ -347,7 +370,7 @@ main( int argc, char** argv )
         }
 
         // this is the only line in this loop that really matters *******************************************************
-        population.IterateGeneration( thread_pool, random, attritionRate );
+        population.IterateGeneration( thread_pool, random, attritionRate, gen_dbg_callbacks );
         fitnessFactory.incrementGeneration();
 
         std::cout << "\tDone. (~" << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count())/1000.0 << "s)\n\n";
