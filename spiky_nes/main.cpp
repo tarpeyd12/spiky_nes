@@ -181,13 +181,13 @@ main( int argc, char** argv )
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
-        mutator.addMutator( 0.0,   0.001,  0.0,    nodeMutator );
-        mutator.addMutator( 0.0,   0.0008, 0.0,    nodeMutator_new );
-        mutator.addMutator( 0.0,   0.0,    0.001,  connMutator );
-        mutator.addMutator( 0.0,   0.0,    0.0008, connMutator_new );
+        mutator.addMutator( 0.0,   0.005,  0.0,    nodeMutator );
+        mutator.addMutator( 0.0,   0.0016, 0.0,    nodeMutator_new );
+        mutator.addMutator( 0.0,   0.0,    0.005,  connMutator );
+        mutator.addMutator( 0.0,   0.0,    0.0016, connMutator_new );
         mutator.addMutator( 0.250, 0.0,    0.0,    nwtkMutator );
         mutator.addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
-        mutator.addMutator( 0.0,   0.0,    0.0020, connMutator_enable );
+        mutator.addMutator( 0.0,   0.0,    0.0200, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -229,20 +229,22 @@ main( int argc, char** argv )
 
     auto gen_dbg_callbacks = std::make_shared< neat::Population::DbgGenerationCallbacks >();
     gen_dbg_callbacks->begin            = [&]{ std::cout << "\t  Start Generation Calculations ... \n" << std::flush; };
-    gen_dbg_callbacks->fitness_begin    = [&]{ std::cout << "\t    Calculating Fitness ...     " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->speciate_begin   = [&]{ std::cout << "\t    Speciating Population ...     " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->speciate_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
+    gen_dbg_callbacks->fitness_begin    = [&]{ std::cout << "\t    Calculating Fitness ...       " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->fitness_end      = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
-    gen_dbg_callbacks->archive_begin    = [&]{ std::cout << "\t    Archiving Generation ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->archive_begin    = [&]{ std::cout << "\t    Archiving Generation ...      " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->archive_end      = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
-    gen_dbg_callbacks->extinction_begin = [&]{ std::cout << "\t    Checking for Extinction ... " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->extinction_begin = [&]{ std::cout << "\t    Checking for Extinction ...   " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->extinction_event = [&]{ std::cout << "Going Extinct! ... " << std::flush; };
     gen_dbg_callbacks->extinction_end   = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
-    gen_dbg_callbacks->matching_begin   = [&]{ std::cout << "\t    Matching Individuals ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->matching_begin   = [&]{ std::cout << "\t    Matching Individuals ...      " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->matching_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
-    gen_dbg_callbacks->splicing_begin   = [&]{ std::cout << "\t    Splicing Individuals ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->splicing_begin   = [&]{ std::cout << "\t    Splicing Individuals ...      " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->splicing_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
-    gen_dbg_callbacks->mutation_begin   = [&]{ std::cout << "\t    Mutating Population ...     " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->mutation_begin   = [&]{ std::cout << "\t    Mutating Population ...       " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->mutation_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
-    gen_dbg_callbacks->swap_begin       = [&]{ std::cout << "\t    Swapping Populations ...    " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->swap_begin       = [&]{ std::cout << "\t    Swapping Populations ...      " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->swap_end         = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
     gen_dbg_callbacks->end              = [&]{ std::cout << "\t  End Generation Calculations. \n" << std::flush; };
 

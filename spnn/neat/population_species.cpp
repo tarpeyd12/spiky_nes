@@ -117,9 +117,14 @@ namespace neat
     std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > >
     Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool )
     {
-        std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > > speciesFitness;
+        auto speciatedPopulation = getSpeciatedPopulationData( thread_pool );
+        return getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
+    }
 
-        std::map< SpeciesID, std::vector< NetworkGenotype * > > speciatedPopulation = getSpeciatedPopulationData( thread_pool );
+    std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > >
+    Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation )
+    {
+        std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > > speciesFitness;
 
         struct fitness_package
         {
@@ -157,7 +162,7 @@ namespace neat
         for( auto it = speciatedPopulation.begin(); it != speciatedPopulation.end(); ++it )
         {
             SpeciesID species = it->first;
-            std::vector< NetworkGenotype * >& genotypes = it->second;
+            const std::vector< NetworkGenotype * >& genotypes = it->second;
 
             speciesFitness[ species ].first = 0.0;
             speciesFitness[ species ].second.reserve( genotypes.size() );

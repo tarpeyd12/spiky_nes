@@ -168,12 +168,21 @@ namespace neat
         // make sure we have a functioning random number generator
         if( !rand ) rand = std::make_shared< Rand::Random_Safe >( Rand::Int() );
 
+        if( dbg && dbg_callbacks->speciate_begin ) dbg_callbacks->speciate_begin();
+
+        auto speciatedPopulation = getSpeciatedPopulationData( thread_pool );
+
+        if( dbg && dbg_callbacks->speciate_end ) dbg_callbacks->speciate_end();
+
 
         if( dbg && dbg_callbacks->fitness_begin ) dbg_callbacks->fitness_begin();
 
         // std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > >
         // std::map< SpeciesID, std::pair< avgFitness, std::vector< std::pair< fitness, const NetworkGenotype * > > > >
-        auto fitnessMap = getSpeciesAndNetworkFitness( thread_pool );
+        auto fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
+
+        // clean up the map since we cant wrap this part in brackets :/
+        speciatedPopulation.clear();
 
         if( dbg && dbg_callbacks->fitness_end ) dbg_callbacks->fitness_end();
 

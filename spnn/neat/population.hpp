@@ -99,6 +99,7 @@ namespace neat
 
             std::map< SpeciesID, long double > getSpeciesFitness( tpl::pool& thread_pool );
             std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > > getSpeciesAndNetworkFitness( tpl::pool& thread_pool );
+            std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > > getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation );
 
             void printSpeciesArchetypes( std::ostream& out );
 
@@ -110,6 +111,9 @@ namespace neat
             struct DbgGenerationCallbacks
             {
                 std::function<void()> begin;
+
+                std::function<void()> speciate_begin;
+                std::function<void()> speciate_end;
 
                 std::function<void()> fitness_begin;
                 std::function<void()> fitness_end;
