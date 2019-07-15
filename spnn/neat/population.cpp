@@ -391,7 +391,7 @@ namespace neat
             while( countSum < populationSize )
             {
                 SpeciesID minID = speciesNextGenCount.begin()->first;
-                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ minID ] < c.second ) { minID = c.first; } }
+                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ minID ] > c.second ) { minID = c.first; } }
 
                 speciesNextGenCount[ minID ]++;
                 countSum++;
@@ -401,19 +401,16 @@ namespace neat
             while( countSum > populationSize )
             {
                 SpeciesID maxID = speciesNextGenCount.begin()->first;
-                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ maxID ] > c.second ) { maxID = c.first; } }
+                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ maxID ] < c.second ) { maxID = c.first; } }
 
-                if( speciesNextGenCount[ maxID ] <= 1 )
-                {
-                    // ERREOR
-                }
-                else
+                if( speciesNextGenCount[ maxID ] > 0 )
                 {
                     speciesNextGenCount[ maxID ]--;
+                    countSum--;
                 }
-                countSum--;
             }
 
+            // wait for all sorts to be done
             while( !species_sort_futures.empty() )
             {
                 species_sort_futures.pop_front();
@@ -483,6 +480,11 @@ namespace neat
                     }
                 }
 
+                while( matingPairs.size() > newGenotypesToMake )
+                {
+                    matingPairs.pop_back();
+                }
+
                 for( auto p : matingPairs )
                 {
                     // if the pair is the same, then just return one of them instead of splicing
@@ -498,6 +500,8 @@ namespace neat
                     genotype_futures.push_back( { thread_pool.submit< overload_type >( SpliceGenotypes, std::cref( *oldGenotypesVec[ p.first ].second ), std::cref( *oldGenotypesVec[ p.second ].second ), _rand ), p.do_mutate } );
                 }
             }
+
+            assert( genotype_futures.size() == populationSize );
 
             std::set< size_t > no_mutate_indexes;
             while( !genotype_futures.empty() )
@@ -546,7 +550,7 @@ namespace neat
         {
             if( dbg && dbg_callbacks->swap_begin ) dbg_callbacks->swap_begin();
 
-            // if we royally screwed up the population sizing and got too big, randomly reduce
+            // if we royally screwed up the population sizing and got too big, randomly reduce as a last resort
             while( nextPopulation.size() > populationData.size() )
             {
                 nextPopulation.erase( nextPopulation.begin() + rand->Int( 0, nextPopulation.size() - 1 ) );

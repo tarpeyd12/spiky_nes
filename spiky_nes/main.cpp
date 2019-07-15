@@ -137,7 +137,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   30.0;
+    speciationParams.threshold =   75.0;
 
     neat::Mutations::Mutation_Multi mutator;
 
@@ -260,7 +260,7 @@ main( int argc, char** argv )
         3.0 * 60.0, // APM allowed
         100, // network steps per NES frame
         5, // color winding value
-        8  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
+        16  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
     );
 
     std::cout << "Population construct call ... " << std::flush;
@@ -343,6 +343,7 @@ main( int argc, char** argv )
         {
             // this is the PLEASE DON'T CRASH section
 
+            dbg_time_set();
             std::cout << "\n\tSaving Population Data ... " << std::flush;
 
             std::ofstream success_file( output_path, std::ofstream::trunc );
@@ -356,7 +357,7 @@ main( int argc, char** argv )
 
             success_file.close();
 
-            std::cout << "Done.\n" << std::flush;
+            std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush;
         }
 
         std::cout << "\n\tCalculating ...\n" << std::flush;

@@ -19,8 +19,8 @@ namespace Rand
     };
 
     inline long double Float( long double min = 0.0, long double max = 1.0 );
-    inline double Float( double min = 0.0, double max = 1.0 );
-    inline float Float( float min = 0.0, float max = 1.0 );
+    inline double Float( double min, double max );
+    inline float Float( float min, float max );
 
     inline uintmax_t Int( uintmax_t min = 0, uintmax_t max = ~1 );
 
