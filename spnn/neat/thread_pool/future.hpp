@@ -16,6 +16,7 @@ namespace tpl
 
         public:
 
+            future();
             future( std::future< T >&& f );
             ~future();
 
@@ -30,6 +31,7 @@ namespace tpl
             T get();
             void release();
             bool valid() const;
+            void wait() const;
     };
 }
 

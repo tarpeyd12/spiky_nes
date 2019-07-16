@@ -6,6 +6,13 @@
 namespace tpl
 {
     template < typename T >
+    future< T >::future()
+         :  _future(), block_on_destruction( false )
+    {
+        /*  */
+    }
+
+    template < typename T >
     future< T >::future( std::future< T >&& f )
          :  _future( std::move( f ) ), block_on_destruction( true )
     {
@@ -40,6 +47,13 @@ namespace tpl
     future< T >::valid() const
     {
         return block_on_destruction && _future.valid();
+    }
+
+    template < typename T >
+    void
+    future< T >::wait() const
+    {
+        _future.wait();
     }
 }
 
