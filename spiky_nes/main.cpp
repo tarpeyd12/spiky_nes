@@ -260,7 +260,7 @@ main( int argc, char** argv )
         3.0 * 60.0, // APM allowed
         100, // network steps per NES frame
         5, // color winding value
-        16  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
+        8  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
     );
 
     std::cout << "Population construct call ... " << std::flush;

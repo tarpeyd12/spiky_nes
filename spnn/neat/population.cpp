@@ -390,8 +390,17 @@ namespace neat
             // account for too few
             while( countSum < populationSize )
             {
-                SpeciesID minID = speciesNextGenCount.begin()->first;
-                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ minID ] > c.second ) { minID = c.first; } }
+                /*SpeciesID minID = speciesNextGenCount.begin()->first;
+                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ minID ] > c.second ) { minID = c.first; } }*/
+
+                std::vector< SpeciesID > minIDs = { speciesNextGenCount.begin()->first };
+                size_t minCount = speciesNextGenCount.begin()->second;
+                for( auto c : speciesNextGenCount )
+                {
+                    if( minCount > c.second ) { minIDs.clear(); minIDs.emplace_back( c.first ); minCount = c.second; }
+                    else if( minCount == c.second ) { minIDs.emplace_back( c.first ); }
+                }
+                SpeciesID minID = minIDs[ rand->Int( 0, minIDs.size() - 1 ) ];
 
                 speciesNextGenCount[ minID ]++;
                 countSum++;
@@ -400,8 +409,17 @@ namespace neat
             // account for too many
             while( countSum > populationSize )
             {
-                SpeciesID maxID = speciesNextGenCount.begin()->first;
-                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ maxID ] < c.second ) { maxID = c.first; } }
+                /*SpeciesID maxID = speciesNextGenCount.begin()->first;
+                for( auto c : speciesNextGenCount ) { if( speciesNextGenCount[ maxID ] < c.second ) { maxID = c.first; } }*/
+
+                std::vector< SpeciesID > maxIDs = { speciesNextGenCount.begin()->first };
+                size_t maxCount = speciesNextGenCount.begin()->second;
+                for( auto c : speciesNextGenCount )
+                {
+                    if( maxCount < c.second ) { maxIDs.clear(); maxIDs.emplace_back( c.first ); maxCount = c.second; }
+                    else if( maxCount == c.second ) { maxIDs.emplace_back( c.first ); }
+                }
+                SpeciesID maxID = maxIDs[ rand->Int( 0, maxIDs.size() - 1 ) ];
 
                 if( speciesNextGenCount[ maxID ] > 0 )
                 {
