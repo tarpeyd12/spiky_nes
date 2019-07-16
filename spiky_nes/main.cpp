@@ -67,6 +67,7 @@ main( int argc, char** argv )
         cmd.add( new spkn::Cmd::Arg<int>{ { "-n", "population" }, [&]( int i ){ arg_populationSize = i; }, "Number of networks" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "?", "-h", "help" }, help_func, "Prints help" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "-v", "version" }, []{ std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl; exit( 0 ); }, "Prints version" } );
+        cmd.add( new spkn::Cmd::Arg_void{ { "--file-async", "fileasync" }, []{}, "Flag to save file on separate thread" } );
 
         cmd.parse( argc, argv, [&]( const std::string& s ){ rom_path = s; } );
     }
@@ -339,6 +340,8 @@ main( int argc, char** argv )
 
         std::cout << "\n\nGeneration " << population.getGenerationCount() << ":\n";
 
+        tpl::future<void> save_future;
+
         if( cmd.wasArgFound( "output" ) )
         {
             // this is the PLEASE DON'T CRASH section
@@ -346,16 +349,34 @@ main( int argc, char** argv )
             dbg_time_set();
             std::cout << "\n\tSaving Population Data ... " << std::flush;
 
-            std::ofstream success_file( output_path, std::ofstream::trunc );
             //population.printSpeciesArchetypes( success_file );
 
-            rapidxml::xml_document<> doc;
+            rapidxml::xml_document<> * doc = new rapidxml::xml_document<>();
 
-            population.SaveToXML( &doc, &doc );
+            {
+                auto begin = std::chrono::high_resolution_clock::now();
+                population.SaveToXML( doc, doc );
+                std::cout << " [Data Encoding Complete ";
+                std::cout << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count();
+                std::cout << "s] " << std::flush;
+            }
 
-            success_file << doc << std::flush;
+            save_future = thread_pool.submit( [doc,output_path]
+            {
+                auto begin = std::chrono::high_resolution_clock::now();
+                std::ofstream success_file( output_path, std::ofstream::trunc );
+                success_file << *doc << std::flush;
+                success_file.close();
+                delete doc;
+                std::cout << " [Disc Write Complete ";
+                std::cout << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count();
+                std::cout << "s] " << std::flush;
+            } );
 
-            success_file.close();
+            if( !cmd.wasArgFound( "fileasync" ) )
+            {
+                save_future.wait();
+            }
 
             std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush;
         }
@@ -377,6 +398,11 @@ main( int argc, char** argv )
         fitnessFactory.incrementGeneration();
 
         std::cout << "\tDone. (~" << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count())/1000.0 << "s)\n\n";
+
+        if( save_future.valid() )
+        {
+            save_future.wait();
+        }
 
         std::cout << "\tattrRate = " << attritionRate << "\n";
 
