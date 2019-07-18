@@ -68,6 +68,7 @@ main( int argc, char** argv )
         cmd.add( new spkn::Cmd::Arg_void{ { "?", "-h", "help" }, help_func, "Prints help" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "-v", "version" }, []{ std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl; exit( 0 ); }, "Prints version" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "--file-async", "fileasync" }, []{}, "Flag to save file on separate thread" } );
+        cmd.add( new spkn::Cmd::Arg_void{ { "--headless", "headless" }, []{}, "Flag to disable preview window" } );
 
         cmd.parse( argc, argv, [&]( const std::string& s ){ rom_path = s; } );
     }
@@ -249,10 +250,13 @@ main( int argc, char** argv )
     gen_dbg_callbacks->swap_end         = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
     gen_dbg_callbacks->end              = [&]{ std::cout << "\t  End Generation Calculations. \n" << std::flush; };
 
-    //tpl::pool thread_pool{ 4 };
     tpl::pool thread_pool{ numThreads };
 
-    auto previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, pixelMultiplier );
+    std::shared_ptr<spkn::PreviewWindow> previewWindow = nullptr;
+    if( !cmd.wasArgFound( "headless" ) )
+    {
+        previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, pixelMultiplier );
+    }
 
     spkn::FitnessFactory fitnessFactory(
         rom_path,
@@ -276,7 +280,7 @@ main( int argc, char** argv )
         fitnessFactory,
         speciationParams,
         neat::SpeciationMethod::Closest,
-        50, // min species size to not be considered endangered
+        5, // min species size to not be considered endangered
         5, // num generations to buffer before endangered species goes extinct
         25, // min generations between mass extinctions
         1 // num generation data to keep
@@ -357,7 +361,7 @@ main( int argc, char** argv )
                 auto begin = std::chrono::high_resolution_clock::now();
                 population.SaveToXML( doc, doc );
                 std::cout << " [Data Encoding Complete ";
-                std::cout << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count();
+                std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
                 std::cout << "s] " << std::flush;
             }
 
@@ -369,7 +373,7 @@ main( int argc, char** argv )
                 success_file.close();
                 delete doc;
                 std::cout << " [Disc Write Complete ";
-                std::cout << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count();
+                std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
                 std::cout << "s] " << std::flush;
             } );
 
