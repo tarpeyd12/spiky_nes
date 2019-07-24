@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "preview_window.hpp"
+#include "helpers.hpp"
 
 #include "../simple_nes/include/Emulator.h"
 
@@ -177,7 +178,7 @@ namespace spkn
                 long double runTime = std::chrono::duration<long double>(currentTime-startTime).count();
                 long double lastVBlankTime = std::chrono::duration<long double>(lastUpdatedCurrentTime-startTime).count();
 
-                long double netsPerHour = numIndividualsProcessed / (lastVBlankTime/3600.0);
+                long double netsPerHour = numIndividualsProcessed / (lastVBlankTime/3600.0L);
                 long double gensPerHour = netsPerHour / (long double)( populationSize );
                 uint64_t netsInGen = numIndividualsProcessed % populationSize;
                 uint64_t netsLeftInGen = populationSize - netsInGen;
@@ -191,23 +192,19 @@ namespace spkn
                 //ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h";
                 ss << std::fixed << std::setprecision(2) << gensPerHour << "/h";
                 ss << ", " << std::fixed << std::setprecision(2) << percentThroughGen * 100.0 << "%";
-                ss << ", eta:" << std::fixed << std::setprecision(2) << (long double)(netsLeftInGen) * 60.0L/netsPerHour << "m";
+                ss << ", eta:" << std::fixed << std::setprecision(2) << spkn::SecondsToHMS( (long double)(netsLeftInGen) * 3600.0L/netsPerHour, 0 ) << "";
                 ss << "), ";
 
                 ss << "Nets=" << numIndividualsProcessed << "(";
                 ss << std::fixed << std::setprecision(2) << netsPerHour << "/h), ";
 
                 ss << "VBlanks=" << numKnownVBlanks << "(";
-                ss << std::fixed << std::setprecision(2) << (long double)(numKnownVBlanks)/60.0 << "s), ";
+                ss << std::fixed << std::setprecision(2) << (long double)(numKnownVBlanks)/60.0L << "s, " << spkn::SecondsToHMS( (long double)(numKnownVBlanks)/60.0L, 2 ) << "), ";
 
-                ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(";
-                if( runTime >= 3600.0 ) { ss << uint64_t(runTime/3600) << "h"; }
-                if( runTime >= 60.0 )   { ss << std::setw(2) << std::setfill('0') << uint64_t(runTime/60) % 60 << "m"; }
-                                        { ss << std::setw(4) << std::setfill('0') << fmod( runTime, 60.0 ) << "s"; }
-                ss << "), ";
+                ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(" << spkn::SecondsToHMS( runTime, 1 ) << "), ";
 
-                ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0) / lastVBlankTime << "s:1s";
-                ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s)";
+                ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L) / lastVBlankTime << "s:1s";
+                ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s)";
 
                 ss << "]";
 

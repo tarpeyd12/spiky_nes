@@ -17,5 +17,6 @@ namespace spkn
 #include "color.hpp"
 #include "fitness.hpp"
 #include "game_state.hpp"
+#include "helpers.hpp"
 
 #endif // SPKN_SPIKEY_NES_HPP_INCLUDED

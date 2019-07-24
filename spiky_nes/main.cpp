@@ -55,7 +55,9 @@ main( int argc, char** argv )
             std::cout << "\t-t num_threads\n";
             std::cout << "\t-s pixel_scale\n";
             std::cout << "\t-w num_columns\n";
-            std::cout << "\t-n size_population\n";
+            std::cout << "\t-n size_population\n\n";
+            std::cout << "\t--file-sync   save file on main thread\n";
+            std::cout << "\t--headless    disable preview window\n";
             exit( 0 );
         };
 
@@ -67,7 +69,7 @@ main( int argc, char** argv )
         cmd.add( new spkn::Cmd::Arg<int>{ { "-n", "population" }, [&]( int i ){ arg_populationSize = i; }, "Number of networks" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "?", "-h", "help" }, help_func, "Prints help" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "-v", "version" }, []{ std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl; exit( 0 ); }, "Prints version" } );
-        cmd.add( new spkn::Cmd::Arg_void{ { "--file-async", "fileasync" }, []{}, "Flag to save file on separate thread" } );
+        cmd.add( new spkn::Cmd::Arg_void{ { "--file-sync", "filesync" }, []{}, "Flag to save file on main thread" } );
         cmd.add( new spkn::Cmd::Arg_void{ { "--headless", "headless" }, []{}, "Flag to disable preview window" } );
 
         cmd.parse( argc, argv, [&]( const std::string& s ){ rom_path = s; } );
@@ -139,7 +141,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   75.0;
+    speciationParams.threshold =   25.0;
 
     neat::Mutations::Mutation_Multi mutator;
 
@@ -189,7 +191,7 @@ main( int argc, char** argv )
         mutator.addMutator( 0.0,   0.0,    0.0016, connMutator_new );
         mutator.addMutator( 0.250, 0.0,    0.0,    nwtkMutator );
         mutator.addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
-        mutator.addMutator( 0.0,   0.0,    0.0200, connMutator_enable );
+        mutator.addMutator( 0.0,   0.0,    0.0020, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -265,7 +267,7 @@ main( int argc, char** argv )
         3.0 * 60.0, // APM allowed
         100, // network steps per NES frame
         5, // color winding value
-        8  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
+        16  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
     );
 
     std::cout << "Population construct call ... " << std::flush;
@@ -377,7 +379,7 @@ main( int argc, char** argv )
                 std::cout << "s] " << std::flush;
             } );
 
-            if( !cmd.wasArgFound( "fileasync" ) )
+            if( cmd.wasArgFound( "filesync" ) )
             {
                 save_future.wait();
             }
