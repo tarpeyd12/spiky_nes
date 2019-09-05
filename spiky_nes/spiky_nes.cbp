@@ -63,7 +63,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters="mario.nes -t 5 -w 5 -s 1 -o out.xml -n 150" />
+				<Option parameters="mario.nes -t 4 -w 4 -s 2 -o out.xml -n 150" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-m64" />

@@ -104,7 +104,10 @@ namespace neat
             void printSpeciesArchetypes( std::ostream& out );
 
             uint64_t mutatePopulation( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand = nullptr );
+            uint64_t mutatePopulation( tpl::pool& thread_pool, neat::Mutations::Mutation_base& custom_mutator, std::shared_ptr< Rand::RandomFunctor > rand = nullptr );
             uint64_t mutatePopulation( tpl::pool& thread_pool, std::vector< NetworkGenotype* > genotypes_to_mutate, std::shared_ptr< Rand::RandomFunctor > rand = nullptr );
+
+            void clearGenerationConnections();
 
             size_t speciatePopulationAndCount( tpl::pool& thread_pool );
 

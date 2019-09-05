@@ -185,11 +185,11 @@ main( int argc, char** argv )
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
-        mutator.addMutator( 0.0,   0.005,  0.0,    nodeMutator );
-        mutator.addMutator( 0.0,   0.0016, 0.0,    nodeMutator_new );
-        mutator.addMutator( 0.0,   0.0,    0.005,  connMutator );
-        mutator.addMutator( 0.0,   0.0,    0.0016, connMutator_new );
-        mutator.addMutator( 0.250, 0.0,    0.0,    nwtkMutator );
+        mutator.addMutator( 0.0,   0.015,  0.0,    nodeMutator );
+        mutator.addMutator( 0.0,   0.0015, 0.0,    nodeMutator_new );
+        mutator.addMutator( 0.0,   0.0,    0.015,  connMutator );
+        mutator.addMutator( 0.0,   0.0,    0.0015, connMutator_new );
+        mutator.addMutator( 0.050, 0.0,    0.0,    nwtkMutator );
         mutator.addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
         mutator.addMutator( 0.0,   0.0,    0.0020, connMutator_enable );
     }
@@ -298,12 +298,46 @@ main( int argc, char** argv )
 
     std::cout << "Population First Mutation ... " << std::flush;
 
-    if( false ) do
+    if( false )
     {
-        population.mutatePopulation( thread_pool, random );
-        std::cout << " ... " << std::flush;
+        std::cout << std::endl;
+
+        const size_t desired_num_species = 5;
+        size_t current_species_count = 1;
+        size_t prints = 0;
+
+        neat::Mutations::Mutation_Multi fast_struct_mutator;
+        {
+            auto nwtkMutator       = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+            auto nwtkMutator_multi = std::make_shared< neat::Mutations::Mutation_Multi_one >();
+
+            nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
+            /*nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn        >();
+            nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
+            nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();*/
+
+            nwtkMutator_multi->addMutator< neat::Mutations::Mutation_Add_conn_multi_in  >();
+            nwtkMutator_multi->addMutator< neat::Mutations::Mutation_Add_conn_multi_out >();
+
+            fast_struct_mutator.addMutator( 0.50, 0.0,    0.0,    nwtkMutator );
+            fast_struct_mutator.addMutator( 0.50, 0.0,    0.0,    nwtkMutator_multi );
+        }
+
+        do
+        {
+            population.clearGenerationConnections();
+            population.mutatePopulation( thread_pool, fast_struct_mutator, random );
+            current_species_count = population.speciatePopulationAndCount( thread_pool );
+            std::cout << " " << current_species_count << " ... " << std::flush;
+            if( ++prints >= 25 )
+            {
+                std::cout << std::endl;
+                prints = 0;
+            }
+        }
+        while( current_species_count < desired_num_species );
     }
-    while( population.speciatePopulationAndCount( thread_pool ) < 2 );
+
 
 
     std::cout << "Done." << std::endl;
@@ -403,7 +437,8 @@ main( int argc, char** argv )
         population.IterateGeneration( thread_pool, random, attritionRate, gen_dbg_callbacks );
         fitnessFactory.incrementGeneration();
 
-        std::cout << "\tDone. (~" << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count())/1000.0 << "s)\n\n";
+        double genComplettionTime = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count();
+        std::cout << "\tDone. (~" << round(1000.0*genComplettionTime)/1000.0 << "s " << spkn::SecondsToHMS( genComplettionTime ) << ")\n\n";
 
         if( save_future.valid() )
         {

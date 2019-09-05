@@ -106,6 +106,24 @@ namespace neat
     }
 
     uint64_t
+    Population::mutatePopulation( tpl::pool& thread_pool, neat::Mutations::Mutation_base& custom_mutator, std::shared_ptr< Rand::RandomFunctor > rand )
+    {
+        // make sure we have a functioning random number generator
+        if( !rand ) rand = std::make_shared< Rand::Random_Safe >( Rand::Int() );
+
+        std::atomic< uint64_t > num_muts{ 0 };
+
+        // mutate each genotype present in the population
+        tpl::for_each( thread_pool, populationData.begin(), populationData.end(), [&]( auto& genotype )
+        {
+            auto _rand = std::make_shared< Rand::Random_Unsafe >( rand->Int() );
+            num_muts += custom_mutator( genotype, *innovationCounter, mutationRates, mutationLimits, _rand );
+        } );
+
+        return num_muts;
+    }
+
+    uint64_t
     Population::mutatePopulation( tpl::pool& thread_pool, std::vector< NetworkGenotype* > genotypes_to_mutate, std::shared_ptr< Rand::RandomFunctor > rand )
     {
         // make sure we have a functioning random number generator
@@ -121,6 +139,13 @@ namespace neat
         } );
 
         return num_muts;
+    }
+
+    void
+    Population::clearGenerationConnections()
+    {
+        // make sure the mutations are classified as new
+        innovationCounter->clearGenerationConnections();
     }
 
     inline
@@ -347,7 +372,7 @@ namespace neat
 
                 size_t speciesNextPopSize = f.second * populationSize;
 
-                if( speciesNextPopSize < 1 && minSpeciesSize > 1 )
+                if( speciesNextPopSize < std::max<size_t>( 1, minSpeciesSize / 2 ) && minSpeciesSize > 1 )
                 {
                     speciesKillDelay[ f.first ] += 2;
                 }
@@ -359,6 +384,10 @@ namespace neat
                 if( speciesKillDelay[ f.first ] < killDelayLimit )
                 {
                     speciesNextPopSize = std::max<size_t>( speciesNextPopSize, minSpeciesSize );
+                }
+                else if( speciesNextPopSize >= minSpeciesSize && speciesKillDelay[ f.first ] < killDelayLimit && speciesKillDelay[ f.first ] > 0 )
+                {
+                    speciesKillDelay[ f.first ] -= 1;
                 }
                 else
                 {
@@ -556,7 +585,8 @@ namespace neat
             if( dbg && dbg_callbacks->mutation_begin ) dbg_callbacks->mutation_begin();
 
             // make sure the mutations are classified as new
-            innovationCounter->clearGenerationConnections();
+            //innovationCounter->clearGenerationConnections();
+            clearGenerationConnections();
 
             // mutate the population
             mutatePopulation( thread_pool, nextPopulation_to_mutate, rand );

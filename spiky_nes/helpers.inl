@@ -6,11 +6,11 @@
 namespace spkn
 {
     void
-    SecondsToHMS( long double seconds, uint32_t &h, uint32_t &m, long double &s )
+    SecondsToHMS( long double seconds, uint64_t &h, uint8_t &m, long double &s )
     {
-        h = uint32_t( seconds / 3600 );
-        m = uint32_t( seconds / 60 ) % 60;
-        s = fmod( seconds, 60.0 );
+        h = uint64_t( seconds / 3600l );
+        m = uint8_t( uint64_t( seconds / 60l ) % 60l );
+        s = fmodl( seconds, 60.0L );
     }
 
     std::string
@@ -18,31 +18,32 @@ namespace spkn
     {
         std::ostringstream ss;
 
-        uint32_t h, m;
+        uint64_t    h;
+        uint8_t     m;
         long double s;
 
         SecondsToHMS( seconds, h, m, s );
 
-        if( seconds >= 3600.0 )
+        if( seconds >= 3600.0L )
         {
             ss << h << "h";
 
         }
 
-        bool display_minutes = seconds >= 60.0;
+        bool display_minutes = seconds >= 60.0L;
 
         if( prepad_zeros && display_minutes )
         {
-            ss << std::setw(2) << std::setfill('0') << m << "m";
+            ss << std::setw( 2 ) << std::setfill( '0' ) << uint16_t( m ) << "m";
         }
         else if( display_minutes )
         {
-            ss << m << "m";
+            ss << uint16_t( m ) << "m";
         }
 
         if( prepad_zeros )
         {
-            ss << std::fixed << std::setprecision( precision ) << std::setw( 2 + precision + ( precision > 0 ? 1 : 0 ) ) << std::setfill('0') << s << "s";
+            ss << std::fixed << std::setprecision( precision ) << std::setw( 2 + precision + ( precision > 0 ? 1 : 0 ) ) << std::setfill( '0' ) << s << "s";
         }
         else
         {

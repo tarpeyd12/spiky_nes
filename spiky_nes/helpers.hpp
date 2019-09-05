@@ -3,7 +3,7 @@
 
 namespace spkn
 {
-    inline void SecondsToHMS( long double seconds, uint32_t &h, uint32_t &m, long double &s );
+    inline void SecondsToHMS( long double seconds, uint64_t &h, uint8_t &m, long double &s );
     inline std::string SecondsToHMS( long double seconds, uint8_t precision = 2, bool prepad_zeros = true );
 }
 
