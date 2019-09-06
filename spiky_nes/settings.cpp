@@ -57,6 +57,9 @@ namespace spkn
             }
         };
 
+        cmd.add( new spkn::Cmd::Arg_void{         { "?", "-h", "help" },         help_func,                                                            "Prints help" } );
+        cmd.add( new spkn::Cmd::Arg_void{         { "-v", "version" },           version_func,                                                         "Prints version" } );
+
         cmd.add( new spkn::Cmd::Arg<std::string>{ { "--rom", "rom_path" },       [&]( const std::string& s ){ arg_rom_path = s; },                     "Path to rom file" } );
         cmd.add( new spkn::Cmd::Arg<std::string>{ { "-o", "output" },            [&]( const std::string& s ){ arg_output_path = s; },                  "Path to file to save output" } );
         cmd.add( new spkn::Cmd::Arg<std::string>{ { "-i", "input" },             [&]( const std::string& s ){ arg_input_path = s; },                   "Path to file to load at startup" } );
@@ -65,8 +68,7 @@ namespace spkn
         cmd.add( new spkn::Cmd::Arg<float>{       { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                               "Scale of NES preview windows" } );
         cmd.add( new spkn::Cmd::Arg<size_t>{      { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                               "Number of NES preview Windows per row" } );
         cmd.add( new spkn::Cmd::Arg<size_t>{      { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                           "Number of networks" } );
-        cmd.add( new spkn::Cmd::Arg_void{         { "?", "-h", "help" },         help_func,                                                            "Prints help" } );
-        cmd.add( new spkn::Cmd::Arg_void{         { "-v", "version" },           version_func,                                                         "Prints version" } );
+
         cmd.add( new spkn::Cmd::Arg_void{         { "--file-sync", "filesync" }, [&]{ arg_file_sync = true },                                          "Flag to save file on main thread" } );
         cmd.add( new spkn::Cmd::Arg_void{         { "--headless", "headless" },  [&]{ arg_headless = true },                                           "Flag to disable preview window" } );
         cmd.add( new spkn::Cmd::Arg<std::string>{ { "--set", "_var" },           assign_var,                                                           "Set misc variables" } );
@@ -95,6 +97,8 @@ namespace spkn
         neat::xml::appendSimpleValueNode( "arg_window_scale", arg_windowScale, settings_node, mem_pool );
         neat::xml::appendSimpleValueNode( "arg_num_columns", arg_numColumns, settings_node, mem_pool );
         neat::xml::appendSimpleValueNode( "arg_population_size", arg_populationSize, settings_node, mem_pool );
+        neat::xml::appendSimpleValueNode( "arg_file_sync", arg_file_sync, settings_node, mem_pool );
+        neat::xml::appendSimpleValueNode( "arg_headless", arg_headless, settings_node, mem_pool );
 
         var.SaveToXML( settings_node, mem_pool );
 
