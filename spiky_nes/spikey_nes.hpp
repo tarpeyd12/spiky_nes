@@ -18,5 +18,7 @@ namespace spkn
 #include "fitness.hpp"
 #include "game_state.hpp"
 #include "helpers.hpp"
+#include "preview_window.hpp"
+#include "settings.hpp"
 
 #endif // SPKN_SPIKEY_NES_HPP_INCLUDED

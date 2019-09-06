@@ -37,60 +37,22 @@ main( int argc, char** argv )
 
     spkn::InitEmulatorLogs();
 
-    std::string rom_path = "";
-    std::string output_path = "";
-    int   arg_numThreads = 0;
-    float arg_windowScale = 0.0f;
-    int   arg_numColums = 0;
-    int   arg_populationSize = 0;
-
-    spkn::Cmd cmd;
+    spkn::Settings settings;
     {
-        auto help_func = [&]() -> void
-        {
-            std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl;
-            std::cout << "\t-h   Help\n";
-            std::cout << "\t-v   Version\n";
-            std::cout << "\t-f rom_path\n";
-            std::cout << "\t-t num_threads\n";
-            std::cout << "\t-s pixel_scale\n";
-            std::cout << "\t-w num_columns\n";
-            std::cout << "\t-n size_population\n\n";
-            std::cout << "\t--file-sync   save file on main thread\n";
-            std::cout << "\t--headless    disable preview window\n";
-            exit( 0 );
-        };
+        settings.arg_rom_path = "";
+        settings.arg_output_path = "";
+        settings.arg_input_path = "";
+        settings.arg_numThreads = 0;
+        settings.arg_windowScale = 0.0f;
+        settings.arg_numColumns = 0;
+        settings.arg_populationSize = 0;
 
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "-f", "path" }, [&]( const std::string& s ){ rom_path = s; },  "Path to rom file" } );
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "-o", "output" }, [&]( const std::string& s ){ output_path = s; },  "Path to file to save output" } );
-        cmd.add( new spkn::Cmd::Arg<int>{ { "-t", "threads" },    [&]( int i ){ arg_numThreads = i; },     "Number of threads" } );
-        cmd.add( new spkn::Cmd::Arg<float>{ { "-s", "scale" },    [&]( float f ){ arg_windowScale = f; },    "Scale of NES preview windows" } );
-        cmd.add( new spkn::Cmd::Arg<int>{ { "-w", "columns" },    [&]( int i ){ arg_numColums = i; },      "Number of NES preview Windows per row" } );
-        cmd.add( new spkn::Cmd::Arg<int>{ { "-n", "population" }, [&]( int i ){ arg_populationSize = i; }, "Number of networks" } );
-        cmd.add( new spkn::Cmd::Arg_void{ { "?", "-h", "help" }, help_func, "Prints help" } );
-        cmd.add( new spkn::Cmd::Arg_void{ { "-v", "version" }, []{ std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl; exit( 0 ); }, "Prints version" } );
-        cmd.add( new spkn::Cmd::Arg_void{ { "--file-sync", "filesync" }, []{}, "Flag to save file on main thread" } );
-        cmd.add( new spkn::Cmd::Arg_void{ { "--headless", "headless" }, []{}, "Flag to disable preview window" } );
-
-        cmd.parse( argc, argv, [&]( const std::string& s ){ rom_path = s; } );
+        settings.parse_cmd( argc, argv );
     }
 
     std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl;
 
-    /*for( int i = 1; i < argc; ++i )
-    {
-        std::string arg( argv[i] );
-        if( argv[i][0] != '-' )
-        {
-            rom_path = argv[i];
-        }
-        else
-        {
-            std::cerr << "Unrecognized argument: " << argv[i] << std::endl;
-        }
-    }*/
-
-    if( rom_path.empty() )
+    if( settings.arg_rom_path.empty() )
     {
         std::cout << "Argument required: ROM path" << std::endl;
         return 1;
@@ -202,27 +164,27 @@ main( int argc, char** argv )
     uint64_t populationSize = 150;
 
     {
-        if( cmd.wasArgFound( "scale" ) )
+        if( settings.cmd.wasArgFound( "scale" ) )
         {
-            pixelMultiplier = arg_windowScale;
+            pixelMultiplier = settings.arg_windowScale;
             pixelMultiplier = std::max<float>( 0.125f, pixelMultiplier );
         }
 
-        if( cmd.wasArgFound( "threads" ) )
+        if( settings.cmd.wasArgFound( "threads" ) )
         {
-            numThreads = arg_numThreads;
+            numThreads = settings.arg_numThreads;
             numThreads = neat::MinMax<size_t>{ 1, std::max<size_t>( 2, std::thread::hardware_concurrency() ) - 1 }.clamp( numThreads );
         }
 
-        if( cmd.wasArgFound( "population" ) )
+        if( settings.cmd.wasArgFound( "population" ) )
         {
-            populationSize = arg_populationSize;
+            populationSize = settings.arg_populationSize;
             populationSize = std::max<size_t>( 50, populationSize );
         }
 
-        if( cmd.wasArgFound( "columns" ) )
+        if( settings.cmd.wasArgFound( "columns" ) )
         {
-            numColumns = arg_numColums;
+            numColumns = settings.arg_numColumns;
             numColumns = neat::MinMax<size_t>{ 1, 256 }.clamp( numColumns );
         }
     }
@@ -255,13 +217,13 @@ main( int argc, char** argv )
     tpl::pool thread_pool{ numThreads };
 
     std::shared_ptr<spkn::PreviewWindow> previewWindow = nullptr;
-    if( !cmd.wasArgFound( "headless" ) )
+    if( !settings.cmd.wasArgFound( "headless" ) )
     {
         previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, pixelMultiplier );
     }
 
     spkn::FitnessFactory fitnessFactory(
-        rom_path,
+        settings.arg_rom_path,
         previewWindow,
         limits.thresholdMax.max, // maximum activation value, used to scale input values
         3.0 * 60.0, // APM allowed
@@ -382,7 +344,7 @@ main( int argc, char** argv )
 
         tpl::future<void> save_future;
 
-        if( cmd.wasArgFound( "output" ) )
+        if( settings.cmd.wasArgFound( "output" ) )
         {
             // this is the PLEASE DON'T CRASH section
 
@@ -395,16 +357,17 @@ main( int argc, char** argv )
 
             {
                 auto begin = std::chrono::high_resolution_clock::now();
+                settings.SaveToXML( doc, doc );
                 population.SaveToXML( doc, doc );
                 std::cout << " [Data Encoding Complete ";
                 std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
                 std::cout << "s] " << std::flush;
             }
 
-            save_future = thread_pool.submit( [doc,output_path]
+            save_future = thread_pool.submit( [doc,&settings]
             {
                 auto begin = std::chrono::high_resolution_clock::now();
-                std::ofstream success_file( output_path, std::ofstream::trunc );
+                std::ofstream success_file( settings.arg_output_path, std::ofstream::trunc );
                 success_file << *doc << std::flush;
                 success_file.close();
                 delete doc;
@@ -413,7 +376,7 @@ main( int argc, char** argv )
                 std::cout << "s] " << std::flush;
             } );
 
-            if( cmd.wasArgFound( "filesync" ) )
+            if( settings.cmd.wasArgFound( "filesync" ) )
             {
                 save_future.wait();
             }
