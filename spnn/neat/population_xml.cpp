@@ -22,7 +22,14 @@ namespace neat
         }
 
         // mutatorFunctor
-        population_node->append_node( xml::Node( "mutator_functor", "TODO", mem_pool ) );
+        {
+            auto mutator_functor_node = xml::Node( "mutator_functor", "", mem_pool );
+
+            mutatorFunctor.SaveToXML( mutator_functor_node, mem_pool );
+
+            population_node->append_node( mutator_functor_node );
+        }
+
 
         {
             auto state = xml::Node( "state", "", mem_pool );

@@ -90,6 +90,7 @@
 		<Unit filename="neat/mutations_add.cpp" />
 		<Unit filename="neat/mutations_connection.cpp" />
 		<Unit filename="neat/mutations_node.cpp" />
+		<Unit filename="neat/mutations_xml.cpp" />
 		<Unit filename="neat/neat.hpp" />
 		<Unit filename="neat/neat.inl" />
 		<Unit filename="neat/network.cpp" />

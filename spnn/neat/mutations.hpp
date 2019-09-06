@@ -12,6 +12,7 @@ namespace neat
 #include "network.hpp"
 #include "innovation_generator.hpp"
 #include "neat.hpp"
+#include "xml.hpp"
 
 namespace neat
 {
@@ -31,6 +32,9 @@ namespace neat
 
                 // actual function
                 virtual uint64_t operator()( NetworkGenotype& genotypeToMutate, InnovationGenerator& innovationTracker, const MutationRates& rate, const MutationLimits& limits, std::shared_ptr< Rand::RandomFunctor > rand = nullptr ) const = 0;
+
+                // save function
+                virtual void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const = 0;
 
             protected:
 
@@ -71,6 +75,8 @@ namespace neat
                 size_t addMutator( double baseChance, double nodeChance, double connChance ) { return addMutator( baseChance, nodeChance, connChance, std::make_shared< mutatorType >() ); }
 
                 uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override;
+
+                void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override;
         };
 
         class Mutation_Multi_one : public Mutation_base
@@ -91,40 +97,42 @@ namespace neat
                 size_t addMutator() { return addMutator( std::make_shared< mutatorType >() ); }
 
                 uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override;
+
+                void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override;
         };
 
         // Node property mutations
 
-        struct Mutation_Node_thresh_min       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_thresh_min_new   : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_thresh_max       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_thresh_max_new   : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_decays_value     : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_decays_value_new : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_decays_activ     : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_decays_activ_new : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_pulses_fast      : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_pulses_fast_new  : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_pulses_slow      : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Node_pulses_slow_new  : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Node_thresh_min       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_thresh_min_new   : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_thresh_max       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_thresh_max_new   : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_decays_value     : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_decays_value_new : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_decays_activ     : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_decays_activ_new : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_pulses_fast      : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_pulses_fast_new  : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_pulses_slow      : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Node_pulses_slow_new  : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
 
         // Connection property mutations
 
-        struct Mutation_Conn_weight        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_weight_new    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_length        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_length_new    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Conn_enable        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Conn_weight        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Conn_weight_new    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Conn_length        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Conn_length_new    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Conn_enable        : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
 
         // Structural mutations
 
-        struct Mutation_Add_node           : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Add_conn           : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Add_conn_unique    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Add_conn_dup       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Add_node           : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Add_conn           : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Add_conn_unique    : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Add_conn_dup       : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
 
-        struct Mutation_Add_conn_multi_in  : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
-        struct Mutation_Add_conn_multi_out : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; };
+        struct Mutation_Add_conn_multi_in  : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
+        struct Mutation_Add_conn_multi_out : public Mutation_base { uint64_t operator()( NetworkGenotype&, InnovationGenerator&, const MutationRates&, const MutationLimits&, std::shared_ptr< Rand::RandomFunctor > ) const override; void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const override; };
 
     }
 }
