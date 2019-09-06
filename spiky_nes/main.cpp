@@ -209,7 +209,7 @@ main( int argc, char** argv )
     tpl::pool thread_pool{ numThreads };
 
     std::shared_ptr<spkn::PreviewWindow> previewWindow = nullptr;
-    if( !settings.cmd.wasArgFound( "headless" ) )
+    if( !settings.arg_headless )
     {
         previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, pixelMultiplier );
     }
@@ -368,7 +368,7 @@ main( int argc, char** argv )
                 std::cout << "s] " << std::flush;
             } );
 
-            if( settings.cmd.wasArgFound( "filesync" ) )
+            if( settings.arg_file_sync )
             {
                 save_future.wait();
             }

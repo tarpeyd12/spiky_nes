@@ -14,7 +14,9 @@ namespace spkn
         arg_numThreads( 1 ),
         arg_windowScale( 2.0f ),
         arg_numColumns( 2 ),
-        arg_populationSize( 150 )
+        arg_populationSize( 150 ),
+        arg_file_sync( false ),
+        arg_headless( false )
     {
         auto version_func = []() -> void
         {
@@ -65,8 +67,8 @@ namespace spkn
         cmd.add( new spkn::Cmd::Arg<size_t>{      { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                           "Number of networks" } );
         cmd.add( new spkn::Cmd::Arg_void{         { "?", "-h", "help" },         help_func,                                                            "Prints help" } );
         cmd.add( new spkn::Cmd::Arg_void{         { "-v", "version" },           version_func,                                                         "Prints version" } );
-        cmd.add( new spkn::Cmd::Arg_void{         { "--file-sync", "filesync" }, []{},                                                                 "Flag to save file on main thread" } );
-        cmd.add( new spkn::Cmd::Arg_void{         { "--headless", "headless" },  []{},                                                                 "Flag to disable preview window" } );
+        cmd.add( new spkn::Cmd::Arg_void{         { "--file-sync", "filesync" }, [&]{ arg_file_sync = true },                                          "Flag to save file on main thread" } );
+        cmd.add( new spkn::Cmd::Arg_void{         { "--headless", "headless" },  [&]{ arg_headless = true },                                           "Flag to disable preview window" } );
         cmd.add( new spkn::Cmd::Arg<std::string>{ { "--set", "_var" },           assign_var,                                                           "Set misc variables" } );
     }
 
