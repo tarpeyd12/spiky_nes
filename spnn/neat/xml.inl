@@ -85,6 +85,13 @@ namespace neat
             return result;
         }
 
+        template < >
+        inline
+        std::string to_string< std::string >( const std::string& v ) // specialized for strings
+        {
+            return v;
+        }
+
         std::string
         Name( const rapidxml::xml_base<> * base )
         {
