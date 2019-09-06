@@ -1,6 +1,7 @@
 #ifndef HELPERS_INL_INCLUDED
 #define HELPERS_INL_INCLUDED
 
+#include <fstream>
 #include <sstream>
 
 namespace spkn
@@ -49,6 +50,34 @@ namespace spkn
         {
             ss << std::fixed << std::setprecision( precision ) << s << "s";
         }
+
+        return ss.str();
+    }
+
+    std::string
+    GetROMFileHashString( const std::string& rom_file_path )
+    {
+        size_t hash_value = 0;
+
+        std::ifstream rom_file( rom_file_path.c_str(), std::ifstream::in | std::ifstream::binary);
+
+        if( rom_file.is_open() )
+        {
+            rom_file.seekg( 0, rom_file.end );
+            size_t rom_file_size = rom_file.tellg();
+            rom_file.seekg( 0, rom_file.beg );
+
+            std::string rom_data( rom_file_size, '\0' );
+
+            rom_file.read( &rom_data[0], rom_file_size );
+
+            rom_file.close();
+
+            hash_value = std::hash<std::string>{}( rom_data );
+        }
+
+        std::stringstream ss;
+        ss << std::hex << hash_value;
 
         return ss.str();
     }

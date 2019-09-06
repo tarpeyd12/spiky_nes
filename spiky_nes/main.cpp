@@ -39,14 +39,6 @@ main( int argc, char** argv )
 
     spkn::Settings settings;
     {
-        settings.arg_rom_path = "";
-        settings.arg_output_path = "";
-        settings.arg_input_path = "";
-        settings.arg_numThreads = 0;
-        settings.arg_windowScale = 0.0f;
-        settings.arg_numColumns = 0;
-        settings.arg_populationSize = 0;
-
         settings.parse_cmd( argc, argv );
     }
 
@@ -226,10 +218,10 @@ main( int argc, char** argv )
         settings.arg_rom_path,
         previewWindow,
         limits.thresholdMax.max, // maximum activation value, used to scale input values
-        3.0 * 60.0, // APM allowed
+        settings.var.get<double>( "fitness_max_apm", 3.0 * 60.0 ), // APM allowed
         100, // network steps per NES frame
         5, // color winding value
-        16  // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
+        settings.var.get<size_t>( "fitness_downscale_ratio", 16 ) // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
     );
 
     std::cout << "Population construct call ... " << std::flush;

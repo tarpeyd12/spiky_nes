@@ -63,7 +63,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters="mario.nes -t 2 -w 2 -s 3 -o out.xml -n 150" />
+				<Option parameters="mario.nes -t 4 -w 4 -o out.xml -n 150 --set fitness_downscale_ratio=8 --set fitness_max_apm=30.0" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-m64" />
