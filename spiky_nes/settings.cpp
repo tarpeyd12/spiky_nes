@@ -69,8 +69,8 @@ namespace spkn
         cmd.add( new spkn::Cmd::Arg<size_t>{      { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                               "Number of NES preview Windows per row" } );
         cmd.add( new spkn::Cmd::Arg<size_t>{      { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                           "Number of networks" } );
 
-        cmd.add( new spkn::Cmd::Arg_void{         { "--file-sync", "filesync" }, [&]{ arg_file_sync = true },                                          "Flag to save file on main thread" } );
-        cmd.add( new spkn::Cmd::Arg_void{         { "--headless", "headless" },  [&]{ arg_headless = true },                                           "Flag to disable preview window" } );
+        cmd.add( new spkn::Cmd::Arg_void{         { "--file-sync", "filesync" }, [&]{ arg_file_sync = true; },                                         "Flag to save file on main thread" } );
+        cmd.add( new spkn::Cmd::Arg_void{         { "--headless", "headless" },  [&]{ arg_headless = true; },                                          "Flag to disable preview window" } );
         cmd.add( new spkn::Cmd::Arg<std::string>{ { "--set", "_var" },           assign_var,                                                           "Set misc variables" } );
     }
 
