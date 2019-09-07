@@ -1,3 +1,8 @@
+Note
+------------------------
+This is a project forked form [here](https://github.com/amhndu/SimpleNES) written by [Amish Naidu](https://github.com/amhndu).
+I chose this emulator as it was quite readable and used SFML. It has been adapted to fit my needs.
+
 SimpleNES
 =============
 

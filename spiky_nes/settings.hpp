@@ -21,23 +21,10 @@ namespace spkn
             inline std::string& operator[]( const std::string& key ) { return vars[ key ]; }
 
             template < typename T >
-            inline
-            T get( const std::string& key, const T& _default ) const
-            {
-                auto it = vars.find( key );
-                if( it != vars.end() )
-                {
-                    return neat::xml::from_string<T>( it->second );
-                }
-                return _default;
-            }
+            inline T get( const std::string& key, const T& _default ) const;
 
             template < typename T >
-            inline
-            T operator()( const std::string& key, const T& _default ) const
-            {
-                return get<T>( key, _default );
-            }
+            inline T operator()( const std::string& key, const T& _default ) const;
 
             void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const;
     };
@@ -72,5 +59,7 @@ namespace spkn
 
     };
 }
+
+#include "settings.inl"
 
 #endif // SPKN_SETTINGS_HPP_INCLUDED
