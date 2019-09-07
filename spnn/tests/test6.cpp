@@ -233,27 +233,27 @@ namespace _tests
 
         speciationParams.threshold =   3.0;
 
-        neat::Mutations::Mutation_Multi mutator;
+        auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
         const double nodeMutation = 0.001;
         const double connMutation = 0.01;
         const double ntwkMutation = 0.00001;
 
         {
-            mutator.addMutator< neat::Mutations::Mutation_Node_thresh_min   >( nodeMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Node_thresh_max   >( nodeMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Node_decays_value >( nodeMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Node_decays_activ >( nodeMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Node_pulses_fast  >( nodeMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Node_pulses_slow  >( nodeMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Node_thresh_min   >( nodeMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Node_thresh_max   >( nodeMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Node_decays_value >( nodeMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Node_decays_activ >( nodeMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Node_pulses_fast  >( nodeMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Node_pulses_slow  >( nodeMutation );
 
-            mutator.addMutator< neat::Mutations::Mutation_Conn_weight       >( connMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Conn_length       >( connMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Conn_enable       >( connMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Conn_weight       >( connMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Conn_length       >( connMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Conn_enable       >( connMutation );
 
-            mutator.addMutator< neat::Mutations::Mutation_Add_node          >( ntwkMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Add_conn          >( ntwkMutation );
-            mutator.addMutator< neat::Mutations::Mutation_Add_conn_unique   >( ntwkMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Add_node          >( ntwkMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Add_conn          >( ntwkMutation );
+            mutator->addMutator< neat::Mutations::Mutation_Add_conn_unique   >( ntwkMutation );
         }
 
 

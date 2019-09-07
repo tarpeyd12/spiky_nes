@@ -97,7 +97,7 @@ main( int argc, char** argv )
 
     speciationParams.threshold =   25.0;
 
-    neat::Mutations::Mutation_Multi mutator;
+    auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
     {
         auto nodeMutator       = std::make_shared< neat::Mutations::Mutation_Multi_one >();
@@ -139,13 +139,13 @@ main( int argc, char** argv )
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
-        mutator.addMutator( 0.0,   0.015,  0.0,    nodeMutator );
-        mutator.addMutator( 0.0,   0.0015, 0.0,    nodeMutator_new );
-        mutator.addMutator( 0.0,   0.0,    0.015,  connMutator );
-        mutator.addMutator( 0.0,   0.0,    0.0015, connMutator_new );
-        mutator.addMutator( 0.050, 0.0,    0.0,    nwtkMutator );
-        mutator.addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
-        mutator.addMutator( 0.0,   0.0,    0.0020, connMutator_enable );
+        mutator->addMutator( 0.0,   0.015,  0.0,    nodeMutator );
+        mutator->addMutator( 0.0,   0.0015, 0.0,    nodeMutator_new );
+        mutator->addMutator( 0.0,   0.0,    0.015,  connMutator );
+        mutator->addMutator( 0.0,   0.0,    0.0015, connMutator_new );
+        mutator->addMutator( 0.050, 0.0,    0.0,    nwtkMutator );
+        mutator->addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
+        mutator->addMutator( 0.0,   0.0,    0.0020, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -236,7 +236,7 @@ main( int argc, char** argv )
         fitnessFactory,
         speciationParams,
         neat::SpeciationMethod::Closest,
-        5, // min species size to not be considered endangered
+        25, // min species size to not be considered endangered
         5, // num generations to buffer before endangered species goes extinct
         25, // min generations between mass extinctions
         1 // num generation data to keep

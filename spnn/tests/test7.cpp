@@ -436,7 +436,7 @@ namespace _tests
 
         speciationParams.threshold =   3.5*1.0;
 
-        neat::Mutations::Mutation_Multi mutator;
+        auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
         {
             auto nodeMutator = std::make_shared< neat::Mutations::Mutation_Multi_one >();
@@ -474,12 +474,12 @@ namespace _tests
             nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
             nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
 
-            mutator.addMutator( 0.0,   0.01,  0.0,   nodeMutator );
-            mutator.addMutator( 0.0,   0.008, 0.0,   nodeMutator_new );
-            mutator.addMutator( 0.0,   0.0,   0.01,  connMutator );
-            mutator.addMutator( 0.0,   0.0,   0.008, connMutator_new );
-            mutator.addMutator( 0.002, 0.0,   0.0,   nwtkMutator );
-            mutator.addMutator( 0.0,   0.0,   0.0002, connMutator_enable );
+            mutator->addMutator( 0.0,   0.01,  0.0,   nodeMutator );
+            mutator->addMutator( 0.0,   0.008, 0.0,   nodeMutator_new );
+            mutator->addMutator( 0.0,   0.0,   0.01,  connMutator );
+            mutator->addMutator( 0.0,   0.0,   0.008, connMutator_new );
+            mutator->addMutator( 0.002, 0.0,   0.0,   nwtkMutator );
+            mutator->addMutator( 0.0,   0.0,   0.0002, connMutator_enable );
         }
 
         std::cout << "Population construct call" << std::endl;

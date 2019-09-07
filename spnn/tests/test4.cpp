@@ -241,22 +241,22 @@ namespace _tests
 
             speciationParams.threshold =   2.0;
 
-            neat::Mutations::Mutation_Multi mutator;
+            auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
-            mutator.addMutator< neat::Mutations::Mutation_Node_thresh_min   >( 0.05000 );
-            mutator.addMutator< neat::Mutations::Mutation_Node_thresh_max   >( 0.05000 );
-            mutator.addMutator< neat::Mutations::Mutation_Node_decays_value >( 0.05000 );
-            mutator.addMutator< neat::Mutations::Mutation_Node_decays_activ >( 0.05000 );
-            mutator.addMutator< neat::Mutations::Mutation_Node_pulses_fast  >( 0.05000 );
-            mutator.addMutator< neat::Mutations::Mutation_Node_pulses_slow  >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Node_thresh_min   >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Node_thresh_max   >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Node_decays_value >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Node_decays_activ >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Node_pulses_fast  >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Node_pulses_slow  >( 0.05000 );
 
-            mutator.addMutator< neat::Mutations::Mutation_Conn_weight       >( 0.05000 );
-            mutator.addMutator< neat::Mutations::Mutation_Conn_length       >( 0.05000 );
-            mutator.addMutator< neat::Mutations::Mutation_Conn_enable       >( 0.01000 );
+            mutator->addMutator< neat::Mutations::Mutation_Conn_weight       >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Conn_length       >( 0.05000 );
+            mutator->addMutator< neat::Mutations::Mutation_Conn_enable       >( 0.01000 );
 
-            mutator.addMutator< neat::Mutations::Mutation_Add_node          >( 0.00100 );
-            mutator.addMutator< neat::Mutations::Mutation_Add_conn          >( 0.00010 );
-            mutator.addMutator< neat::Mutations::Mutation_Add_conn_unique   >( 0.00500 );
+            mutator->addMutator< neat::Mutations::Mutation_Add_node          >( 0.00100 );
+            mutator->addMutator< neat::Mutations::Mutation_Add_conn          >( 0.00010 );
+            mutator->addMutator< neat::Mutations::Mutation_Add_conn_unique   >( 0.00500 );
 
             std::cout << "Population construct call" << std::endl;
 

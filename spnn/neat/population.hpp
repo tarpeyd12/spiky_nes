@@ -41,7 +41,6 @@ namespace neat
 
         protected:
 
-
             std::vector< NetworkGenotype > populationData;
 
             std::vector< NodeID > inputNodeIDs;
@@ -52,7 +51,7 @@ namespace neat
             MutationLimits mutationLimits;
             MutationRates mutationRates;
 
-            Mutations::Mutation_base& mutatorFunctor;
+            std::shared_ptr< Mutations::Mutation_base > mutatorFunctor;
 
             FitnessFactory& fitnessCalculatorFactory;
 
@@ -74,7 +73,7 @@ namespace neat
                         size_t outNodes,
                         const MutationLimits& initLimits,
                         const MutationRates& mutRate,
-                        Mutations::Mutation_base& mutator,
+                        std::shared_ptr< Mutations::Mutation_base > mutator,
                         FitnessFactory& fitFactory,
                         const SpeciesDistanceParameters& speciationParameters,
                         SpeciationMethod specMethod = SpeciationMethod::FirstForward,
