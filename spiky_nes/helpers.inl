@@ -55,29 +55,33 @@ namespace spkn
     }
 
     std::string
-    GetROMFileHashString( const std::string& rom_file_path )
+    GetFileAsString( const std::string& file_path )
     {
-        size_t hash_value = 0;
+        std::ifstream file( file_path.c_str(), std::ifstream::in | std::ifstream::binary);
 
-        std::ifstream rom_file( rom_file_path.c_str(), std::ifstream::in | std::ifstream::binary);
-
-        if( rom_file.is_open() )
+        if( file.is_open() )
         {
-            rom_file.seekg( 0, rom_file.end );
-            size_t rom_file_size = rom_file.tellg();
-            rom_file.seekg( 0, rom_file.beg );
+            file.seekg( 0, file.end );
+            size_t file_size = file.tellg();
+            file.seekg( 0, file.beg );
 
-            std::string rom_data( rom_file_size, '\0' );
+            std::string data( file_size, '\0' );
 
-            rom_file.read( &rom_data[0], rom_file_size );
+            file.read( &data[0], file_size );
 
-            rom_file.close();
+            file.close();
 
-            hash_value = std::hash<std::string>{}( rom_data );
+            return data;
         }
 
+        return std::string();
+    }
+
+    std::string
+    GetROMFileHashString( const std::string& rom_file_path )
+    {
         std::stringstream ss;
-        ss << std::hex << hash_value;
+        ss << std::hex << std::hash<std::string>{}( GetFileAsString( rom_file_path ) );
 
         return ss.str();
     }

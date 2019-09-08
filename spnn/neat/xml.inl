@@ -63,6 +63,13 @@ namespace neat
             return v;
         }
 
+        template < >
+        inline
+        std::string from_string< std::string >( const std::string& s )
+        {
+            return s;
+        }
+
         template < typename T >
         std::string to_string( const T& v )
         {
@@ -95,12 +102,14 @@ namespace neat
         std::string
         Name( const rapidxml::xml_base<> * base )
         {
+            if( base == nullptr ) { return std::string(); }
             return std::string( base->name(), base->name_size() );
         }
 
         std::string
         Value( const rapidxml::xml_base<> * base )
         {
+            if( base == nullptr ) { return std::string(); }
             return std::string( base->value(), base->value_size() );
         }
 
@@ -131,8 +140,12 @@ namespace neat
         }
 
         rapidxml::xml_node<> *
-        FindNode( const std::string& name, rapidxml::xml_node<> * node )
+        FindNode( const std::string& name, const rapidxml::xml_node<> * node )
         {
+            if( node == nullptr )
+            {
+                return nullptr;
+            }
             if( name.empty() )
             {
                 return node->first_node();
@@ -141,8 +154,12 @@ namespace neat
         }
 
         rapidxml::xml_attribute<> *
-        FindAttribute( const std::string& name, rapidxml::xml_node<> * node )
+        FindAttribute( const std::string& name, const rapidxml::xml_node<> * node )
         {
+            if( node == nullptr )
+            {
+                return nullptr;
+            }
             if( name.empty() )
             {
                 return node->first_attribute();
@@ -161,7 +178,7 @@ namespace neat
 
         template < typename T >
         void
-        readSimpleValueNode( const char * name, T& value, rapidxml::xml_node<> * source )
+        readSimpleValueNode( const char * name, T& value, const rapidxml::xml_node<> * source )
         {
             auto node = FindNode( name, source );
             if( node )

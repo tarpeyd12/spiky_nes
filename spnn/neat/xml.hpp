@@ -41,14 +41,14 @@ namespace neat
         inline rapidxml::xml_node<> * Node( const char * name, const std::string& data, rapidxml::memory_pool<> * mem_pool, rapidxml::node_type type = rapidxml::node_element );
         inline rapidxml::xml_attribute<> * Attribute( const char * name, const std::string& data, rapidxml::memory_pool<> * mem_pool );
 
-        inline rapidxml::xml_node<> * FindNode( const std::string& name, rapidxml::xml_node<> * node );
-        inline rapidxml::xml_attribute<> * FindAttribute( const std::string& name, rapidxml::xml_node<> * node );
+        inline rapidxml::xml_node<> * FindNode( const std::string& name, const rapidxml::xml_node<> * node );
+        inline rapidxml::xml_attribute<> * FindAttribute( const std::string& name, const rapidxml::xml_node<> * node );
 
 
         template < typename T >
         inline void appendSimpleValueNode( const char * name, const T& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
         template < typename T >
-        inline void readSimpleValueNode( const char * name, T& value, rapidxml::xml_node<> * source );
+        inline void readSimpleValueNode( const char * name, T& value, const rapidxml::xml_node<> * source );
 
         template < typename T >
         inline void appendMinMaxValueNode( const char * name, const MinMax<T>& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );

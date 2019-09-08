@@ -16,6 +16,7 @@ namespace spkn
         public:
 
             Variables() = default;
+            Variables( const rapidxml::xml_node<> * node );
             ~Variables() = default;
 
             inline std::string& operator[]( const std::string& key ) { return vars[ key ]; }
@@ -32,6 +33,7 @@ namespace spkn
     struct Settings
     {
         Settings();
+        Settings( const rapidxml::xml_node<> * node );
 
         // command line parser
         Cmd cmd;
@@ -39,11 +41,11 @@ namespace spkn
         // storage of other variables
         Variables var;
 
-        // get info from the command line
-        void parse_cmd( int argc, char** argv );
-
         // for saving to the data file
         void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const;
+
+        // get info from the command line
+        void parse_cmd( int argc, char** argv );
 
         // data
 
