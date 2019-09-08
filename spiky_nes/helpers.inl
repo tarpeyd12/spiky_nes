@@ -65,7 +65,7 @@ namespace spkn
             size_t file_size = file.tellg();
             file.seekg( 0, file.beg );
 
-            std::string data( file_size, '\0' );
+            std::string data( file_size + 1, '\0' );
 
             file.read( &data[0], file_size );
 

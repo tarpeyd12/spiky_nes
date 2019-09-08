@@ -71,51 +71,35 @@ namespace spkn
 
             std::string file_data = GetFileAsString( file_path );
 
-            doc.parse<0>( &file_data[0] );
+            doc.parse<rapidxml::parse_default>( &file_data[0] );
 
-            *this = Settings( &doc );
+            this->__LoadFromXML( neat::xml::FindNode( "settings", &doc ) );
         };
 
-        cmd.add( new spkn::Cmd::Arg_void{         { "?", "-h", "help" },         help_func,                                                                                   "Prints help" } );
-        cmd.add( new spkn::Cmd::Arg_void{         { "-v", "version" },           version_func,                                                                                "Prints version" } );
+        cmd.add_void(          { "?", "-h", "help" },         help_func,                                                                                   "Prints help"  );
+        cmd.add_void(          { "-v", "version" },           version_func,                                                                                "Prints version"  );
 
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "--hash-rom", "hash_rom" },  rom_hash_func,                                                                               "Path to rom file to hash" } );
+        cmd.add<std::string>(  { "--hash-rom", "hash_rom" },  rom_hash_func,                                                                               "Path to rom file to hash"  );
 
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "--set", "_var" },           assign_var,                                                                                  "Set misc variables" } );
+        cmd.add<std::string>(  { "--set", "_var" },           assign_var,                                                                                  "Set misc variables"  );
 
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "--rom", "rom_path" },       [&]( const std::string& s ){ arg_rom_path = s; },                                            "Path to rom file" } );
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "-o", "output" },            [&]( const std::string& s ){ arg_output_path = s; },                                         "Path to file to save output" } );
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "-i", "input" },             [&]( const std::string& s ){ load_settings_file(s); arg_input_path = s; },                   "Path to file to load at startup" } );
-        cmd.add( new spkn::Cmd::Arg<std::string>{ { "-f", "file" },              [&]( const std::string& s ){ load_settings_file(s); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to" } );
-        cmd.add( new spkn::Cmd::Arg<size_t>{      { "-t", "threads" },           [&]( size_t i ){ arg_numThreads = i; },                                                      "Number of threads" } );
-        cmd.add( new spkn::Cmd::Arg<float>{       { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                                                      "Scale of NES preview windows" } );
-        cmd.add( new spkn::Cmd::Arg<size_t>{      { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                                                      "Number of NES preview Windows per row" } );
-        cmd.add( new spkn::Cmd::Arg<size_t>{      { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                  "Number of networks" } );
+        cmd.add<std::string>(  { "--rom", "rom_path" },       [&]( const std::string& s ){ arg_rom_path = s; },                                            "Path to rom file"  );
+        cmd.add<std::string>(  { "-o", "output" },            [&]( const std::string& s ){ arg_output_path = s; },                                         "Path to file to save output"  );
+        cmd.add<std::string>(  { "-i", "input" },             [&]( const std::string& s ){ load_settings_file(s); arg_input_path = s; },                   "Path to file to load at startup"  );
+        cmd.add<std::string>(  { "-f", "file" },              [&]( const std::string& s ){ load_settings_file(s); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to"  );
+        cmd.add<size_t>(       { "-t", "threads" },           [&]( size_t i ){ arg_numThreads = i; },                                                      "Number of threads"  );
+        cmd.add<float>(        { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                                                      "Scale of NES preview windows"  );
+        cmd.add<size_t>(       { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                                                      "Number of NES preview Windows per row"  );
+        cmd.add<size_t>(       { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                  "Number of networks"  );
 
-        cmd.add( new spkn::Cmd::Arg_void{         { "--file-sync", "filesync" }, [&](){ arg_file_sync = true; },                                                              "Flag to save file on main thread" } );
-        cmd.add( new spkn::Cmd::Arg_void{         { "--headless", "headless" },  [&](){ arg_headless = true; },                                                               "Flag to disable preview window" } );
+        cmd.add_void(          { "--file-sync", "filesync" }, [&](){ arg_file_sync = true; },                                                              "Flag to save file on main thread"  );
+        cmd.add_void(          { "--headless", "headless" },  [&](){ arg_headless = true; },                                                               "Flag to disable preview window"  );
     }
 
     Settings::Settings( const rapidxml::xml_node<> * settings_node )
          : Settings()
     {
-        assert( settings_node && neat::xml::Name( settings_node ) == "settings" );
-
-        neat::xml::readSimpleValueNode( "arg_rom_path", arg_rom_path, settings_node );
-        {
-            std::string saved_hash = neat::xml::Value( neat::xml::FindAttribute( "rom_hash", neat::xml::FindNode( "arg_rom_path", settings_node ) ) );
-            assert( saved_hash == spkn::GetROMFileHashString( arg_rom_path ) );
-        }
-        neat::xml::readSimpleValueNode( "arg_output_path", arg_output_path, settings_node );
-        neat::xml::readSimpleValueNode( "arg_input_path", arg_input_path, settings_node );
-        neat::xml::readSimpleValueNode( "arg_num_threads", arg_numThreads, settings_node );
-        neat::xml::readSimpleValueNode( "arg_window_scale", arg_windowScale, settings_node );
-        neat::xml::readSimpleValueNode( "arg_num_columns", arg_numColumns, settings_node );
-        neat::xml::readSimpleValueNode( "arg_population_size", arg_populationSize, settings_node );
-        neat::xml::readSimpleValueNode( "arg_file_sync", arg_file_sync, settings_node );
-        neat::xml::readSimpleValueNode( "arg_headless", arg_headless, settings_node );
-
-        var = Variables( neat::xml::FindNode( "var", settings_node ) );
+        __LoadFromXML( settings_node );
     }
 
     void
@@ -141,6 +125,33 @@ namespace spkn
 
         // add node to destination
         destination->append_node( settings_node );
+    }
+
+    void
+    Settings::__LoadFromXML( const rapidxml::xml_node<> * settings_node )
+    {
+        assert( settings_node && neat::xml::Name( settings_node ) == "settings" );
+
+        neat::xml::readSimpleValueNode<std::string>( "arg_rom_path", arg_rom_path, settings_node );
+        {
+            std::string saved_hash = neat::xml::Value( neat::xml::FindAttribute( "rom_hash", neat::xml::FindNode( "arg_rom_path", settings_node ) ) );
+            assert( saved_hash == spkn::GetROMFileHashString( arg_rom_path ) );
+        }
+
+        neat::xml::readSimpleValueNode( "arg_output_path", arg_output_path, settings_node );
+        neat::xml::readSimpleValueNode( "arg_input_path", arg_input_path, settings_node );
+        neat::xml::readSimpleValueNode( "arg_num_threads", arg_numThreads, settings_node );
+        neat::xml::readSimpleValueNode( "arg_window_scale", arg_windowScale, settings_node );
+        neat::xml::readSimpleValueNode( "arg_num_columns", arg_numColumns, settings_node );
+        neat::xml::readSimpleValueNode( "arg_population_size", arg_populationSize, settings_node );
+        neat::xml::readSimpleValueNode( "arg_file_sync", arg_file_sync, settings_node );
+        neat::xml::readSimpleValueNode( "arg_headless", arg_headless, settings_node );
+
+        std::cout << "loaded stuff" << std::endl;
+
+        var = Variables( neat::xml::FindNode( "var", settings_node ) );
+
+        std::cout << "loaded stuff" << std::endl;
     }
 
     void

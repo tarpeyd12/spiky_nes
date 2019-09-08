@@ -25,6 +25,13 @@ namespace spkn
 
         _callback( v );
     }
+
+    template < typename ArgType >
+    void
+    Cmd::add( const std::list< std::string >& a, std::function<void(ArgType)> func, const std::string& d )
+    {
+        add( std::make_shared< Arg< ArgType > >( a, func, d ) );
+    }
 }
 
 #endif // SPKN_CMD_INL_INCLUDED

@@ -102,14 +102,14 @@ namespace neat
         std::string
         Name( const rapidxml::xml_base<> * base )
         {
-            if( base == nullptr ) { return std::string(); }
+            if( base == nullptr ) { return std::string( "" ); }
             return std::string( base->name(), base->name_size() );
         }
 
         std::string
         Value( const rapidxml::xml_base<> * base )
         {
-            if( base == nullptr ) { return std::string(); }
+            if( base == nullptr ) { return std::string( "" ); }
             return std::string( base->value(), base->value_size() );
         }
 

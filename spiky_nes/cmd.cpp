@@ -31,7 +31,7 @@ namespace spkn
     }
 
 
-    Cmd::Cmd( std::list< Arg_base* > args )
+    Cmd::Cmd( std::list< std::shared_ptr< Arg_base > > args )
         : argument_list( args ), argsFound()
     {
         /*  */
@@ -39,22 +39,8 @@ namespace spkn
 
     Cmd::~Cmd()
     {
-        for( auto*& a : argsFound )
-        {
-            a = nullptr;
-        }
         argsFound.clear();
-
-        for( auto* a : argument_list )
-        {
-            delete a;
-        }
-    }
-
-    void
-    Cmd::add( Arg_base* a )
-    {
-        argument_list.emplace_back( a );
+        argument_list.clear();
     }
 
     void
@@ -67,9 +53,9 @@ namespace spkn
 
         for( auto it = begin; it != end; ++it )
         {
-            std::list< Arg_base* > matchedArgs;
+            std::list< std::shared_ptr< Arg_base > > matchedArgs;
 
-            for( auto* arg : argument_list )
+            for( auto arg : argument_list )
             {
                 if( arg->match( *it ) )
                 {
@@ -101,10 +87,22 @@ namespace spkn
         //end
     }
 
+    void
+    Cmd::add_void( const std::list< std::string >& a, std::function<void()> func, const std::string& d )
+    {
+        add( std::make_shared< Arg_void >( a, func, d ) );
+    }
+
+    void
+    Cmd::add( std::shared_ptr< Arg_base > a )
+    {
+        argument_list.emplace_back( a );
+    }
+
     bool
     Cmd::wasArgFound( const std::string& arg ) const
     {
-        for( Arg_base* a : argsFound )
+        for( auto a : argsFound )
         {
             if( a->match( arg.c_str() ) )
             {

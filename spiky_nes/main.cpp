@@ -156,25 +156,25 @@ main( int argc, char** argv )
     uint64_t populationSize = 150;
 
     {
-        if( settings.cmd.wasArgFound( "scale" ) )
+        //if( settings.cmd.wasArgFound( "scale" ) )
         {
             pixelMultiplier = settings.arg_windowScale;
             pixelMultiplier = std::max<float>( 0.125f, pixelMultiplier );
         }
 
-        if( settings.cmd.wasArgFound( "threads" ) )
+        //if( settings.cmd.wasArgFound( "threads" ) )
         {
             numThreads = settings.arg_numThreads;
             numThreads = neat::MinMax<size_t>{ 1, std::max<size_t>( 2, std::thread::hardware_concurrency() ) - 1 }.clamp( numThreads );
         }
 
-        if( settings.cmd.wasArgFound( "population" ) )
+        //if( settings.cmd.wasArgFound( "population" ) )
         {
             populationSize = settings.arg_populationSize;
             populationSize = std::max<size_t>( 50, populationSize );
         }
 
-        if( settings.cmd.wasArgFound( "columns" ) )
+        //if( settings.cmd.wasArgFound( "columns" ) )
         {
             numColumns = settings.arg_numColumns;
             numColumns = neat::MinMax<size_t>{ 1, 256 }.clamp( numColumns );
@@ -336,7 +336,7 @@ main( int argc, char** argv )
 
         tpl::future<void> save_future;
 
-        if( settings.cmd.wasArgFound( "output" ) )
+        if( !settings.arg_output_path.empty() )
         {
             // this is the PLEASE DON'T CRASH section
 

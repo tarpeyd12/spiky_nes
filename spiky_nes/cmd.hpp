@@ -2,6 +2,7 @@
 #define SPKN_CMD_HPP_INCLUDED
 
 #include <functional>
+#include <memory>
 #include <list>
 
 namespace spkn
@@ -68,16 +69,20 @@ namespace spkn
 
         private:
 
-            std::list< Arg_base* > argument_list;
-            std::list< Arg_base* > argsFound;
+            std::list< std::shared_ptr< Arg_base > > argument_list;
+            std::list< std::shared_ptr< Arg_base > > argsFound;
 
         public:
 
-            Cmd( std::list< Arg_base* > args = {} );
+            Cmd( std::list< std::shared_ptr< Arg_base > > args = {} );
             ~Cmd();
 
-            void add( Arg_base* a );
             void parse( int argc, char** argv, std::function<void(const std::string&)> defaultCheck = nullptr );
+
+            template < typename ArgType >
+            void add( const std::list< std::string >& a, std::function<void(ArgType)> func, const std::string& d = "" );
+            void add_void( const std::list< std::string >& a, std::function<void()> func, const std::string& d = "" );
+            void add( std::shared_ptr< Arg_base > a );
 
             bool wasArgFound( const std::string& arg ) const;
 

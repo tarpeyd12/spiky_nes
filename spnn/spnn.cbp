@@ -39,6 +39,7 @@
 				<Option type="2" />
 				<Option compiler="mingw64" />
 				<Compiler>
+					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-O3" />
 					<Add option="-m64" />
