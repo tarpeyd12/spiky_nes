@@ -17,13 +17,21 @@ namespace spkn
     void
     Cmd::Arg< ArgType >::call( const char * s )
     {
-        std::stringstream ss;
-        ss.str( std::string{ s } );
+        if( s != nullptr )
+        {
+            ArgType v{};
 
-        ArgType v{};
-        ss >> v;
+            {
+                std::istringstream ss;
+                ss.str( std::string{ s } );
 
-        _callback( v );
+                ss >> v;
+
+                //ss.str( std::string{} );
+            }
+
+            _callback( v );
+        }
     }
 
     template < typename ArgType >

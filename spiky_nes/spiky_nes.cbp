@@ -14,6 +14,8 @@
 				<Option compiler="gcc" />
 				<Option parameters="-i input_test_32.xml -o output_test_32.xml" />
 				<Compiler>
+					<Add option="-O3" />
+					<Add option="-Og" />
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
@@ -63,7 +65,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters="-i input_test.xml -o output_test.xml" />
+				<Option parameters="-i input_test.xml" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />

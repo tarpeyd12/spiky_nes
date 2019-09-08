@@ -18,6 +18,12 @@ namespace spkn
         arg_file_sync( false ),
         arg_headless( false )
     {
+        // threads logic
+        {
+            arg_numThreads = std::max<size_t>( 1, std::thread::hardware_concurrency() / 2 );
+            arg_numColumns = std::max<size_t>( 1, arg_numThreads / 2 );
+        }
+
         auto version_func = []() -> void
         {
             std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl;
@@ -29,8 +35,8 @@ namespace spkn
             std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << "\n" << std::endl;
             std::cout << "\t-h            Help\n";
             std::cout << "\t-v            Version\n";
-            //std::cout << "\t-f            data xml file to load from and save to\n";
-            //std::cout << "\t-i            data xml file to load from\n";
+            std::cout << "\t-f            data xml file to load from and save to\n";
+            std::cout << "\t-i            data xml file to load from\n";
             std::cout << "\t-o            data xml file to save to\n";
             std::cout << "\t-t            num_threads\n";
             std::cout << "\t-s            pixel_scale\n";
@@ -65,7 +71,7 @@ namespace spkn
             }
         };
 
-        auto load_settings_file = [&,this]( const std::string& file_path ) -> void
+        auto load_settings_file = [&]( const std::string& file_path, Settings & settings ) -> void
         {
             rapidxml::xml_document<> doc;
 
@@ -73,27 +79,29 @@ namespace spkn
 
             doc.parse<rapidxml::parse_default>( &file_data[0] );
 
-            this->__LoadFromXML( neat::xml::FindNode( "settings", &doc ) );
+            settings.__LoadFromXML( neat::xml::FindNode( "settings", &doc ) );
+
+            file_data.clear();
         };
 
-        cmd.add_void(          { "?", "-h", "help" },         help_func,                                                                                   "Prints help"  );
-        cmd.add_void(          { "-v", "version" },           version_func,                                                                                "Prints version"  );
+        cmd.add_void(          { "?", "-h", "help" },         help_func,                                                                                         "Prints help"  );
+        cmd.add_void(          { "-v", "version" },           version_func,                                                                                      "Prints version"  );
 
-        cmd.add<std::string>(  { "--hash-rom", "hash_rom" },  rom_hash_func,                                                                               "Path to rom file to hash"  );
+        cmd.add<std::string>(  { "--hash-rom", "hash_rom" },  rom_hash_func,                                                                                     "Path to rom file to hash"  );
 
-        cmd.add<std::string>(  { "--set", "_var" },           assign_var,                                                                                  "Set misc variables"  );
+        cmd.add<std::string>(  { "--set", "_var" },           assign_var,                                                                                        "Set misc variables"  );
 
-        cmd.add<std::string>(  { "--rom", "rom_path" },       [&]( const std::string& s ){ arg_rom_path = s; },                                            "Path to rom file"  );
-        cmd.add<std::string>(  { "-o", "output" },            [&]( const std::string& s ){ arg_output_path = s; },                                         "Path to file to save output"  );
-        cmd.add<std::string>(  { "-i", "input" },             [&]( const std::string& s ){ load_settings_file(s); arg_input_path = s; },                   "Path to file to load at startup"  );
-        cmd.add<std::string>(  { "-f", "file" },              [&]( const std::string& s ){ load_settings_file(s); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to"  );
-        cmd.add<size_t>(       { "-t", "threads" },           [&]( size_t i ){ arg_numThreads = i; },                                                      "Number of threads"  );
-        cmd.add<float>(        { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                                                      "Scale of NES preview windows"  );
-        cmd.add<size_t>(       { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                                                      "Number of NES preview Windows per row"  );
-        cmd.add<size_t>(       { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                  "Number of networks"  );
+        cmd.add<std::string>(  { "--rom", "rom_path" },       [&]( const std::string& s ){ arg_rom_path = s; },                                                  "Path to rom file"  );
+        cmd.add<std::string>(  { "-o", "output" },            [&]( const std::string& s ){ arg_output_path = s; },                                               "Path to file to save output"  );
+        cmd.add<std::string>(  { "-i", "input" },             [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = s; },                   "Path to file to load at startup"  );
+        cmd.add<std::string>(  { "-f", "file" },              [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to"  );
+        cmd.add<size_t>(       { "-t", "threads" },           [&]( size_t i ){ arg_numThreads = i; },                                                            "Number of threads"  );
+        cmd.add<float>(        { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                                                            "Scale of NES preview windows"  );
+        cmd.add<size_t>(       { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                                                            "Number of NES preview Windows per row"  );
+        cmd.add<size_t>(       { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
 
-        cmd.add_void(          { "--file-sync", "filesync" }, [&](){ arg_file_sync = true; },                                                              "Flag to save file on main thread"  );
-        cmd.add_void(          { "--headless", "headless" },  [&](){ arg_headless = true; },                                                               "Flag to disable preview window"  );
+        cmd.add_void(          { "--file-sync", "filesync" }, [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
+        cmd.add_void(          { "--headless", "headless" },  [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );
     }
 
     Settings::Settings( const rapidxml::xml_node<> * settings_node )
@@ -147,11 +155,7 @@ namespace spkn
         neat::xml::readSimpleValueNode( "arg_file_sync", arg_file_sync, settings_node );
         neat::xml::readSimpleValueNode( "arg_headless", arg_headless, settings_node );
 
-        std::cout << "loaded stuff" << std::endl;
-
         var = Variables( neat::xml::FindNode( "var", settings_node ) );
-
-        std::cout << "loaded stuff" << std::endl;
     }
 
     void

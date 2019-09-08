@@ -54,12 +54,13 @@ namespace neat
         template < typename T >
         T from_string( const std::string& s )
         {
-            std::istringstream ss;
-            ss.str( s );
-
             T v{};
-            ss >> v;
-
+            if( s.empty() ) { return v; }
+            {
+                std::istringstream ss;
+                ss.str( s );
+                ss >> v;
+            }
             return v;
         }
 
@@ -67,6 +68,7 @@ namespace neat
         inline
         std::string from_string< std::string >( const std::string& s )
         {
+            if( s.empty() ) { return std::string( "" ); }
             return s;
         }
 
@@ -102,14 +104,14 @@ namespace neat
         std::string
         Name( const rapidxml::xml_base<> * base )
         {
-            if( base == nullptr ) { return std::string( "" ); }
+            if( base == nullptr || base->name_size() == 0 ) { return std::string( "" ); }
             return std::string( base->name(), base->name_size() );
         }
 
         std::string
         Value( const rapidxml::xml_base<> * base )
         {
-            if( base == nullptr ) { return std::string( "" ); }
+            if( base == nullptr || base->value_size() == 0 ) { return std::string( "" ); }
             return std::string( base->value(), base->value_size() );
         }
 
@@ -172,7 +174,7 @@ namespace neat
         appendSimpleValueNode( const char * name, const T& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
         {
             auto node = Node( name, "", mem_pool );
-            node->append_attribute( Attribute( "value", xml::to_string( value ), mem_pool ) );
+            node->append_attribute( Attribute( "value", xml::to_string<T>( value ), mem_pool ) );
             destination->append_node( node );
         }
 
@@ -183,7 +185,11 @@ namespace neat
             auto node = FindNode( name, source );
             if( node )
             {
-                value = from_string<T>( Value( FindAttribute( "value", node ) ) );
+                std::string v = Value( FindAttribute( "value", node ) );
+                if( !v.empty() )
+                {
+                    value = from_string<T>( v );
+                }
             }
         }
 
@@ -192,8 +198,8 @@ namespace neat
         appendMinMaxValueNode( const char * name, const MinMax<T>& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
         {
             auto node = Node( name, "", mem_pool );
-            node->append_attribute( Attribute( "min", xml::to_string( value.min ), mem_pool ) );
-            node->append_attribute( Attribute( "max", xml::to_string( value.max ), mem_pool ) );
+            node->append_attribute( Attribute( "min", xml::to_string<T>( value.min ), mem_pool ) );
+            node->append_attribute( Attribute( "max", xml::to_string<T>( value.max ), mem_pool ) );
             destination->append_node( node );
         }
 
