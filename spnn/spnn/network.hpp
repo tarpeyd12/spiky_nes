@@ -10,6 +10,9 @@ namespace spnn
 
             // tracking
 
+            uint64_t pulsesProcessed;
+            uint64_t neuronsProcessed;
+
             uint64_t pulsesProcessedLastTick;
             uint64_t neuronsProcessedLastTick;
 
@@ -56,6 +59,9 @@ namespace spnn
             TimeType Time() const;
             TimeType DeltaTime() const;
             size_t QueueSize() const;
+
+            uint64_t PulsesProcessed() const;
+            uint64_t NeuronsProcessed() const;
 
             uint64_t PulsesProcessedLastTick() const;
             uint64_t NeuronsProcessedLastTick() const;

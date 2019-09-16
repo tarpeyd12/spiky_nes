@@ -44,6 +44,8 @@ namespace neat
             size_t getNumInputNodes() const;
             size_t getNumOutputNodes() const;
 
+            std::shared_ptr< NetworkPhenotype > Network() const;
+
         private:
 
             uint64_t Run();

@@ -35,6 +35,12 @@ namespace neat
         return 0;
     }
 
+    std::shared_ptr< NetworkPhenotype >
+    FitnessCalculator::Network() const
+    {
+        return network;
+    }
+
     uint64_t
     FitnessCalculator::Run()
     {

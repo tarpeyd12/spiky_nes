@@ -112,29 +112,35 @@ namespace spkn
         long double fitness = 0.0;
 
         fitness += (long double)( gameStateExtractor.Score_High() ) * 0.01;
-        fitness += highestWorldLevel - 11;
+        fitness += (long double)( highestWorldLevel - 11 );
+
         if( !controllStopped )
         {
-            fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0;
+            fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0L;
         }
 
-        long double traversalScore = 0.0;
+        long double traversalScore = 0.0L;
 
         for( const auto& p : maxScreenPosPerLevel )
         {
             traversalScore += p.second;
         }
 
-        fitness += traversalScore * 1000.0;
+        fitness += traversalScore * 1000.0L;
 
         if( controllStopped )
         {
-            fitness *= 0.9;
+            fitness *= 0.9L;
         }
 
-        return fitness - sqrt( (long double)( getNumVBlank() ) / 3600.0L );
-        //return fitness - sqrt( (long double)( getNumVBlank() ) / 60.0L );
-        //return fitness;
+        long double network_activity = (long double)( Network()->PulsesProcessed() ) / (long double)( Network()->numNeurons() ) / (long double)( Network()->Time() ) * (long double)( networkStepsPerFrame );
+
+        fitness -= ( network_activity  - 1.0L ) * 100.0L;
+
+        fitness -= sqrt( (long double)( getNumVBlank() ) / 3600.0L );
+        //fitness -= sqrt( (long double)( getNumVBlank() ) / 60.0L );
+
+        return fitness;
     }
 
     uint64_t

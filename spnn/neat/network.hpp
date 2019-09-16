@@ -53,8 +53,19 @@ namespace neat
 
             size_t numInputs() const;
             size_t numOutputs() const;
+            size_t numNeurons() const;
 
             void printNetworkState( std::ostream& out ) const;
+
+            using spnn::network::Time;
+            using spnn::network::DeltaTime;
+            using spnn::network::QueueSize;
+
+            using spnn::network::PulsesProcessed;
+            using spnn::network::NeuronsProcessed;
+
+            using spnn::network::PulsesProcessedLastTick;
+            using spnn::network::NeuronsProcessedLastTick;
 
         protected:
 

@@ -8,7 +8,7 @@ namespace spnn
 {
     template < typename Type, typename TimeType >
     network_base< Type, TimeType >::network_base( const TimeType& dTime )
-        : pulsesProcessedLastTick( 0 ), neuronsProcessedLastTick( 0 ), deltaTime( dTime ), neurons(), pulses(), currentTime( 0 )
+        : pulsesProcessed( 0 ), neuronsProcessed( 0 ), pulsesProcessedLastTick( 0 ), neuronsProcessedLastTick( 0 ), deltaTime( dTime ), neurons(), pulses(), currentTime( 0 )
     {
         assert( DeltaTime() > 0 );
     }
@@ -58,6 +58,9 @@ namespace spnn
             }
         }
 
+        pulsesProcessed += pulsesProcessedLastTick;
+        neuronsProcessed += neuronsProcessedLastTick;
+
         // increment the time
         currentTime += deltaTime;
 
@@ -97,6 +100,9 @@ namespace spnn
     void
     network_base< Type, TimeType >::clear_network_state()
     {
+        pulsesProcessed = 0;
+        neuronsProcessed = 0;
+
         pulsesProcessedLastTick = 0;
         neuronsProcessedLastTick = 0;
 
@@ -130,6 +136,20 @@ namespace spnn
     network_base< Type, TimeType >::QueueSize() const
     {
         return pulses.QueueSize();
+    }
+
+    template < typename Type, typename TimeType >
+    uint64_t
+    network_base< Type, TimeType >::PulsesProcessed() const
+    {
+        return pulsesProcessed;
+    }
+
+    template < typename Type, typename TimeType >
+    uint64_t
+    network_base< Type, TimeType >::NeuronsProcessed() const
+    {
+        return neuronsProcessed;
     }
 
     template < typename Type, typename TimeType >

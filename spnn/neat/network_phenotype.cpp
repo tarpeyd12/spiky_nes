@@ -37,6 +37,12 @@ namespace neat
         return outputNeurons.size();
     }
 
+    size_t
+    NetworkPhenotype::numNeurons() const
+    {
+        return neuronData.size();
+    }
+
     void
     NetworkPhenotype::printNetworkState( std::ostream& out ) const
     {
