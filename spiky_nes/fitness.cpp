@@ -132,11 +132,9 @@ namespace spkn
             fitness *= 0.9;
         }
 
-        //return fitness / sqrt( (long double)( getNumVBlank() ) / 60.0 );
-        //return fitness / ( (long double)( getNumVBlank() ) / 60.0 );
-        //return fitness / ( (long double)( getNumVBlank() ) / 3600.0 );
-        //return fitness / sqrt( (long double)( getNumVBlank() ) / 3600.0 );
-        return fitness;
+        return fitness - sqrt( (long double)( getNumVBlank() ) / 3600.0L );
+        //return fitness - sqrt( (long double)( getNumVBlank() ) / 60.0L );
+        //return fitness;
     }
 
     uint64_t

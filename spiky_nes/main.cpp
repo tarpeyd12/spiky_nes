@@ -95,7 +95,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   25.0;
+    speciationParams.threshold =   2.0;
 
     auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
@@ -139,13 +139,13 @@ main( int argc, char** argv )
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
-        mutator->addMutator( 0.0,   0.015,  0.0,    nodeMutator );
-        mutator->addMutator( 0.0,   0.0015, 0.0,    nodeMutator_new );
-        mutator->addMutator( 0.0,   0.0,    0.015,  connMutator );
-        mutator->addMutator( 0.0,   0.0,    0.0015, connMutator_new );
-        mutator->addMutator( 0.050, 0.0,    0.0,    nwtkMutator );
-        mutator->addMutator( 0.015, 0.0,    0.0,    nwtkMutator_multi );
-        mutator->addMutator( 0.0,   0.0,    0.0020, connMutator_enable );
+        mutator->addMutator( 0.0,   0.005,  0.0,    nodeMutator );
+        mutator->addMutator( 0.0,   0.0005, 0.0,    nodeMutator_new );
+        mutator->addMutator( 0.0,   0.0,    0.005,  connMutator );
+        mutator->addMutator( 0.0,   0.0,    0.0005, connMutator_new );
+        mutator->addMutator( 0.015, 0.0,    0.0,    nwtkMutator );
+        mutator->addMutator( 0.005, 0.0,    0.0,    nwtkMutator_multi );
+        mutator->addMutator( 0.0,   0.0,    0.0002, connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -171,7 +171,7 @@ main( int argc, char** argv )
         //if( settings.cmd.wasArgFound( "population" ) )
         {
             populationSize = settings.arg_populationSize;
-            populationSize = std::max<size_t>( 50, populationSize );
+            populationSize = std::max<size_t>( 15, populationSize );
         }
 
         //if( settings.cmd.wasArgFound( "columns" ) )
