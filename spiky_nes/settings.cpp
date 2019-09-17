@@ -41,7 +41,7 @@ namespace spkn
             std::cout << "\t-t            num_threads\n";
             std::cout << "\t-s            pixel_scale\n";
             std::cout << "\t-w            num_columns\n";
-            std::cout << "\t-n            size_population\n\n";
+            std::cout << "\t-p            size_population\n\n";
             std::cout << "\t--rom         rom_path\n";
             std::cout << "\t--hash-rom    rom_path\n";
             std::cout << "\t--file-sync   save file on main thread\n";
@@ -98,7 +98,7 @@ namespace spkn
         cmd.add<size_t>(       { "-t", "threads" },           [&]( size_t i ){ arg_numThreads = i; },                                                            "Number of threads"  );
         cmd.add<float>(        { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                                                            "Scale of NES preview windows"  );
         cmd.add<size_t>(       { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                                                            "Number of NES preview Windows per row"  );
-        cmd.add<size_t>(       { "-n", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
+        cmd.add<size_t>(       { "-p", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
 
         cmd.add_void(          { "--file-sync", "filesync" }, [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
         cmd.add_void(          { "--headless", "headless" },  [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );

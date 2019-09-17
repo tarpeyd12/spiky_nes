@@ -65,7 +65,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters="mario.nes -o out.xml -n 150 -t 6 -w 3 -s 2  --set fitness_downscale_ratio=16  --set fitness_max_apm=180.0" />
+				<Option parameters="mario.nes -o out.xml -p 150 -t 6 -w 3 -s 2  --set fitness_downscale_ratio=16  --set fitness_max_apm=180.0" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
