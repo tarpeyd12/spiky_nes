@@ -205,12 +205,34 @@ namespace neat
 
         if( dbg && dbg_callbacks->fitness_begin ) dbg_callbacks->fitness_begin();
 
+        // TODO(dot##9/16/2019): rewrite this function to use a class encapsulated fitnessMap. that data-type is a pain in the fucking butt to deal with >:(
+
         // std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > >
         // std::map< SpeciesID, std::pair< avgFitness, std::vector< std::pair< fitness, const NetworkGenotype * > > > >
         auto fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
 
         // clean up the map since we cant wrap this part in brackets :/
         speciatedPopulation.clear();
+
+        SpeciesID speciesIDwithHighestIndividualFitness = fitnessMap.begin()->first;
+        long double highestFitnessPressent = fitnessMap.begin()->second.second[0].first;
+        {
+            for( const auto& f : fitnessMap )
+            {
+                SpeciesID sID = f.first;
+                const auto& indvFitness_vec = f.second.second;
+                if( !indvFitness_vec.empty() )
+                for( const auto& indv_f : indvFitness_vec )
+                {
+                    if( indv_f.first > highestFitnessPressent )
+                    {
+                        highestFitnessPressent = indv_f.first;
+                        speciesIDwithHighestIndividualFitness = sID;
+                    }
+                }
+            }
+        }
+
 
         if( dbg && dbg_callbacks->fitness_end ) dbg_callbacks->fitness_end();
 
@@ -281,7 +303,7 @@ namespace neat
                     std::vector< std::pair< SpeciesID, long double > > speciesFitnesses;
                     speciesFitnesses.reserve( fitnessMap.size() );
 
-                    for( auto f : fitnessMap )
+                    for( const auto& f : fitnessMap )
                     {
                         speciesFitnesses.emplace_back( f.first, f.second.first );
                     }
@@ -290,6 +312,8 @@ namespace neat
                     //std::stable_sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
 
                     std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > > newFitnessMap;
+
+                    // TODO(dot##9/16/2019): use speciesIDwithHighestIndividualFitness here to somehow stop the removal of the highest preforming individual during mass extinctions
 
                     if( speciesFitnesses.size() >= 1 )
                     {
@@ -388,11 +412,14 @@ namespace neat
                 {
                     speciesNextPopSize = std::max<size_t>( speciesNextPopSize, minSpeciesSize );
                 }
-                else if( speciesNextPopSize >= minSpeciesSize && speciesKillDelay[ f.first ] < killDelayLimit && speciesKillDelay[ f.first ] > 0 )
+                else if( speciesKillDelay[ f.first ] < killDelayLimit && speciesKillDelay[ f.first ] > 0 )
                 {
-                    speciesKillDelay[ f.first ] -= 1;
+                    if( speciesNextPopSize >= minSpeciesSize || f.first == speciesIDwithHighestIndividualFitness )
+                    {
+                        speciesKillDelay[ f.first ] -= 1;
+                    }
                 }
-                else
+                else if( f.first != speciesIDwithHighestIndividualFitness )
                 {
                     speciesKillDelay[ f.first ] = 0;
                     speciesNextPopSize = 0;
