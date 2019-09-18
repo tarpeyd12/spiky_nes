@@ -95,7 +95,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   2.0;
+    speciationParams.threshold =   25.0;
 
     auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 

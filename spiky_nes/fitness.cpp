@@ -109,38 +109,34 @@ namespace spkn
     long double
     FitnessCalculator::getFitnessScore() const
     {
-        long double fitness = 0.0;
+        const long double screen_points = 1.0L;
 
-        fitness += (long double)( gameStateExtractor.Score_High() ) * 0.01;
-        fitness += (long double)( highestWorldLevel - 11 );
-
-        if( !controllStopped )
-        {
-            fitness += (long double)( gameStateExtractor.Lives() - 2 ) * 1000.0L;
-        }
-
-        long double traversalScore = 0.0L;
-
-        for( const auto& p : maxScreenPosPerLevel )
-        {
-            traversalScore += p.second;
-        }
-
-        fitness += traversalScore * 1000.0L;
-
-        if( controllStopped )
-        {
-            fitness *= 0.9L;
-        }
+        long double fitness = 0.0L;
 
         long double network_activity = (long double)( Network()->PulsesProcessed() ) / (long double)( Network()->numNeurons() ) / (long double)( Network()->Time() ) * (long double)( networkStepsPerFrame );
+        long double minutes_played   = (long double)( getNumVBlank() ) / 3600.0L;
+        long double game_score       = (long double)( gameStateExtractor.Score_High() );
+        long double world_score      = (long double)( highestWorldLevel - 11 ); // BCD ex. World 3-2 would be 32
+        long double level_count      = (long double)( std::max<size_t>( 1, maxScreenPosPerLevel.size() ) );
+        long double lives_score      = ( !controllStopped ? (long double)( gameStateExtractor.Lives() - 2 ) : 0.0L );
+        long double traversal_score  = std::accumulate( maxScreenPosPerLevel.begin(), maxScreenPosPerLevel.end(), 0.0L, []( const auto& a, const auto& b ){ return a + b.second; } );
 
-        fitness -= ( network_activity  - 1.0L ) * 100.0L;
+        fitness += game_score      * screen_points * 0.0001L;
+        fitness += traversal_score * screen_points * 1.0L;
+        fitness += world_score     * screen_points * 1.0L;
+        fitness += level_count     * screen_points * 1.0L;
+        fitness += lives_score     * screen_points * 1.0L;
 
-        fitness -= sqrt( (long double)( getNumVBlank() ) / 3600.0L );
-        //fitness -= sqrt( (long double)( getNumVBlank() ) / 60.0L );
+        fitness *= ( controllStopped ? 1.0L - ( 0.1L ) : 1.0L ); // -10% to score if the network stopped giving inputs
+
+        fitness -= ( pow( minutes_played   + 1.0L, 1.0L / 2.0L ) - 1.0L ) * screen_points;
+        fitness -= ( pow( network_activity + 1.0L, 1.0L / 3.0L ) - 1.0L ) * screen_points;
 
         return fitness;
+
+        //fitness += screen_points * 1000.0L; // for better accounting for negative fitness values with the minimum of 0.0 fitness
+
+        //return std::max<long double>( fitness, 0.0L );
     }
 
     uint64_t
