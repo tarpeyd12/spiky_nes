@@ -408,18 +408,20 @@ namespace neat
                     speciesKillDelay[ f.first ] += 1;
                 }
 
+                if( f.first == speciesIDwithHighestIndividualFitness )
+                {
+                    speciesKillDelay[ f.first ] = 0;
+                }
+
                 if( speciesKillDelay[ f.first ] < killDelayLimit )
                 {
                     speciesNextPopSize = std::max<size_t>( speciesNextPopSize, minSpeciesSize );
                 }
-                else if( speciesKillDelay[ f.first ] < killDelayLimit && speciesKillDelay[ f.first ] > 0 )
+                else if( speciesKillDelay[ f.first ] < killDelayLimit && speciesNextPopSize >= minSpeciesSize && speciesKillDelay[ f.first ] > 0 )
                 {
-                    if( speciesNextPopSize >= minSpeciesSize || f.first == speciesIDwithHighestIndividualFitness )
-                    {
-                        speciesKillDelay[ f.first ] -= 1;
-                    }
+                    speciesKillDelay[ f.first ] -= 1;
                 }
-                else if( f.first != speciesIDwithHighestIndividualFitness )
+                else
                 {
                     speciesKillDelay[ f.first ] = 0;
                     speciesNextPopSize = 0;
