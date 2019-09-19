@@ -129,8 +129,8 @@ namespace spkn
 
         fitness *= ( controllStopped ? 1.0L - ( 0.1L ) : 1.0L ); // -10% to score if the network stopped giving inputs
 
-        fitness -= ( pow( minutes_played   + 1.0L, 1.0L / 2.0L ) - 1.0L ) * screen_points;
-        fitness -= ( pow( network_activity + 1.0L, 1.0L / 3.0L ) - 1.0L ) * screen_points;
+        fitness -= ( pow( minutes_played   + 1.0L, 1.0L / 3.0L ) - 1.0L ) * screen_points;
+        fitness -= ( pow( network_activity + 1.0L, 1.0L / 4.0L ) - 1.0L ) * screen_points;
 
         return fitness;
 

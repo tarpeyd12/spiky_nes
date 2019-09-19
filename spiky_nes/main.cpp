@@ -302,10 +302,10 @@ main( int argc, char** argv )
         //std::ofstream logfile( "out.csv", std::ofstream::trunc );
 
         logfile << "Generation,";
-        logfile << "Min,Max,Avg,";
-        logfile << "MinNodesTotal,MaxNodesTotal,AvgNodesTotal,MinConnTotal,MaxConnTotal,AvgConnTotal,";
-        logfile << "MinNodesActive,MaxNodesActive,AvgNodesActive,MinConnActive,MaxConnActive,AvgConnActive,";
-        logfile << "numSpecies,numExtinct,numMassExtinct,calculation time,attrition rate\n";
+        logfile << "Min Fitness,Max Fitness,Avg Fitness,";
+        logfile << "Min Nodes Per Genome,Max Nodes Per Genome,Avg Nodes Per Genome,Min Conn Per Genome,Max Conn Per Genome,Avg Conn Per Genome,";
+        logfile << "Min Nodes Per Network,Max Nodes Per Network,Avg Nodes Per Network,Min Conn Per Network,Max Conn Per Network,Avg Conn Per Network,";
+        logfile << "Num Species Present,Num Species Extinct,Num Mass-Extinctions,Calculation Time,Attrition Rate\n";
         //logfile.close();
 
         popfile << "Generation,Fitness,Species\n";
