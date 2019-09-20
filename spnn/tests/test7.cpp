@@ -381,7 +381,7 @@ namespace _tests
             std::cout << "Training in characters: \"" << data_string << "\"\n\n";
         }
 
-        t7::TestFitnessFactory fitnessFactory( 200, data_string, random );
+        auto fitnessFactory = std::make_shared< t7::TestFitnessFactory >( 200, data_string, random );
 
         limits.thresholdMin = {  2.0,  900.0 };
         limits.thresholdMax = { 10.0, 1000.0 };
@@ -484,8 +484,8 @@ namespace _tests
 
         std::cout << "Population construct call" << std::endl;
 
-        uint64_t numInNodes = fitnessFactory.numInputNodes();
-        uint64_t numOutNodes = fitnessFactory.numOutputNodes();
+        uint64_t numInNodes = fitnessFactory->numInputNodes();
+        uint64_t numOutNodes = fitnessFactory->numOutputNodes();
 
         neat::Population population( 1000, numInNodes, numOutNodes, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::Closest, 1, 3, 500, 1 );
 

@@ -53,7 +53,7 @@ namespace neat
 
             std::shared_ptr< Mutations::Mutation_base > mutatorFunctor;
 
-            FitnessFactory& fitnessCalculatorFactory;
+            std::shared_ptr< FitnessFactory > fitnessCalculatorFactory;
 
             size_t generationDataToKeep;
             std::deque< std::shared_ptr< Generation > > generationLog;
@@ -74,7 +74,7 @@ namespace neat
                         const MutationLimits& initLimits,
                         const MutationRates& mutRate,
                         std::shared_ptr< Mutations::Mutation_base > mutator,
-                        FitnessFactory& fitFactory,
+                        std::shared_ptr< FitnessFactory > fitFactory,
                         const SpeciesDistanceParameters& speciationParameters,
                         SpeciationMethod specMethod = SpeciationMethod::FirstForward,
                         size_t minSpec = 1,

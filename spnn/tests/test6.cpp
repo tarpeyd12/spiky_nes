@@ -183,7 +183,7 @@ namespace _tests
         neat::MutationRates rates;
         neat::SpeciesDistanceParameters speciationParams;
 
-        t6::TestFitnessFactory fitnessFactory;
+        auto fitnessFactory = std::make_shared< t6::TestFitnessFactory >();
 
         limits.thresholdMin.min =     2.0;
         limits.thresholdMin.max =   900.0;

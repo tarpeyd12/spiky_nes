@@ -89,13 +89,13 @@ namespace neat
             for( NetworkGenotype * genotype : genotypes )
             {
                 long double fitScore = 0.0;
-                size_t count = fitnessCalculatorFactory.numTimesToTest();
+                size_t count = fitnessCalculatorFactory->numTimesToTest();
 
                 auto network_phenotype = genotype->getNewNetworkPhenotype();
 
                 while( count-- )
                 {
-                    auto fitnessCalculator = fitnessCalculatorFactory.getNewFitnessCalculator( network_phenotype, count );
+                    auto fitnessCalculator = fitnessCalculatorFactory->getNewFitnessCalculator( network_phenotype, count );
 
                     fitnessCalculator->Run();
 
@@ -104,7 +104,7 @@ namespace neat
                     fitnessCalculator->clearNetwork();
                     network_phenotype->resetNetworkState();
                 }
-                fitScore /= (long double)( fitnessCalculatorFactory.numTimesToTest() );
+                fitScore /= (long double)( fitnessCalculatorFactory->numTimesToTest() );
 
                 speciesFitness[ species ] += fitScore;
             }
@@ -133,16 +133,16 @@ namespace neat
             const NetworkGenotype * genotype;
         };
 
-        auto fitness_lambda = []( SpeciesID species, const NetworkGenotype * genotype, FitnessFactory& fitness_factory ) -> fitness_package
+        auto fitness_lambda = []( SpeciesID species, const NetworkGenotype * genotype, std::shared_ptr< FitnessFactory > fitness_factory ) -> fitness_package
         {
             long double fitScore = 0.0;
-            size_t count = fitness_factory.numTimesToTest();
+            size_t count = fitness_factory->numTimesToTest();
 
             auto network_phenotype = genotype->getNewNetworkPhenotype();
 
             while( count-- )
             {
-                auto fitnessCalculator = fitness_factory.getNewFitnessCalculator( network_phenotype, count );
+                auto fitnessCalculator = fitness_factory->getNewFitnessCalculator( network_phenotype, count );
 
                 fitnessCalculator->Run();
 
@@ -152,7 +152,7 @@ namespace neat
                 network_phenotype->resetNetworkState();
             }
 
-            fitScore /= (long double)( fitness_factory.numTimesToTest() );
+            fitScore /= (long double)( fitness_factory->numTimesToTest() );
 
             return { species, fitScore, genotype };
         };
@@ -169,7 +169,7 @@ namespace neat
 
             for( const NetworkGenotype * genotype : genotypes )
             {
-                auto fitness_package_future = thread_pool.submit( fitness_lambda, species, genotype, std::ref( fitnessCalculatorFactory ) );
+                auto fitness_package_future = thread_pool.submit( fitness_lambda, species, genotype, fitnessCalculatorFactory );
                 fitness_futures.push( std::move( fitness_package_future ) );
             }
             speciesFitness[ species ].first /= ( long double )genotypes.size();

@@ -214,7 +214,9 @@ main( int argc, char** argv )
         previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, pixelMultiplier );
     }
 
-    spkn::FitnessFactory fitnessFactory(
+    std::shared_ptr< spkn::FitnessFactory > fitnessFactory = nullptr;
+
+    fitnessFactory = std::make_shared< spkn::FitnessFactory >(
         settings.arg_rom_path,
         previewWindow,
         limits.thresholdMax.max, // maximum activation value, used to scale input values
@@ -226,10 +228,12 @@ main( int argc, char** argv )
 
     std::cout << "Population construct call ... " << std::flush;
 
-    neat::Population population(
+    std::shared_ptr< neat::Population > population = nullptr;
+
+    population = std::make_shared< neat::Population >(
         populationSize,
-        fitnessFactory.numInputs(),
-        fitnessFactory.numOutputs(),
+        fitnessFactory->numInputs(),
+        fitnessFactory->numOutputs(),
         limits,
         rates,
         mutator,
@@ -246,7 +250,7 @@ main( int argc, char** argv )
 
     std::cout << "Population Init call ... " << std::flush;
 
-    population.Init();
+    population->Init();
 
     std::cout << "Done." << std::endl;
 
@@ -279,9 +283,9 @@ main( int argc, char** argv )
 
         do
         {
-            population.clearGenerationConnections();
-            population.mutatePopulation( thread_pool, fast_struct_mutator, random );
-            current_species_count = population.speciatePopulationAndCount( thread_pool );
+            population->clearGenerationConnections();
+            population->mutatePopulation( thread_pool, fast_struct_mutator, random );
+            current_species_count = population->speciatePopulationAndCount( thread_pool );
             std::cout << " " << current_species_count << " ... " << std::flush;
             if( ++prints >= 25 )
             {
@@ -327,12 +331,12 @@ main( int argc, char** argv )
 
     auto evolution_start_time = std::chrono::high_resolution_clock::now();
 
-    //while( population.getGenerationCount() < 100 )
+    //while( population->getGenerationCount() < 100 )
     while( true )
     {
         auto generation_start_time = std::chrono::high_resolution_clock::now();
 
-        std::cout << "\n\nGeneration " << population.getGenerationCount() << ":\n";
+        std::cout << "\n\nGeneration " << population->getGenerationCount() << ":\n";
 
         tpl::future<void> save_future;
 
@@ -343,14 +347,14 @@ main( int argc, char** argv )
             dbg_time_set();
             std::cout << "\n\tSaving Population Data ... " << std::flush;
 
-            //population.printSpeciesArchetypes( success_file );
+            //population->printSpeciesArchetypes( success_file );
 
             rapidxml::xml_document<> * doc = new rapidxml::xml_document<>();
 
             {
                 auto begin = std::chrono::high_resolution_clock::now();
                 settings.SaveToXML( doc, doc );
-                population.SaveToXML( doc, doc );
+                population->SaveToXML( doc, doc );
                 std::cout << " [Data Encoding Complete ";
                 std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
                 std::cout << "s] " << std::flush;
@@ -383,14 +387,14 @@ main( int argc, char** argv )
         neat::MinMax<double> attritionRange( base_attrition - attrition_range, base_attrition + attrition_range );
         double attritionRate = 0.5;
         {
-            double x = double( population.getGenerationCount() ) / 100.0;
+            double x = double( population->getGenerationCount() ) / 100.0;
             attritionRate = ( ( -cos( x * 3.14159 ) + 1.0 ) / 2.0 ) * attritionRange.range() + attritionRange.min;
-            //if( population.getLastGenerationData() ) { attritionRate = neat::MinMax<double>(0.05,0.95).clamp( population.getLastGenerationData()->getMaxFitness()/1000.0 ); }
+            //if( population->getLastGenerationData() ) { attritionRate = neat::MinMax<double>(0.05,0.95).clamp( population->getLastGenerationData()->getMaxFitness()/1000.0 ); }
         }
 
         // this is the only line in this loop that really matters *******************************************************
-        population.IterateGeneration( thread_pool, random, attritionRate, gen_dbg_callbacks );
-        fitnessFactory.incrementGeneration();
+        population->IterateGeneration( thread_pool, random, attritionRate, gen_dbg_callbacks );
+        fitnessFactory->incrementGeneration();
 
         double genComplettionTime = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count();
         std::cout << "\tDone. (~" << round(1000.0*genComplettionTime)/1000.0 << "s " << spkn::SecondsToHMS( genComplettionTime ) << ")\n\n";
@@ -402,7 +406,7 @@ main( int argc, char** argv )
 
         std::cout << "\tattrRate = " << attritionRate << "\n";
 
-        auto genData = population.getLastGenerationData();
+        auto genData = population->getLastGenerationData();
 
         if( !genData )
         {
@@ -465,7 +469,7 @@ main( int argc, char** argv )
 
             for( size_t i = 0; i < len; ++i )
             {
-                popfile << population.getGenerationCount() - 1 << ",";
+                popfile << population->getGenerationCount() - 1 << ",";
                 popfile << genFitness[i] << ",";
                 popfile << genSpeciesIDs[i] << "\n";
                 popfile << std::flush;
@@ -475,7 +479,7 @@ main( int argc, char** argv )
         std::cout << "\tSpecies:\n";
         std::cout << "\t\tTracked: " << genData->getSpeciesManager().getNumTrackedSpecies() << "\n";
         std::cout << "\t\tPresent: " << speciesPresent.size() << "\n";
-        std::cout << "\t\tExtinct: " << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << "(" << population.getNumMassExtinctions() << ")\n";
+        std::cout << "\t\tExtinct: " << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << "(" << population->getNumMassExtinctions() << ")\n";
         std::cout << "\t\t#/Spec:  " << round( 100.0*avgGenotypesPerSpecies )/100.0 << "(" << floor( double( avgGenotypesPerSpecies )*(1.0-attritionRate) ) << ")\n";
         std::cout << "\t\tmaxFit:  " << maxSpeciesFitness << "(" << maxFitSpeciesID << ")\n";
         std::cout << "\t\tminFit:  " << minSpeciesFitness << "(" << minFitSpeciesID << ")\n";
@@ -596,7 +600,7 @@ main( int argc, char** argv )
         }
 
         std::cout << "\n\n\t";
-        auto endangered = population.getEndangeredSpecies();
+        auto endangered = population->getEndangeredSpecies();
         std::vector< std::pair< neat::SpeciesID, size_t > > endangered_sorted;
         endangered_sorted.reserve( endangered.size() );
         for( auto s : endangered )
@@ -627,7 +631,7 @@ main( int argc, char** argv )
 
             //std::ofstream logfile( "out.csv", std::ofstream::app );
 
-            logfile << population.getGenerationCount() - 1 << ",";
+            logfile << population->getGenerationCount() - 1 << ",";
             logfile << genData->getMinFitness() << ",";
             logfile << genData->getMaxFitness() << ",";
             logfile << genData->getAvgFitness() << ",";
@@ -645,7 +649,7 @@ main( int argc, char** argv )
             logfile << avgConns_active << ",";
             logfile << speciesPresent.size() << ",";
             logfile << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << ",";
-            logfile << population.getNumMassExtinctions() << ",";
+            logfile << population->getNumMassExtinctions() << ",";
             logfile << dur.count() << ",";
             logfile << attritionRate << ",";
             logfile << "\n" << std::flush;
@@ -668,8 +672,8 @@ main( int argc, char** argv )
 
     std::cout << "\n\a";
     std::ofstream success_file( "out.txt" );
-    //population.printSpeciesArchetypes( std::cout );
-    population.printSpeciesArchetypes( success_file );
+    //population->printSpeciesArchetypes( std::cout );
+    population->printSpeciesArchetypes( success_file );
     success_file.close();
 
     previewWindow->close();

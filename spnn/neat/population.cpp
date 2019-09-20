@@ -7,7 +7,7 @@
 
 namespace neat
 {
-    Population::Population( size_t numNets, size_t inNodes, size_t outNodes, const MutationLimits& initLimits, const MutationRates& mutRate, std::shared_ptr< Mutations::Mutation_base > mutator, FitnessFactory& fitFactory, const SpeciesDistanceParameters& speciationParameters, SpeciationMethod specMethod, size_t minSpec, size_t killDelay, size_t massExtinction, size_t gensToKeep )
+    Population::Population( size_t numNets, size_t inNodes, size_t outNodes, const MutationLimits& initLimits, const MutationRates& mutRate, std::shared_ptr< Mutations::Mutation_base > mutator, std::shared_ptr< FitnessFactory > fitFactory, const SpeciesDistanceParameters& speciationParameters, SpeciationMethod specMethod, size_t minSpec, size_t killDelay, size_t massExtinction, size_t gensToKeep )
          : innovationCounter( new InnovationGenerator() ), numNetworks( numNets ), numInputNodes( inNodes ), numOutputNodes( outNodes ), generationCount( 0 ), initialGenotypeTemplate( new NetworkGenotype() ), populationData(), inputNodeIDs(), outputNodeIDs(), speciesTracker( new SpeciesManager( speciationParameters, specMethod ) ), mutationLimits( initLimits ), mutationRates( mutRate ), mutatorFunctor( mutator ), fitnessCalculatorFactory( fitFactory ), generationDataToKeep( gensToKeep ), generationLog(), minSpeciesSize( minSpec ), speciesKillDelay(), killDelayLimit( killDelay ), massExtinctionTimer( massExtinction ), pastFitness(), massExtinctionCount( 0 )
     {
         assert( massExtinctionTimer > killDelayLimit );
@@ -24,6 +24,9 @@ namespace neat
 
         // make sure we have a mutator
         assert( mutatorFunctor != nullptr );
+
+        // make sure we have a fitness factory
+        assert( fitnessCalculatorFactory != nullptr );
 
         // define temporary default input and output nodes for the template network
         std::vector< NodeID > inNodesIDMade;

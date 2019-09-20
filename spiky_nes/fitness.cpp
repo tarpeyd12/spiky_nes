@@ -133,10 +133,6 @@ namespace spkn
         fitness -= ( pow( network_activity + 1.0L, 1.0L / 4.0L ) - 1.0L ) * screen_points;
 
         return fitness;
-
-        //fitness += screen_points * 1000.0L; // for better accounting for negative fitness values with the minimum of 0.0 fitness
-
-        //return std::max<long double>( fitness, 0.0L );
     }
 
     uint64_t
