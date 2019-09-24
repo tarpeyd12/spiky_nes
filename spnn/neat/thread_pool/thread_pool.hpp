@@ -4,6 +4,7 @@
 #include <atomic>
 #include <vector>
 #include <thread>
+#include <condition_variable>
 
 #include "safe_queue.hpp"
 #include "task.hpp"
@@ -17,6 +18,12 @@ namespace tpl
             std::atomic_bool done;
             std::vector< std::thread > worker_threads;
             safe_queue< std::unique_ptr< task_base > > work_queue;
+
+            mutable std::mutex working_mutex;
+            std::condition_variable working_condition;
+            size_t max_workers_limit;
+
+            std::atomic< size_t > num_working;
 
         public:
 
@@ -36,10 +43,14 @@ namespace tpl
             inline size_t size() const;
             inline bool empty() const;
 
+            void limit_workers( size_t num_workers );
+            inline size_t workers_limit() const;
+            inline size_t workers_active() const;
+
         private:
 
             void destroy();
-            void worker_method();
+            void worker_method( const size_t __thread_num );
 
     };
 

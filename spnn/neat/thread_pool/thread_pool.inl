@@ -42,6 +42,19 @@ namespace tpl
         return work_queue.empty();
     }
 
+    size_t
+    pool::workers_limit() const
+    {
+        std::lock_guard<std::mutex> lock{ working_mutex };
+        return max_workers_limit;
+    }
+
+    size_t
+    pool::workers_active() const
+    {
+        return num_working;
+    }
+
     template< class InputIt, class UnaryFunction >
     UnaryFunction
     for_each( pool& thread_pool, InputIt first, InputIt last, UnaryFunction f )
