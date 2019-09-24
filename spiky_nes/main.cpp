@@ -211,7 +211,7 @@ main( int argc, char** argv )
     std::shared_ptr<spkn::PreviewWindow> previewWindow = nullptr;
     if( !settings.arg_headless )
     {
-        previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, pixelMultiplier );
+        previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, thread_pool, pixelMultiplier );
     }
 
     std::shared_ptr< spkn::FitnessFactory > fitnessFactory = nullptr;

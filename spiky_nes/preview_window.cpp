@@ -1,3 +1,4 @@
+#include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <cmath>
@@ -9,7 +10,7 @@
 
 namespace spkn
 {
-    PreviewWindow::PreviewWindow( const std::string& window_name, size_t population_size, size_t num_previews, size_t num_columns, float screen_size_ratio )
+    PreviewWindow::PreviewWindow( const std::string& window_name, size_t population_size, size_t num_previews, size_t num_columns, tpl::pool& thread_pool_to_limit, float screen_size_ratio )
          :
         windowName( window_name ),
         pixelSize( screen_size_ratio ),
@@ -23,6 +24,7 @@ namespace spkn
         screen_data_queue_out(),
         screen_data_to_remove(),
         blankScreenData( nullptr ),
+        working_thread_pool( thread_pool_to_limit ),
         numKnownVBlanks( 0 ),
         numIndividualsProcessed( 0 ),
         numGenerationsProcessed( 0 )
@@ -132,15 +134,72 @@ namespace spkn
         {
             while( window.pollEvent( event ) )
             {
-                if( event.type == sf::Event::GainedFocus )
+                switch( event.type )
                 {
-                    window.setFramerateLimit( 60 );
-                    focus = true;
-                }
-                else if( event.type == sf::Event::LostFocus )
-                {
-                    window.setFramerateLimit( 20 );
-                    focus = false;
+                    default: break;
+
+                    case sf::Event::GainedFocus:
+                    {
+                        window.setFramerateLimit( 60 );
+                        focus = true;
+                        break;
+                    }
+
+                    case sf::Event::LostFocus:
+                    {
+                        window.setFramerateLimit( 20 );
+                        focus = false;
+                        break;
+                    }
+
+                    case sf::Event::KeyPressed:
+                    {
+                        switch( event.key.code )
+                        {
+                            default: break;
+
+                            case sf::Keyboard::F1:
+                            case sf::Keyboard::F2:
+                            case sf::Keyboard::F3:
+                            case sf::Keyboard::F4:
+                            case sf::Keyboard::F5:
+                            case sf::Keyboard::F6:
+                            case sf::Keyboard::F7:
+                            case sf::Keyboard::F8:
+                            {
+                                if( event.key.control )
+                                {
+                                    working_thread_pool.limit_workers( event.key.code - sf::Keyboard::F1 + 1 );
+                                    //std::cout << " [Set num workers to " << working_thread_pool.num_workers() << "] " << std::flush;
+                                }
+                                break;
+                            }
+
+                            case sf::Keyboard::F9:
+                            case sf::Keyboard::F10:
+                            case sf::Keyboard::F11:
+                            {
+                                if( event.key.control )
+                                {
+                                    working_thread_pool.limit_workers( round( working_thread_pool.num_threads() * ( 0.25 * float( event.key.code - sf::Keyboard::F9 + 1 ) ) ) );
+                                    //std::cout << " [Set num workers to " << working_thread_pool.num_workers() << "] " << std::flush;
+                                }
+                                break;
+                            }
+
+                            case sf::Keyboard::F12:
+                            {
+                                if( event.key.control )
+                                {
+                                    working_thread_pool.limit_workers( working_thread_pool.num_threads() );
+                                    //std::cout << " [Set num workers to " << working_thread_pool.num_workers() << "] " << std::flush;
+                                }
+                                break;
+                            }
+                        }
+                        break;
+                    }
+
                 }
             }
 
@@ -204,7 +263,10 @@ namespace spkn
                 ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(" << spkn::SecondsToHMS( runTime, 1 ) << "), ";
 
                 ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L) / lastVBlankTime << "s:1s";
-                ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s)";
+                ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s), ";
+
+                ss << "Queue=" << working_thread_pool.size() << "+" << working_thread_pool.workers_active();
+                ss << "(" << working_thread_pool.workers_limit() << "/" <<  working_thread_pool.num_threads() << ")";
 
                 ss << "]";
 

@@ -12,6 +12,7 @@
 
 #include "../simple_nes/include/VirtualScreen.h"
 #include "../spnn/neat/thread_pool/safe_queue.hpp"
+#include "../spnn/neat/thread_pool/thread_pool.hpp"
 
 namespace spkn
 {
@@ -37,13 +38,15 @@ namespace spkn
             std::shared_ptr<sf::Image> blankScreenData;
             std::thread window_thread;
 
+            tpl::pool& working_thread_pool;
+
             uint64_t numKnownVBlanks;
             uint64_t numIndividualsProcessed;
             uint64_t numGenerationsProcessed;
 
         public:
 
-            PreviewWindow( const std::string& window_name, size_t population_size, size_t num_previews, size_t num_columns, float screen_size_ratio = 2.0f );
+            PreviewWindow( const std::string& window_name, size_t population_size, size_t num_previews, size_t num_columns, tpl::pool& thread_pool_to_limit, float screen_size_ratio = 2.0f );
             ~PreviewWindow();
 
             void addScreenData( std::shared_ptr<sf::Image> data );
