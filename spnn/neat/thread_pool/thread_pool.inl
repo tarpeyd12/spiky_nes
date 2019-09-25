@@ -45,7 +45,7 @@ namespace tpl
     size_t
     pool::workers_limit() const
     {
-        std::lock_guard<std::mutex> lock{ working_mutex };
+        //std::lock_guard<std::mutex> lock{ working_mutex };
         return max_workers_limit;
     }
 

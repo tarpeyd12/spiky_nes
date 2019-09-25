@@ -19,9 +19,9 @@ namespace tpl
             std::vector< std::thread > worker_threads;
             safe_queue< std::unique_ptr< task_base > > work_queue;
 
-            mutable std::mutex working_mutex;
+            std::mutex working_mutex;
             std::condition_variable working_condition;
-            size_t max_workers_limit;
+            std::atomic< size_t > max_workers_limit;
 
             std::atomic< size_t > num_working;
 
