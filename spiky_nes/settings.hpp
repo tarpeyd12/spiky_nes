@@ -58,6 +58,7 @@ namespace spkn
         float       arg_windowScale;
         size_t      arg_numColumns;
         size_t      arg_populationSize;
+        size_t      arg_numGenerations;
         bool        arg_file_sync;
         bool        arg_headless;
 

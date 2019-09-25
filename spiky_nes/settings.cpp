@@ -15,13 +15,15 @@ namespace spkn
         arg_windowScale( 2.0f ),
         arg_numColumns( 2 ),
         arg_populationSize( 150 ),
+        arg_numGenerations( ~0L ),
         arg_file_sync( false ),
         arg_headless( false )
     {
         // threads logic
         {
             arg_numThreads = std::max<size_t>( 1, std::thread::hardware_concurrency() / 2 );
-            arg_numColumns = std::max<size_t>( 1, arg_numThreads / 2 );
+            arg_numColumns = std::max<size_t>( 1, arg_numThreads > 4 ? arg_numThreads / 2 : arg_numThreads );
+            arg_windowScale = arg_numColumns > 6 ? 1.0f : 2.0f;
         }
 
         auto version_func = []() -> void
@@ -42,8 +44,9 @@ namespace spkn
             std::cout << "\t-s            pixel_scale\n";
             std::cout << "\t-w            num_columns\n";
             std::cout << "\t-p            size_population\n\n";
+            std::cout << "\t-n            num_generations\n\n";
             std::cout << "\t--rom         rom_path\n";
-            std::cout << "\t--hash-rom    rom_path\n";
+            std::cout << "\t--hash-rom    rom_path_to_hash\n";
             std::cout << "\t--file-sync   save file on main thread\n";
             std::cout << "\t--headless    disable preview window\n";
             exit( 0 );
@@ -99,6 +102,7 @@ namespace spkn
         cmd.add<float>(        { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                                                            "Scale of NES preview windows"  );
         cmd.add<size_t>(       { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                                                            "Number of NES preview Windows per row"  );
         cmd.add<size_t>(       { "-p", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
+        cmd.add<size_t>(       { "-n", "generations" },       [&]( size_t i ){ arg_numGenerations = i; },                                                        "Number of generations to calculate"  );
 
         cmd.add_void(          { "--file-sync", "filesync" }, [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
         cmd.add_void(          { "--headless", "headless" },  [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );
@@ -126,6 +130,7 @@ namespace spkn
         neat::xml::appendSimpleValueNode( "arg_window_scale", arg_windowScale, settings_node, mem_pool );
         neat::xml::appendSimpleValueNode( "arg_num_columns", arg_numColumns, settings_node, mem_pool );
         neat::xml::appendSimpleValueNode( "arg_population_size", arg_populationSize, settings_node, mem_pool );
+        neat::xml::appendSimpleValueNode( "arg_num_generations", arg_numGenerations, settings_node, mem_pool );
         neat::xml::appendSimpleValueNode( "arg_file_sync", arg_file_sync, settings_node, mem_pool );
         neat::xml::appendSimpleValueNode( "arg_headless", arg_headless, settings_node, mem_pool );
 
@@ -152,6 +157,7 @@ namespace spkn
         neat::xml::readSimpleValueNode( "arg_window_scale", arg_windowScale, settings_node );
         neat::xml::readSimpleValueNode( "arg_num_columns", arg_numColumns, settings_node );
         neat::xml::readSimpleValueNode( "arg_population_size", arg_populationSize, settings_node );
+        neat::xml::readSimpleValueNode( "arg_num_generations", arg_numGenerations, settings_node );
         neat::xml::readSimpleValueNode( "arg_file_sync", arg_file_sync, settings_node );
         neat::xml::readSimpleValueNode( "arg_headless", arg_headless, settings_node );
 

@@ -331,8 +331,8 @@ main( int argc, char** argv )
 
     auto evolution_start_time = std::chrono::high_resolution_clock::now();
 
-    //while( population->getGenerationCount() < 100 )
-    while( true )
+    //while( true )
+    while( population->getGenerationCount() < settings.arg_numGenerations )
     {
         auto generation_start_time = std::chrono::high_resolution_clock::now();
 
@@ -667,14 +667,18 @@ main( int argc, char** argv )
 
     }
 
-    logfile.close();
-    popfile.close();
+    /*logfile.close();
+    popfile.close();*/
 
     std::cout << "\n\a";
-    std::ofstream success_file( "out.txt" );
-    //population->printSpeciesArchetypes( std::cout );
-    population->printSpeciesArchetypes( success_file );
-    success_file.close();
+
+    if( false )
+    {
+        std::ofstream success_file( "out.txt" );
+        //population->printSpeciesArchetypes( std::cout );
+        population->printSpeciesArchetypes( success_file );
+        success_file.close();
+    }
 
     previewWindow->close();
 
