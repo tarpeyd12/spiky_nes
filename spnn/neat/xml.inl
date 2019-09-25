@@ -66,6 +66,16 @@ namespace neat
 
         template < >
         inline
+        bool from_string< bool >( const std::string& s )
+        {
+            if( s.empty() ) { return false; }
+            if( s == "t" || s == "T" || s == "true" || s == "True" || s == "TRUE" ) { return true; }
+            if( s == "f" || s == "F" || s == "false" || s == "False" || s == "FALSE"  ) { return false; }
+            return bool( from_string< uint32_t >( s ) );
+        }
+
+        template < >
+        inline
         std::string from_string< std::string >( const std::string& s )
         {
             if( s.empty() ) { return std::string( "" ); }
@@ -92,6 +102,13 @@ namespace neat
                 if( result.find('.') == std::string::npos ) { result += ".0"; }
             }
             return result;
+        }
+
+        template < >
+        inline
+        std::string to_string< bool >( const bool& v ) // specialized for strings
+        {
+            return v ? "true" : "false";
         }
 
         template < >
