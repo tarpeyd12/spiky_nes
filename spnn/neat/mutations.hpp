@@ -6,6 +6,7 @@ namespace neat
     namespace Mutations
     {
         class Mutation_base;
+        class MutationsFileLoadFactory;
     }
 }
 
@@ -41,6 +42,28 @@ namespace neat
                 // support, 'cause we need to get to the protected data in the NodeGenotype, and I'm not adding 20+ friends to it
                 static std::vector< NodeDef >& GetNodeList( NetworkGenotype& genotype );
                 static std::vector< ConnectionDef >& GetConnList( NetworkGenotype& genotype );
+        };
+
+        class MutationsFileLoadFactory
+        {
+            public:
+
+                struct ConstructionSet
+                {
+                    std::function< std::shared_ptr< Mutation_base >( const rapidxml::xml_node<> * ) > constructor;
+                };
+
+            private:
+
+                std::map< std::string, ConstructionSet > functionMap;
+
+            public:
+
+                MutationsFileLoadFactory();
+
+                std::shared_ptr< Mutation_base > operator()( const rapidxml::xml_node<> * source_node ) const;
+
+                void add_factory( const std::string& name_tag, const ConstructionSet& init_funcs );
         };
 
         //  of mutations

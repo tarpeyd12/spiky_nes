@@ -4,6 +4,112 @@ namespace neat
 {
     namespace Mutations
     {
+        MutationsFileLoadFactory::MutationsFileLoadFactory()
+             : functionMap()
+        {
+            add_factory( "mutation_node_thresh_min",       { [](const auto*){ return std::make_shared<Mutation_Node_thresh_min>(); } } );
+            add_factory( "mutation_node_thresh_min_new",   { [](const auto*){ return std::make_shared<Mutation_Node_thresh_min_new>(); } } );
+            add_factory( "mutation_node_thresh_max",       { [](const auto*){ return std::make_shared<Mutation_Node_thresh_max>(); } } );
+            add_factory( "mutation_node_thresh_max_new",   { [](const auto*){ return std::make_shared<Mutation_Node_thresh_max_new>(); } } );
+            add_factory( "mutation_node_decays_value",     { [](const auto*){ return std::make_shared<Mutation_Node_decays_value>(); } } );
+            add_factory( "mutation_node_decays_value_new", { [](const auto*){ return std::make_shared<Mutation_Node_decays_value_new>(); } } );
+            add_factory( "mutation_node_decays_activ",     { [](const auto*){ return std::make_shared<Mutation_Node_decays_activ>(); } } );
+            add_factory( "mutation_node_decays_activ_new", { [](const auto*){ return std::make_shared<Mutation_Node_decays_activ_new>(); } } );
+            add_factory( "mutation_node_pulses_fast",      { [](const auto*){ return std::make_shared<Mutation_Node_pulses_fast>(); } } );
+            add_factory( "mutation_node_pulses_fast_new",  { [](const auto*){ return std::make_shared<Mutation_Node_pulses_fast_new>(); } } );
+            add_factory( "mutation_node_pulses_slow",      { [](const auto*){ return std::make_shared<Mutation_Node_pulses_slow>(); } } );
+            add_factory( "mutation_node_pulses_slow_new",  { [](const auto*){ return std::make_shared<Mutation_Node_pulses_slow_new>(); } } );
+
+            add_factory( "mutation_conn_weight",           { [](const auto*){ return std::make_shared<Mutation_Conn_weight>(); } } );
+            add_factory( "mutation_conn_weight_new",       { [](const auto*){ return std::make_shared<Mutation_Conn_weight_new>(); } } );
+            add_factory( "mutation_conn_length",           { [](const auto*){ return std::make_shared<Mutation_Conn_length>(); } } );
+            add_factory( "mutation_conn_length_new",       { [](const auto*){ return std::make_shared<Mutation_Conn_length_new>(); } } );
+            add_factory( "mutation_conn_enable",           { [](const auto*){ return std::make_shared<Mutation_Conn_enable>(); } } );
+
+            add_factory( "mutation_add_node",              { [](const auto*){ return std::make_shared<Mutation_Add_node>(); } } );
+            add_factory( "mutation_add_conn",              { [](const auto*){ return std::make_shared<Mutation_Add_conn>(); } } );
+            add_factory( "mutation_add_conn_unique",       { [](const auto*){ return std::make_shared<Mutation_Add_conn_unique>(); } } );
+            add_factory( "mutation_add_conn_dup",          { [](const auto*){ return std::make_shared<Mutation_Add_conn_dup>(); } } );
+
+            add_factory( "mutation_add_conn_multi_in",     { [](const auto*){ return std::make_shared<Mutation_Add_conn_multi_in>(); } } );
+            add_factory( "mutation_add_conn_multi_out",    { [](const auto*){ return std::make_shared<Mutation_Add_conn_multi_out>(); } } );
+
+            add_factory( "mutation_multi_one", {
+                [this](const rapidxml::xml_node<> * source_node )
+                {
+                    auto out = std::make_shared<Mutation_Multi_one>();
+
+                    auto node = source_node->first_node();
+
+                    while( node != nullptr )
+                    {
+                        auto mutator = this->operator()( node );
+
+                        if( mutator != nullptr )
+                        {
+                            out->addMutator( mutator );
+                        }
+
+                        node = node->next_sibling();
+                    }
+
+                    return out;
+                }
+            } );
+
+            add_factory( "mutation_multi", {
+                [this](const rapidxml::xml_node<> * source_node )
+                {
+                    auto out = std::make_shared<Mutation_Multi>();
+
+                    auto node = source_node->first_node();
+
+                    while( node != nullptr )
+                    {
+                        double baseChance = xml::GetAttributeValue<double>( "base_chance", node );
+                        double nodeChance = xml::GetAttributeValue<double>( "node_chance", node );
+                        double connChance = xml::GetAttributeValue<double>( "conn_chance", node );
+
+                        auto mutator = this->operator()( node );
+
+                        if( mutator != nullptr )
+                        {
+                            out->addMutator( baseChance, nodeChance, connChance, mutator );
+                        }
+
+                        node = node->next_sibling();
+                    }
+
+                    return out;
+                }
+            } );
+
+        }
+
+        std::shared_ptr< Mutation_base >
+        MutationsFileLoadFactory::operator()( const rapidxml::xml_node<> * source_node ) const
+        {
+            assert( source_node != nullptr );
+
+            std::string name = xml::Name( source_node );
+
+            auto search = functionMap.find( name );
+
+            if( search != functionMap.end() )
+            {
+                return search->second.constructor( source_node );
+            }
+
+            return nullptr;
+        }
+
+        void
+        MutationsFileLoadFactory::add_factory( const std::string& name_tag, const ConstructionSet& init_funcs )
+        {
+            functionMap.emplace( name_tag, init_funcs );
+        }
+
+
         void
         Mutation_Multi::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const
         {

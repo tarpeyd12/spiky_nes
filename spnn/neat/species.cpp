@@ -338,7 +338,7 @@ namespace neat
     SpeciesManager::SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th )
          : SpeciesManager( th, SpeciationMethod::FirstForward ) // first forward is temporary
     {
-        assert( species_manager_node && neat::xml::Name( species_manager_node ) == "population" );
+        assert( species_manager_node && neat::xml::Name( species_manager_node ) == "species_tracker" );
 
         xml::readSimpleValueNode( "species_counter", speciesCounter, species_manager_node );
         speciationMethod = static_cast< SpeciationMethod >( xml::GetAttributeValue< size_t >( "value", xml::FindNode( "method", species_manager_node ) ) );
@@ -351,7 +351,7 @@ namespace neat
 
         while( species_node != nullptr )
         {
-            if( xml::Name( species_node ) == "species" )
+            if( xml::Name( species_node ) != "species" )
             {
                 species_node = species_node->next_sibling();
                 continue;

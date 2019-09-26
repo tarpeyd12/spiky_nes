@@ -25,7 +25,10 @@ namespace neat
         {
             auto mutator_functor_node = xml::Node( "mutator_functor", "", mem_pool );
 
-            mutatorFunctor->SaveToXML( mutator_functor_node, mem_pool );
+            if( mutatorFunctor != nullptr )
+            {
+                mutatorFunctor->SaveToXML( mutator_functor_node, mem_pool );
+            }
 
             population_node->append_node( mutator_functor_node );
         }
@@ -103,7 +106,7 @@ namespace neat
         destination->append_node( population_node );
     }
 
-    Population::Population( const rapidxml::xml_node<> * population_node )
+    Population::Population( std::shared_ptr< FitnessFactory > fitFactory, std::shared_ptr< Mutations::MutationsFileLoadFactory > mutations_factory, const rapidxml::xml_node<> * population_node )
         :
         innovationCounter( nullptr ),
         numNetworks( ~0L ),
@@ -118,7 +121,7 @@ namespace neat
         mutationLimits(),
         mutationRates(),
         mutatorFunctor( nullptr ),
-        fitnessCalculatorFactory( nullptr ),
+        fitnessCalculatorFactory( fitFactory ),
         generationDataToKeep( ~0L ),
         generationLog(),
         minSpeciesSize( ~0L ),
@@ -138,11 +141,14 @@ namespace neat
             mutationRates = xml::Decode_MutationRates( xml::FindNode( "mutation_rates", settings_node ) );
             mutationLimits = xml::Decode_MutationLimits( xml::FindNode( "mutation_limits", settings_node ) );
             species_distance_params = xml::Decode_SpeciesDistanceParameters( xml::FindNode( "species_distance_parameters", settings_node ) );
+
+            xml::readSimpleValueNode( "generation_data_to_keep", generationDataToKeep, settings_node );
         }
 
         {
             auto mutator_functor_node = xml::FindNode( "mutator_functor", population_node );
-            /*  */
+
+            mutatorFunctor = (*mutations_factory)( mutator_functor_node->first_node() );
         }
 
         {

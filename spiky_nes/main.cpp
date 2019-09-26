@@ -236,7 +236,20 @@ main( int argc, char** argv )
 
     if( !settings.arg_input_path.empty() )
     {
-        ;
+        std::cout << "Loading From File '" << settings.arg_input_path << "' ... " << std::flush;
+        rapidxml::xml_document<> doc;
+
+        std::string file_data = spkn::GetFileAsString( settings.arg_input_path );
+
+        doc.parse<rapidxml::parse_default>( &file_data[0] );
+
+        auto mutations_factory = std::make_shared< neat::Mutations::MutationsFileLoadFactory >();
+
+        population = std::make_shared< neat::Population >( fitnessFactory, mutations_factory, neat::xml::FindNode( "population", &doc ) );
+
+        file_data.clear();
+
+        std::cout << "Done." << std::endl;
     }
     if( population == nullptr )
     {
@@ -255,16 +268,15 @@ main( int argc, char** argv )
             25, // min generations between mass extinctions
             1 // num generation data to keep
         );
+
+        std::cout << "Done." << std::endl;
+
+        std::cout << "Population Init call ... " << std::flush;
+
+        population->Init();
+
+        std::cout << "Done." << std::endl;
     }
-
-
-    std::cout << "Done." << std::endl;
-
-    std::cout << "Population Init call ... " << std::flush;
-
-    population->Init();
-
-    std::cout << "Done." << std::endl;
 
     std::cout << "Population First Mutation ... " << std::flush;
 

@@ -82,7 +82,7 @@ namespace neat
                         size_t massExtinction = 200,
                         size_t gensToKeep = 10 );
 
-            Population( const rapidxml::xml_node<> * population_node );
+            Population( std::shared_ptr< FitnessFactory > fitFactory, std::shared_ptr< Mutations::MutationsFileLoadFactory > mutations_factory, const rapidxml::xml_node<> * population_node );
 
             virtual ~Population() = default;
 
