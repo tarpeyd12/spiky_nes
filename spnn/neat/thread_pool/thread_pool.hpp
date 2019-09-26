@@ -21,9 +21,10 @@ namespace tpl
 
             std::mutex working_mutex;
             std::condition_variable working_condition;
-            std::atomic< size_t > max_workers_limit;
+            size_t max_workers_limit;
+            size_t num_working;
 
-            std::atomic< size_t > num_working;
+            std::atomic< size_t > num_executing;
 
         public:
 

@@ -12,7 +12,7 @@ namespace tpl
     }
 
     pool::pool( const size_t num_threads )
-         : done( false ), worker_threads(), work_queue(), working_mutex(), working_condition(), max_workers_limit( 0 ), num_working( 0 )
+         : done( false ), worker_threads(), work_queue(), working_mutex(), working_condition(), max_workers_limit( 0 ), num_working( 0 ), num_executing( 0 )
     {
         assert( num_threads > 0 );
 
@@ -41,6 +41,7 @@ namespace tpl
     void
     pool::limit_workers( size_t num_workers )
     {
+        std::lock_guard<std::mutex> lock{ working_mutex };
         max_workers_limit = std::max<size_t>( 1, std::min<size_t>( num_workers, num_threads() ) );
 
         // tell all threads that may be waiting to execute to re-evaluate if they are allowed to execute
@@ -68,7 +69,13 @@ namespace tpl
         {
             // block execution until the number of working threads falls under the number of threads allowed to be working
             std::unique_lock<std::mutex> lock{ working_mutex };
-            working_condition.wait( lock, [this](){ return num_working < max_workers_limit || done; } );
+            working_condition.wait( lock, [this](){ return ( num_working < workers_limit() ) || done; } );
+
+            // track the change in the number of threads working
+            ++num_working;
+
+            // release the lock so other threads can see if they are allowed to execute within the max_workers_limit limit
+            lock.unlock();
 
             {
                 std::unique_ptr< task_base > task{ nullptr };
@@ -76,22 +83,23 @@ namespace tpl
                 // block thread execution until a task is retrieved
                 if( work_queue.wait_pop( task ) && task != nullptr && !done )
                 {
-                    // track the change in the number of threads working
-                    ++num_working;
-
-                    // release the lock so other threads can see if they are allowed to execute within the max_workers_limit limit
-                    lock.unlock();
+                    ++num_executing;
 
                     // execute the retrieved task
                     task->execute();
 
-                    // we are finished executing so we update the count of working threads
-                    --num_working;
-
-                    // notify the other threads that one of them may retrieve a task
-                    working_condition.notify_one();
+                    --num_executing;
                 }
             }
+
+            // reacquire the lock to safely modify num_working and signal other threads
+            lock.lock();
+
+            // we are finished executing so we update the count of working threads
+            --num_working;
+
+            // notify the other threads that one of them may retrieve a task
+            working_condition.notify_one();
         }
         // thread done
     }

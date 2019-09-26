@@ -52,7 +52,7 @@ namespace tpl
     size_t
     pool::workers_active() const
     {
-        return num_working;
+        return num_executing;
     }
 
     template< class InputIt, class UnaryFunction >
