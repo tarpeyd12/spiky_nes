@@ -80,6 +80,11 @@ namespace spkn
 
             std::string file_data = GetFileAsString( file_path );
 
+            if( file_data.empty() )
+            {
+                return;
+            }
+
             doc.parse<rapidxml::parse_default>( &file_data[0] );
 
             settings.__LoadFromXML( neat::xml::FindNode( "settings", &doc ) );

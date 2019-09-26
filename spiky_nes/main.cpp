@@ -230,29 +230,39 @@ main( int argc, char** argv )
     }
 
 
-    std::cout << "Population construct call ... " << std::flush;
+
 
     std::shared_ptr< neat::Population > population = nullptr;
 
     if( !settings.arg_input_path.empty() )
     {
-        std::cout << "Loading From File '" << settings.arg_input_path << "' ... " << std::flush;
+        std::cout << "Loading Population From File '" << settings.arg_input_path << "' ... " << std::flush;
         rapidxml::xml_document<> doc;
 
         std::string file_data = spkn::GetFileAsString( settings.arg_input_path );
 
-        doc.parse<rapidxml::parse_default>( &file_data[0] );
+        if( !file_data.empty() )
+        {
+            doc.parse<rapidxml::parse_default>( &file_data[0] );
 
-        auto mutations_factory = std::make_shared< neat::Mutations::MutationsFileLoadFactory >();
+            auto mutations_factory = std::make_shared< neat::Mutations::MutationsFileLoadFactory >();
 
-        population = std::make_shared< neat::Population >( fitnessFactory, mutations_factory, neat::xml::FindNode( "population", &doc ) );
+            population = std::make_shared< neat::Population >( fitnessFactory, mutations_factory, neat::xml::FindNode( "population", &doc ) );
 
-        file_data.clear();
+            file_data.clear();
 
-        std::cout << "Done." << std::endl;
+            std::cout << "Done." << std::endl;
+        }
+        else
+        {
+            std::cout << "Failed." << std::endl;
+        }
     }
+
     if( population == nullptr )
     {
+        std::cout << "Population construct call ... " << std::flush;
+
         population = std::make_shared< neat::Population >(
             populationSize,
             fitnessFactory->numInputs(),
