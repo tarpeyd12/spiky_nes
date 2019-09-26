@@ -33,6 +33,8 @@ namespace neat
         }
 
         innovationCounter->clearGenerationConnections();
+
+        initialGenotypeTemplate = nullptr;
     }
 
     NetworkGenotype

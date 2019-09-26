@@ -187,6 +187,13 @@ namespace neat
         }
 
         template < typename T >
+        T GetAttributeValue( const std::string& name, const rapidxml::xml_node<> * node )
+        {
+            return xml::from_string< T >( xml::Value( xml::FindAttribute( name, node ) ) );
+        }
+
+
+        template < typename T >
         void
         appendSimpleValueNode( const char * name, const T& value, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
         {

@@ -9,7 +9,7 @@ namespace neat
 {
     struct SpeciesDistanceParameters;
     class SpeciesManager;
-    enum class SpeciationMethod : uint8_t { FirstForward, FirstReverse, Closest, CloseEnough };
+    enum class SpeciationMethod : uint8_t { FirstForward = 0, FirstReverse, Closest, CloseEnough };
 }
 
 #include "network.hpp"
@@ -60,6 +60,7 @@ namespace neat
         public:
 
             SpeciesManager( const SpeciesDistanceParameters& th, SpeciationMethod specMethod = SpeciationMethod::FirstForward );
+            SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th );
 
             SpeciesManager( const SpeciesManager& other );
 

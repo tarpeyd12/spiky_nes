@@ -43,8 +43,8 @@ namespace neat
 
             std::vector< NetworkGenotype > populationData;
 
-            std::vector< NodeID > inputNodeIDs;
-            std::vector< NodeID > outputNodeIDs;
+            //std::vector< NodeID > inputNodeIDs;
+            //std::vector< NodeID > outputNodeIDs;
 
             std::unique_ptr< SpeciesManager > speciesTracker;
 
@@ -81,6 +81,8 @@ namespace neat
                         size_t killDelay = 100,
                         size_t massExtinction = 200,
                         size_t gensToKeep = 10 );
+
+            Population( const rapidxml::xml_node<> * population_node );
 
             virtual ~Population() = default;
 

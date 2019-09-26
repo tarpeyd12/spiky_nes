@@ -2,6 +2,15 @@
 
 namespace neat
 {
+    InnovationGenerator::InnovationGenerator( rapidxml::xml_node<> * innovation_generator_node )
+         : InnovationGenerator()
+    {
+        assert( innovation_generator_node && neat::xml::Name( innovation_generator_node ) == "innovation_generator" );
+
+        innovationCounter = xml::GetAttributeValue<InnovationID>( "innovation_counter", innovation_generator_node );
+        nodeCounter = xml::GetAttributeValue<NodeID>( "node_counter", innovation_generator_node );
+    }
+
     void
     InnovationGenerator::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
     {

@@ -216,35 +216,47 @@ main( int argc, char** argv )
 
     std::shared_ptr< spkn::FitnessFactory > fitnessFactory = nullptr;
 
-    fitnessFactory = std::make_shared< spkn::FitnessFactory >(
-        settings.arg_rom_path,
-        previewWindow,
-        limits.thresholdMax.max, // maximum activation value, used to scale input values
-        settings.var.get<double>( "fitness_max_apm", 3.0 * 60.0 ), // APM allowed
-        100, // network steps per NES frame
-        5, // color winding value
-        settings.var.get<size_t>( "fitness_downscale_ratio", 16 ) // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
-    );
+    if( fitnessFactory == nullptr )
+    {
+        fitnessFactory = std::make_shared< spkn::FitnessFactory >(
+            settings.arg_rom_path,
+            previewWindow,
+            limits.thresholdMax.max, // maximum activation value, used to scale input values
+            settings.var.get<double>( "fitness_max_apm", 3.0 * 60.0 ), // APM allowed
+            100, // network steps per NES frame
+            5, // color winding value
+            settings.var.get<size_t>( "fitness_downscale_ratio", 16 ) // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
+        );
+    }
+
 
     std::cout << "Population construct call ... " << std::flush;
 
     std::shared_ptr< neat::Population > population = nullptr;
 
-    population = std::make_shared< neat::Population >(
-        populationSize,
-        fitnessFactory->numInputs(),
-        fitnessFactory->numOutputs(),
-        limits,
-        rates,
-        mutator,
-        fitnessFactory,
-        speciationParams,
-        neat::SpeciationMethod::Closest,
-        25, // min species size to not be considered endangered
-        5, // num generations to buffer before endangered species goes extinct
-        25, // min generations between mass extinctions
-        1 // num generation data to keep
-    );
+    if( !settings.arg_input_path.empty() )
+    {
+        ;
+    }
+    if( population == nullptr )
+    {
+        population = std::make_shared< neat::Population >(
+            populationSize,
+            fitnessFactory->numInputs(),
+            fitnessFactory->numOutputs(),
+            limits,
+            rates,
+            mutator,
+            fitnessFactory,
+            speciationParams,
+            neat::SpeciationMethod::Closest,
+            25, // min species size to not be considered endangered
+            5, // num generations to buffer before endangered species goes extinct
+            25, // min generations between mass extinctions
+            1 // num generation data to keep
+        );
+    }
+
 
     std::cout << "Done." << std::endl;
 

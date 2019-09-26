@@ -23,7 +23,7 @@ namespace spkn
         {
             arg_numThreads = std::max<size_t>( 1, std::thread::hardware_concurrency() / 2 );
             arg_numColumns = std::max<size_t>( 1, arg_numThreads > 4 ? arg_numThreads / 2 : arg_numThreads );
-            arg_windowScale = arg_numColumns > 6 ? 1.0f : 2.0f;
+            arg_windowScale = arg_numColumns > 4 ? 1.0f : 2.0f;
         }
 
         auto version_func = []() -> void

@@ -31,6 +31,8 @@ namespace neat
 
             InnovationGenerator() : innovationCounter_mutex(), innovationCounter( 0 ), nodeCounter_mutex(), nodeCounter( 0 ), generationConnections_mutex(), generationConnections() { /*  */ }
 
+            InnovationGenerator( rapidxml::xml_node<> * innovation_generator_node );
+
             inline NodeDef GetNextNode( double tMin, double tMax, double vDec, double aDec, uint64_t pF, uint64_t pS, NodeType type );
             inline ConnectionDef GetNextConnection( NodeID src, NodeID dst, double weight, uint64_t length );
 

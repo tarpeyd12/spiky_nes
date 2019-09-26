@@ -16,6 +16,8 @@ namespace neat
         /*  */
     }
 
+
+
     SpeciesManager::SpeciesManager( const SpeciesManager& other )
          : speciesCounter_mutex(), speciesCounter( 0 ), speciationMethod( other.speciationMethod ), historicSpeciesIDMapList(), speciesIDMap_mutex(), speciesIDMap(), classificationParameters( other.classificationParameters )
     {
@@ -317,6 +319,7 @@ namespace neat
 
         auto node = xml::Node( "species_tracker", "", mem_pool );
         xml::appendSimpleValueNode( "species_counter", speciesCounter, node, mem_pool );
+        xml::appendSimpleValueNode<size_t>( "method", static_cast<size_t>( speciationMethod ), node, mem_pool );
 
         auto species_node = xml::Node( "species_archetypes", "", mem_pool );
         species_node->append_attribute( xml::Attribute( "N", xml::to_string( speciesIDMap.size() ), mem_pool ) );
@@ -330,6 +333,38 @@ namespace neat
         }
         node->append_node( species_node );
         destination->append_node( node );
+    }
+
+    SpeciesManager::SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th )
+         : SpeciesManager( th, SpeciationMethod::FirstForward ) // first forward is temporary
+    {
+        assert( species_manager_node && neat::xml::Name( species_manager_node ) == "population" );
+
+        xml::readSimpleValueNode( "species_counter", speciesCounter, species_manager_node );
+        speciationMethod = static_cast< SpeciationMethod >( xml::GetAttributeValue< size_t >( "value", xml::FindNode( "method", species_manager_node ) ) );
+
+        auto species_archatype_node = xml::FindNode( "species_archetypes", species_manager_node );
+
+        size_t _expected_num_species = xml::GetAttributeValue<size_t>( "N", species_archatype_node );
+
+        auto species_node = species_archatype_node->first_node();
+
+        while( species_node != nullptr )
+        {
+            if( xml::Name( species_node ) == "species" )
+            {
+                species_node = species_node->next_sibling();
+                continue;
+            }
+
+            SpeciesID species_id = xml::GetAttributeValue<SpeciesID>( "ID", species_node );
+
+            speciesIDMap[ species_id ] = std::make_shared< NetworkGenotype >( xml::Decode_NetworkGenotype( xml::FindNode( "genotype", species_node ) ) );
+
+            species_node = species_node->next_sibling();
+        }
+
+        assert( speciesIDMap.size() == _expected_num_species );
     }
 
     SpeciesID

@@ -97,10 +97,138 @@ namespace neat
         }
 
         // speciesTracker
-        //population_node->append_node( xml::Node( "species_tracker", "TODO", mem_pool ) );
         speciesTracker->SaveToXML( population_node, mem_pool );
 
         // add node to destination
         destination->append_node( population_node );
+    }
+
+    Population::Population( const rapidxml::xml_node<> * population_node )
+        :
+        innovationCounter( nullptr ),
+        numNetworks( ~0L ),
+        numInputNodes( ~0L ),
+        numOutputNodes( ~0L ),
+        generationCount( ~0L ),
+        initialGenotypeTemplate( nullptr ),
+        populationData(),
+        //inputNodeIDs(),
+        //outputNodeIDs(),
+        speciesTracker( nullptr ),
+        mutationLimits(),
+        mutationRates(),
+        mutatorFunctor( nullptr ),
+        fitnessCalculatorFactory( nullptr ),
+        generationDataToKeep( ~0L ),
+        generationLog(),
+        minSpeciesSize( ~0L ),
+        speciesKillDelay(),
+        killDelayLimit( ~0L ),
+        massExtinctionTimer( ~0L ),
+        pastFitness(),
+        massExtinctionCount( ~0L )
+    {
+        assert( population_node && neat::xml::Name( population_node ) == "population" );
+
+        SpeciesDistanceParameters species_distance_params;
+
+        {
+            auto settings_node = xml::FindNode( "settings", population_node );
+
+            mutationRates = xml::Decode_MutationRates( xml::FindNode( "mutation_rates", settings_node ) );
+            mutationLimits = xml::Decode_MutationLimits( xml::FindNode( "mutation_limits", settings_node ) );
+            species_distance_params = xml::Decode_SpeciesDistanceParameters( xml::FindNode( "species_distance_parameters", settings_node ) );
+        }
+
+        {
+            auto mutator_functor_node = xml::FindNode( "mutator_functor", population_node );
+            /*  */
+        }
+
+        {
+            auto state_node = xml::FindNode( "state", population_node );
+
+            xml::readSimpleValueNode( "num_networks", numNetworks, state_node );
+            xml::readSimpleValueNode( "num_input_nodes", numInputNodes, state_node );
+            xml::readSimpleValueNode( "num_output_nodes", numOutputNodes, state_node );
+            xml::readSimpleValueNode( "generation_count", generationCount, state_node );
+
+            {
+                auto innovation_counter_node = xml::FindNode( "innovation_generator", state_node );
+
+                innovationCounter = std::make_unique< InnovationGenerator >( innovation_counter_node );
+            }
+
+            xml::readSimpleValueNode( "min_species_size", minSpeciesSize, state_node );
+            xml::readSimpleValueNode( "kill_delay_limit", killDelayLimit, state_node );
+
+            {
+                auto species_kill_delay_node = xml::FindNode( "species_kill_delay", state_node );
+
+                auto species_delay_node = species_kill_delay_node->first_node();
+
+                while( species_delay_node != nullptr )
+                {
+                    if( xml::Name( species_delay_node ) != "species" )
+                    {
+                        species_delay_node = species_delay_node->next_sibling();
+                        continue;
+                    }
+                    speciesKillDelay[ xml::GetAttributeValue< SpeciesID >( "ID", species_delay_node ) ] = xml::GetAttributeValue< size_t >( "delay", species_delay_node );
+
+                    species_delay_node = species_delay_node->next_sibling();
+                }
+            }
+
+            xml::readSimpleValueNode( "mass_extinction_timer", massExtinctionTimer, state_node );
+            xml::readSimpleValueNode( "mass_extinction_count", massExtinctionCount, state_node );
+
+            {
+                auto past_fitness_node = xml::FindNode( "past_fitness", state_node );
+
+                size_t _num_past_fitnesses_expected = xml::GetAttributeValue<size_t>( "N", past_fitness_node );
+
+                auto fitness_node = past_fitness_node->first_node();
+
+                while( fitness_node != nullptr )
+                {
+                    if( xml::Name( fitness_node ) != "fitness" )
+                    {
+                        fitness_node = fitness_node->next_sibling();
+                        continue;
+                    }
+
+                    pastFitness.emplace_back( xml::GetAttributeValue< long double >( "value", fitness_node ) );
+
+                    fitness_node = fitness_node->next_sibling();
+                }
+
+                assert( pastFitness.size() == _num_past_fitnesses_expected );
+            }
+        }
+
+        {
+            auto population_data_node = xml::FindNode( "population_data", population_node );
+
+            size_t _num_genotypes_expected = xml::GetAttributeValue<size_t>( "N", population_data_node );
+
+            populationData.reserve( _num_genotypes_expected );
+
+            auto genotype_node = population_data_node->first_node();
+
+            while( genotype_node != nullptr )
+            {
+                populationData.emplace_back( xml::Decode_NetworkGenotype( genotype_node ) );
+                genotype_node = genotype_node->next_sibling();
+            }
+
+            assert( populationData.size() == _num_genotypes_expected );
+        }
+
+        {
+            auto species_tracker_node = xml::FindNode( "species_tracker", population_node );
+
+            speciesTracker = std::make_unique< SpeciesManager >( species_tracker_node, species_distance_params );
+        }
     }
 }
