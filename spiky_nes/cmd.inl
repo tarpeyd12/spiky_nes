@@ -4,6 +4,8 @@
 #include <sstream>
 #include <cassert>
 
+#include "../spnn/neat/xml.hpp"
+
 namespace spkn
 {
     template < typename ArgType >
@@ -19,7 +21,7 @@ namespace spkn
     {
         if( s != nullptr )
         {
-            ArgType v{};
+            /*ArgType v{};
 
             {
                 std::istringstream ss;
@@ -28,9 +30,9 @@ namespace spkn
                 ss >> v;
 
                 //ss.str( std::string{} );
-            }
+            }*/
 
-            _callback( v );
+            _callback( neat::xml::from_string< ArgType >( std::string{ s } ) );
         }
     }
 
