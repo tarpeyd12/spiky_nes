@@ -43,6 +43,8 @@ namespace neat
 
             // FIXME(dot#9#2/27/2019): MAKE THIS THREAD SAFE
 
+            const SpeciesID FirstAvailableSpecies = 1;
+
             mutable std::mutex speciesCounter_mutex;
             SpeciesID speciesCounter;
 
@@ -54,6 +56,8 @@ namespace neat
 
             mutable std::shared_timed_mutex speciesIDMap_mutex;
             std::map< SpeciesID, std::shared_ptr< NetworkGenotype > > speciesIDMap;
+
+            std::map< SpeciesID, SpeciesID > speciesTaxonomyMap;
 
             SpeciesDistanceParameters classificationParameters;
 

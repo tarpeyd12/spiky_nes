@@ -9,13 +9,13 @@ namespace neat
 {
 
     NetworkGenotype::NetworkGenotype()
-         : nodeGenotype(), connectionGenotype()
+         : nodeGenotype(), connectionGenotype(), parentSpeciesID( 0 )
     {
         /*  */
     }
 
     NetworkGenotype::NetworkGenotype( const NetworkGenotype& other )
-         : nodeGenotype( other.nodeGenotype ), connectionGenotype( other.connectionGenotype )
+         : nodeGenotype( other.nodeGenotype ), connectionGenotype( other.connectionGenotype ), parentSpeciesID( other.parentSpeciesID )
     {
         /*  */
     }
@@ -26,6 +26,7 @@ namespace neat
         // assign all variables in this to the values in other
         nodeGenotype = other.nodeGenotype;
         connectionGenotype = other.connectionGenotype;
+        parentSpeciesID = other.parentSpeciesID;
 
         return *this;
     }
@@ -40,6 +41,12 @@ namespace neat
     NetworkGenotype::getNumConnections() const
     {
         return connectionGenotype.size();
+    }
+
+    SpeciesID
+    NetworkGenotype::getParentSpeciesID() const
+    {
+        return parentSpeciesID;
     }
 
     const std::vector< NodeDef >&

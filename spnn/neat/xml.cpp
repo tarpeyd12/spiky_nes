@@ -174,6 +174,8 @@ namespace neat
             auto nodes_node    = Node( "nodes", "", mem_pool );
             auto conns_node    = Node( "connections", "", mem_pool );
 
+            genotype_node->append_attribute( Attribute( "parent_species", xml::to_string( genotype.getParentSpeciesID() ), mem_pool ) );
+
             nodes_node->append_attribute( Attribute( "N", xml::to_string( genotype.getNumNodes() ), mem_pool ) );
             nodes_node->append_attribute( Attribute( "data", b64::Encode_NodeGenotype( genotype.getNodes() ), mem_pool ) );
             genotype_node->append_node( nodes_node );
@@ -192,8 +194,10 @@ namespace neat
             if( !source || Name( source ) != "genotype" )
             {
                 // error, wrong xml node type. return empty genotype
-                return make_genotype( {}, {} );
+                return make_genotype( {}, {}, 0 );
             }
+
+            SpeciesID parent = xml::GetAttributeValue<SpeciesID>( "parent_species", source );
 
             std::vector< NodeDef > nodes;
             size_t num_nodes = 0;
@@ -207,7 +211,7 @@ namespace neat
             num_conns = from_string<size_t>( Value( FindAttribute( "N", conns_node ) ) );
             b64::Decode_ConnectionGenotype( num_conns, Value( FindAttribute( "data", conns_node ) ), conns );
 
-            return make_genotype( nodes, conns );
+            return make_genotype( nodes, conns, parent );
         }
     }
 }

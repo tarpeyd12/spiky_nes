@@ -547,6 +547,7 @@ namespace neat
             {
                 tpl::future< NetworkGenotype > future;
                 bool do_mutate;
+                SpeciesID species;
             };
 
             std::list< future_package > genotype_futures;
@@ -608,14 +609,14 @@ namespace neat
                     // if the pair is the same, then just return one of them instead of splicing
                     if( p.first == p.second )
                     {
-                        genotype_futures.push_back( { thread_pool.submit( [&,p]{ return *oldGenotypesVec[ p.first ].second; } ), p.do_mutate } );
+                        genotype_futures.push_back( { thread_pool.submit( [&,p]{ return *oldGenotypesVec[ p.first ].second; } ), p.do_mutate, species } );
                         continue;
                     }
 
                     //nextPopulation.push_back( SpliceGenotypes( *oldGenotypesVec[ p.first ].second, *oldGenotypesVec[ p.second ].second, rand ) );
                     auto _rand = std::make_shared< Rand::Random_Unsafe >( rand->Int() );
                     using overload_type = NetworkGenotype( const NetworkGenotype&, const NetworkGenotype&, std::shared_ptr< Rand::RandomFunctor > );
-                    genotype_futures.push_back( { thread_pool.submit< overload_type >( SpliceGenotypes, std::cref( *oldGenotypesVec[ p.first ].second ), std::cref( *oldGenotypesVec[ p.second ].second ), _rand ), p.do_mutate } );
+                    genotype_futures.push_back( { thread_pool.submit< overload_type >( SpliceGenotypes, std::cref( *oldGenotypesVec[ p.first ].second ), std::cref( *oldGenotypesVec[ p.second ].second ), _rand ), p.do_mutate, species } );
                 }
             }
 
@@ -625,6 +626,7 @@ namespace neat
             while( !genotype_futures.empty() )
             {
                 nextPopulation.emplace_back( genotype_futures.front().future.get() );
+                nextPopulation.back().parentSpeciesID = genotype_futures.front().species;
 
                 // elitism
                 if( !genotype_futures.front().do_mutate )

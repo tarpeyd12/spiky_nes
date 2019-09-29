@@ -9,7 +9,15 @@ namespace neat
 {
 
     SpeciesManager::SpeciesManager( const SpeciesDistanceParameters& th, SpeciationMethod specMethod )
-         : speciesCounter_mutex(), speciesCounter( 0 ), speciationMethod( specMethod ), historicSpeciesIDMapList(), speciesIDMap_mutex(), speciesIDMap(), classificationParameters( th )
+     :
+        speciesCounter_mutex(),
+        speciesCounter( FirstAvailableSpecies ),
+        speciationMethod( specMethod ),
+        historicSpeciesIDMapList(),
+        speciesIDMap_mutex(),
+        speciesIDMap(),
+        speciesTaxonomyMap(),
+        classificationParameters( th )
     {
         assert( getClassificationParameters().threshold > 0.0 );
 
@@ -19,7 +27,15 @@ namespace neat
 
 
     SpeciesManager::SpeciesManager( const SpeciesManager& other )
-         : speciesCounter_mutex(), speciesCounter( 0 ), speciationMethod( other.speciationMethod ), historicSpeciesIDMapList(), speciesIDMap_mutex(), speciesIDMap(), classificationParameters( other.classificationParameters )
+     :
+        speciesCounter_mutex(),
+        speciesCounter( FirstAvailableSpecies ),
+        speciationMethod( other.speciationMethod ),
+        historicSpeciesIDMapList(),
+        speciesIDMap_mutex(),
+        speciesIDMap(),
+        speciesTaxonomyMap(),
+        classificationParameters( other.classificationParameters )
     {
         // copy constructor
 
@@ -39,6 +55,7 @@ namespace neat
         speciesCounter = other.speciesCounter;
         historicSpeciesIDMapList = other.historicSpeciesIDMapList;
         speciesIDMap = other.speciesIDMap;
+        speciesTaxonomyMap = other.speciesTaxonomyMap;
     }
 
     void
@@ -68,7 +85,7 @@ namespace neat
                 if( significantChangesOnly && !it->second.empty() && it->second.back().second != nullptr )
                 {
                     double d = NetworkGenotypeDistance( *genotype, *it->second.back().second, getClassificationParameters() );
-                    if( !(d < 0.0) && !(d > 0.0) )
+                    if( d != 0.0 )
                     {
                         it->second.push_back( { generation, genotype } );
                     }
@@ -373,11 +390,26 @@ namespace neat
             node->append_node( historic_species_map_node );
         }
 
+        {
+            auto species_taxonomy_node = xml::Node( "species_taxonomy", "", mem_pool );
+            species_taxonomy_node->append_attribute( xml::Attribute( "N", xml::to_string( speciesTaxonomyMap.size() ), mem_pool ) );
+
+            for( const auto& p : speciesTaxonomyMap )
+            {
+                auto archtype = xml::Node( "species", "", mem_pool );
+                archtype->append_attribute( xml::Attribute( "ID", xml::to_string( p.first ), mem_pool ) );
+                archtype->append_attribute( xml::Attribute( "parent", xml::to_string( p.second ), mem_pool ) );
+                species_taxonomy_node->append_node( archtype );
+            }
+
+            node->append_node( species_taxonomy_node );
+        }
+
         destination->append_node( node );
     }
 
     SpeciesManager::SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th )
-         : SpeciesManager( th, SpeciationMethod::FirstForward ) // first forward is temporary
+     : SpeciesManager( th, SpeciationMethod::FirstForward ) // first forward is temporary
     {
         assert( species_manager_node && neat::xml::Name( species_manager_node ) == "species_tracker" );
 
@@ -467,6 +499,31 @@ namespace neat
             assert( num_species_history_sizes == historicSpeciesIDMapList.size() );
         }
 
+        {
+            auto species_taxonomy_node = xml::FindNode( "species_taxonomy", species_manager_node );
+            size_t _expected_num_species_taxonomy = xml::GetAttributeValue<size_t>( "N", species_taxonomy_node );
+
+            auto species_link_node = species_taxonomy_node->first_node();
+
+            while( species_link_node != nullptr )
+            {
+                if( xml::Name( species_link_node ) != "species" )
+                {
+                    species_link_node = species_link_node->next_sibling();
+                    continue;
+                }
+
+                SpeciesID species_id = xml::GetAttributeValue<SpeciesID>( "ID", species_link_node );
+                SpeciesID parent_id = xml::GetAttributeValue<SpeciesID>( "parent", species_link_node );
+
+                speciesTaxonomyMap[ species_id ] = parent_id;
+
+                species_link_node = species_link_node->next_sibling();
+            }
+
+            assert( speciesTaxonomyMap.size() == _expected_num_species_taxonomy );
+        }
+
     }
 
     SpeciesID
@@ -488,6 +545,20 @@ namespace neat
     SpeciesManager::__updateSpeciesArchtype_no_lock( SpeciesID id, const NetworkGenotype& genotype )
     {
         // if the id does not exist, then add it, if it does exist overwrite it
-        speciesIDMap[ id ] = std::make_shared< NetworkGenotype >( genotype );
+        //speciesIDMap[ id ] = std::make_shared< NetworkGenotype >( genotype );
+
+        auto shared_genotype_copy = std::make_shared< NetworkGenotype >( genotype );
+
+        auto search = speciesIDMap.find( id );
+        if( search == speciesIDMap.end() )
+        {
+            speciesIDMap[ id ] = shared_genotype_copy;
+            speciesTaxonomyMap[ id ] = genotype.getParentSpeciesID();
+        }
+        else
+        {
+            //speciesIDMap[ id ] = shared_genotype_copy;
+            search->second = shared_genotype_copy;
+        }
     }
 }

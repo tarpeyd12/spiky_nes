@@ -12,7 +12,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="mario.nes --auto-threads " />
+				<Option parameters="mario.nes --auto-threads -f dbg.xml" />
 				<Compiler>
 					<Add option="-O3" />
 					<Add option="-Og" />
@@ -65,7 +65,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters="mario.nes -f data.xml --auto-threads" />
+				<Option parameters='mario.nes -f data.xml -t 7 -w 7 -s &quot;100%&quot;' />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />

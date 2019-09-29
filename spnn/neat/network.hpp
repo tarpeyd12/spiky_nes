@@ -109,6 +109,8 @@ namespace neat
             std::vector< NodeDef >          nodeGenotype;
             std::vector< ConnectionDef >    connectionGenotype;
 
+            SpeciesID parentSpeciesID;
+
         public:
 
             // constructors
@@ -128,6 +130,8 @@ namespace neat
 
             size_t getNumNodes() const;
             size_t getNumConnections() const;
+
+            SpeciesID getParentSpeciesID() const;
 
             const std::vector< NodeDef >& getNodes() const;
             const std::vector< ConnectionDef >& getConnections() const;
@@ -162,10 +166,10 @@ namespace neat
             friend class SpeciesManager;
             friend class Mutations::Mutation_base;
             friend NetworkGenotype SpliceGenotypes( const std::vector< const NetworkGenotype* >& genotypes, std::shared_ptr< Rand::RandomFunctor > rand );
-            friend NetworkGenotype make_genotype( const std::vector< NodeDef >& nodes, const std::vector< ConnectionDef >& conns );
+            friend NetworkGenotype make_genotype( const std::vector< NodeDef >& nodes, const std::vector< ConnectionDef >& conns, const SpeciesID parent_species_id );
     };
 
-    NetworkGenotype make_genotype( const std::vector< NodeDef >& nodes, const std::vector< ConnectionDef >& conns );
+    NetworkGenotype make_genotype( const std::vector< NodeDef >& nodes, const std::vector< ConnectionDef >& conns, const SpeciesID parent_species_id = 0 );
 }
 
 #endif // NEAT_NETWORK_HPP_INCLUDED
