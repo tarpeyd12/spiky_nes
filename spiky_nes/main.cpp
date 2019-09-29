@@ -363,6 +363,9 @@ main( int argc, char** argv )
 
     AtExit( onExit );
 
+    const size_t num_starting_nodes = fitnessFactory->numInputs() + fitnessFactory->numOutputs();
+    const size_t num_starting_conns = fitnessFactory->numInputs() * fitnessFactory->numOutputs();
+
     auto evolution_start_time = std::chrono::high_resolution_clock::now();
 
     //while( true )
@@ -574,19 +577,19 @@ main( int argc, char** argv )
             avgConns_active /= (long double)(genotypePtrs.size());
 
             std::cout << "\tGenotypes:\n";
-            std::cout << "\t\tminNodesT:" << nodes.min << "\n";
-            std::cout << "\t\tmaxNodesT:" << nodes.max << "\n";
-            std::cout << "\t\tavgNodesT:" << avgNodes << "\n";
-            std::cout << "\t\tminConnsT:" << conns.min << "\n";
-            std::cout << "\t\tmaxConnsT:" << conns.max << "\n";
-            std::cout << "\t\tavgConnsT:" << avgConns << "\n";
+            std::cout << "\t\tminNodesT:" << (long double)nodes.min - num_starting_nodes << "\n";
+            std::cout << "\t\tmaxNodesT:" << (long double)nodes.max - num_starting_nodes << "\n";
+            std::cout << "\t\tavgNodesT:" << (long double)avgNodes  - num_starting_nodes << "\n";
+            std::cout << "\t\tminConnsT:" << (long double)conns.min - num_starting_conns << "\n";
+            std::cout << "\t\tmaxConnsT:" << (long double)conns.max - num_starting_conns << "\n";
+            std::cout << "\t\tavgConnsT:" << (long double)avgConns  - num_starting_conns << "\n";
             std::cout << "\n";
-            std::cout << "\t\tminNodesA:" << nodes_active.min << "\n";
-            std::cout << "\t\tmaxNodesA:" << nodes_active.max << "\n";
-            std::cout << "\t\tavgNodesA:" << avgNodes_active << "\n";
-            std::cout << "\t\tminConnsA:" << conns_active.min << "\n";
-            std::cout << "\t\tmaxConnsA:" << conns_active.max << "\n";
-            std::cout << "\t\tavgConnsA:" << avgConns_active << "\n";
+            std::cout << "\t\tminNodesA:" << (long double)nodes_active.min - num_starting_nodes << "\n";
+            std::cout << "\t\tmaxNodesA:" << (long double)nodes_active.max - num_starting_nodes << "\n";
+            std::cout << "\t\tavgNodesA:" << (long double)avgNodes_active  - num_starting_nodes << "\n";
+            std::cout << "\t\tminConnsA:" << (long double)conns_active.min - num_starting_conns << "\n";
+            std::cout << "\t\tmaxConnsA:" << (long double)conns_active.max - num_starting_conns << "\n";
+            std::cout << "\t\tavgConnsA:" << (long double)avgConns_active  - num_starting_conns << "\n";
             std::cout << "\n";
         }
 
@@ -669,18 +672,18 @@ main( int argc, char** argv )
             logfile << genData->getMinFitness() << ",";
             logfile << genData->getMaxFitness() << ",";
             logfile << genData->getAvgFitness() << ",";
-            logfile << nodes.min << ",";
-            logfile << nodes.max << ",";
-            logfile << avgNodes << ",";
-            logfile << conns.min << ",";
-            logfile << conns.max << ",";
-            logfile << avgConns << ",";
-            logfile << nodes_active.min << ",";
-            logfile << nodes_active.max << ",";
-            logfile << avgNodes_active << ",";
-            logfile << conns_active.min << ",";
-            logfile << conns_active.max << ",";
-            logfile << avgConns_active << ",";
+            logfile << (long double)nodes.min - num_starting_nodes << ",";
+            logfile << (long double)nodes.max - num_starting_nodes << ",";
+            logfile << (long double)avgNodes  - num_starting_nodes << ",";
+            logfile << (long double)conns.min - num_starting_conns << ",";
+            logfile << (long double)conns.max - num_starting_conns << ",";
+            logfile << (long double)avgConns  - num_starting_conns << ",";
+            logfile << (long double)nodes_active.min - num_starting_nodes << ",";
+            logfile << (long double)nodes_active.max - num_starting_nodes << ",";
+            logfile << (long double)avgNodes_active  - num_starting_nodes << ",";
+            logfile << (long double)conns_active.min - num_starting_conns << ",";
+            logfile << (long double)conns_active.max - num_starting_conns << ",";
+            logfile << (long double)avgConns_active  - num_starting_conns << ",";
             logfile << speciesPresent.size() << ",";
             logfile << genData->getSpeciesManager().getNumTrackedSpecies() - speciesPresent.size() << ",";
             logfile << population->getNumMassExtinctions() << ",";

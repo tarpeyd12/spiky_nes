@@ -42,6 +42,10 @@ namespace spkn
         // storage of other variables
         Variables var;
 
+        // pass through to var::get<T>()
+        template < typename T >
+        inline T get( const std::string& key, const T& _default ) const;
+
         // for saving to and loading from the data file
         void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const;
         void __LoadFromXML( const rapidxml::xml_node<> * settings_node );

@@ -21,6 +21,13 @@ namespace spkn
     {
         return get<T>( key, _default );
     }
+
+    template < typename T >
+    T
+    Settings::get( const std::string& key, const T& _default ) const
+    {
+        return var.get<T>( key, _default );
+    }
 }
 
 #endif // SPKN_SETTINGS_INL_INCLUDED

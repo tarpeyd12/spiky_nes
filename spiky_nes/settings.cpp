@@ -20,11 +20,15 @@ namespace spkn
         arg_headless( false )
     {
         // threads logic
+        auto auto_threads = [&]( float ratio, Settings& settings ) -> void
         {
-            arg_numThreads = std::max<size_t>( 1, std::thread::hardware_concurrency() / 2 );
-            arg_numColumns = std::max<size_t>( 1, arg_numThreads > 4 ? arg_numThreads / 2 : arg_numThreads );
-            arg_windowScale = arg_numColumns > 4 ? 1.0f : 2.0f;
-        }
+            settings.arg_numThreads = std::max<size_t>( 1, std::thread::hardware_concurrency() * ratio );
+            settings.arg_numColumns = std::max<size_t>( 1, settings.arg_numThreads > 4 ? settings.arg_numThreads / 2 : settings.arg_numThreads );
+            settings.arg_windowScale = ( settings.arg_numColumns > 4 || settings.arg_numThreads > 8 ) ? 1.0f : 2.0f;
+        };
+
+        // setup default threads
+        auto_threads( 0.5f, *this );
 
         auto version_func = []() -> void
         {
@@ -35,20 +39,21 @@ namespace spkn
         auto help_func = [&]() -> void
         {
             std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << "\n" << std::endl;
-            std::cout << "\t-h            Help\n";
-            std::cout << "\t-v            Version\n";
-            std::cout << "\t-f            data xml file to load from and save to\n";
-            std::cout << "\t-i            data xml file to load from\n";
-            std::cout << "\t-o            data xml file to save to\n";
-            std::cout << "\t-t            num_threads\n";
-            std::cout << "\t-s            pixel_scale\n";
-            std::cout << "\t-w            num_columns\n";
-            std::cout << "\t-p            size_population\n\n";
-            std::cout << "\t-n            num_generations\n\n";
-            std::cout << "\t--rom         rom_path\n";
-            std::cout << "\t--hash-rom    rom_path_to_hash\n";
-            std::cout << "\t--file-sync   save file on main thread\n";
-            std::cout << "\t--headless    disable preview window\n";
+            std::cout << "\t-h              Help\n";
+            std::cout << "\t-v              Version\n";
+            std::cout << "\t-f              data xml file to load from and save to\n";
+            std::cout << "\t-i              data xml file to load from\n";
+            std::cout << "\t-o              data xml file to save to\n";
+            std::cout << "\t-t              num_threads\n";
+            std::cout << "\t-s              pixel_scale\n";
+            std::cout << "\t-w              num_columns\n";
+            std::cout << "\t-p              size_population\n\n";
+            std::cout << "\t-n              num_generations\n\n";
+            std::cout << "\t--rom           rom_path\n";
+            std::cout << "\t--hash-rom      rom_path_to_hash\n";
+            std::cout << "\t--file-sync     save file on main thread\n";
+            std::cout << "\t--headless      disable preview window\n";
+            std::cout << "\t--auto-threads  automatically choose max num threads\n";
             exit( 0 );
         };
 
@@ -74,7 +79,7 @@ namespace spkn
             }
         };
 
-        auto load_settings_file = [&]( const std::string& file_path, Settings & settings ) -> void
+        auto load_settings_file = [&]( const std::string& file_path, Settings& settings ) -> void
         {
             rapidxml::xml_document<> doc;
 
@@ -92,29 +97,30 @@ namespace spkn
             file_data.clear();
         };
 
-        cmd.add_void(          { "?", "-h", "help" },         help_func,                                                                                         "Prints help"  );
-        cmd.add_void(          { "-v", "version" },           version_func,                                                                                      "Prints version"  );
+        cmd.add_void(          { "?", "-h", "help" },               help_func,                                                                                         "Prints help"  );
+        cmd.add_void(          { "-v", "version" },                 version_func,                                                                                      "Prints version"  );
 
-        cmd.add<std::string>(  { "--hash-rom", "hash_rom" },  rom_hash_func,                                                                                     "Path to rom file to hash"  );
+        cmd.add<std::string>(  { "--hash-rom", "hash_rom" },        rom_hash_func,                                                                                     "Path to rom file to hash"  );
 
-        cmd.add<std::string>(  { "--set", "_var" },           assign_var,                                                                                        "Set misc variables"  );
+        cmd.add<std::string>(  { "--set", "_var" },                 assign_var,                                                                                        "Set misc variables"  );
 
-        cmd.add<std::string>(  { "--rom", "rom_path" },       [&]( const std::string& s ){ arg_rom_path = s; },                                                  "Path to rom file"  );
-        cmd.add<std::string>(  { "-o", "output" },            [&]( const std::string& s ){ arg_output_path = s; },                                               "Path to file to save output"  );
-        cmd.add<std::string>(  { "-i", "input" },             [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = s; },                   "Path to file to load at startup"  );
-        cmd.add<std::string>(  { "-f", "file" },              [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to"  );
-        cmd.add<size_t>(       { "-t", "threads" },           [&]( size_t i ){ arg_numThreads = i; },                                                            "Number of threads"  );
-        cmd.add<float>(        { "-s", "scale" },             [&]( float f ){ arg_windowScale = f; },                                                            "Scale of NES preview windows"  );
-        cmd.add<size_t>(       { "-w", "columns" },           [&]( size_t i ){ arg_numColumns = i; },                                                            "Number of NES preview Windows per row"  );
-        cmd.add<size_t>(       { "-p", "population" },        [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
-        cmd.add<size_t>(       { "-n", "generations" },       [&]( size_t i ){ arg_numGenerations = i; },                                                        "Number of generations to calculate"  );
+        cmd.add<std::string>(  { "--rom", "rom_path" },             [&]( const std::string& s ){ arg_rom_path = s; },                                                  "Path to rom file"  );
+        cmd.add<std::string>(  { "-o", "output" },                  [&]( const std::string& s ){ arg_output_path = s; },                                               "Path to file to save output"  );
+        cmd.add<std::string>(  { "-i", "input" },                   [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = s; },                   "Path to file to load at startup"  );
+        cmd.add<std::string>(  { "-f", "file" },                    [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to"  );
+        cmd.add<size_t>(       { "-t", "threads" },                 [&]( size_t i ){ arg_numThreads = i; },                                                            "Number of threads"  );
+        cmd.add<float>(        { "-s", "scale" },                   [&]( float f ){ arg_windowScale = f; },                                                            "Scale of NES preview windows"  );
+        cmd.add<size_t>(       { "-w", "columns" },                 [&]( size_t i ){ arg_numColumns = i; },                                                            "Number of NES preview Windows per row"  );
+        cmd.add<size_t>(       { "-p", "population" },              [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
+        cmd.add<size_t>(       { "-n", "generations" },             [&]( size_t i ){ arg_numGenerations = i; },                                                        "Number of generations to calculate"  );
 
-        cmd.add_void(          { "--file-sync", "filesync" }, [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
-        cmd.add_void(          { "--headless", "headless" },  [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );
+        cmd.add_void(          { "--file-sync", "filesync" },       [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
+        cmd.add_void(          { "--headless", "headless" },        [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );
+        cmd.add_void(          { "--auto-threads", "autothreads" }, [&](){ auto_threads( 1.0f, *this ); },                                                             "Automatically set threads to max allowed and window to accommodate"  );
     }
 
     Settings::Settings( const rapidxml::xml_node<> * settings_node )
-         : Settings()
+     : Settings()
     {
         __LoadFromXML( settings_node );
     }
@@ -177,7 +183,7 @@ namespace spkn
     }
 
     Variables::Variables( const rapidxml::xml_node<> * variables_node )
-         : vars()
+     : vars()
     {
         assert( variables_node && neat::xml::Name( variables_node ) == "var" );
 

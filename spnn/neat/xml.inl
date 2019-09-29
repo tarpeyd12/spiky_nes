@@ -54,13 +54,25 @@ namespace neat
         template < typename T >
         T from_string( const std::string& s )
         {
-            T v{};
-            if( s.empty() ) { return v; }
+            if( s.empty() )
             {
-                std::istringstream ss;
-                ss.str( s );
-                ss >> v;
+                return T{};
             }
+
+            if( std::is_floating_point<T>::value )
+            {
+                if( s.size() > 1 && s.back() == '%' )
+                {
+                    return from_string<T>( s.substr( 0, s.find_first_of( "%" ) ) ) / 100.0L;
+                }
+            }
+
+            T v{};
+
+            std::istringstream ss;
+            ss.str( s );
+            ss >> v;
+
             return v;
         }
 
