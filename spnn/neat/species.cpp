@@ -553,7 +553,11 @@ namespace neat
         if( search == speciesIDMap.end() )
         {
             speciesIDMap[ id ] = shared_genotype_copy;
-            speciesTaxonomyMap[ id ] = genotype.getParentSpeciesID();
+
+            if( speciesTaxonomyMap.find( id ) == speciesTaxonomyMap.end() )
+            {
+                speciesTaxonomyMap[ id ] = genotype.getParentSpeciesID();
+            }
         }
         else
         {
