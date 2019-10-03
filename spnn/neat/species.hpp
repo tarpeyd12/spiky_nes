@@ -41,8 +41,6 @@ namespace neat
     {
         private:
 
-            // FIXME(dot#9#2/27/2019): MAKE THIS THREAD SAFE
-
             const SpeciesID FirstAvailableSpecies = 1;
 
             mutable std::mutex speciesCounter_mutex;

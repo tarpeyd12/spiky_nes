@@ -328,7 +328,7 @@ namespace neat
     void
     SpeciesManager::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
     {
-        std::unique_lock< std::shared_timed_mutex > map_lock( speciesIDMap_mutex, std::defer_lock );
+        std::shared_lock< std::shared_timed_mutex > map_lock( speciesIDMap_mutex, std::defer_lock );
         std::unique_lock< std::mutex > count_lock( speciesCounter_mutex, std::defer_lock );
         std::lock( map_lock, count_lock );
 
