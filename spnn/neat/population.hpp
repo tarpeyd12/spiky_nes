@@ -24,6 +24,55 @@ namespace neat
 
 namespace neat
 {
+    // TODO(dot#9#9/29/2019): finish implementing this to replace the terrible data-type in IterateGeneration
+    class PopulationSpeciesFitnessData
+    {
+        // std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > >
+        // std::map< SpeciesID, std::pair<  avgFitness, std::vector< std::pair<     fitness, const NetworkGenotype * > > > >
+
+        public:
+
+            struct GenotypeFitnessPackage
+            {
+                SpeciesID                               species_id;
+                long double                             genotype_fitness;
+                const NetworkGenotype *                 genotype;
+            };
+
+            struct SpeciesFitnessPackage
+            {
+                SpeciesID                               species_id;
+                long double                             species_fitness;
+                std::vector< GenotypeFitnessPackage >   genotype_fitnesses;
+            };
+
+        private:
+
+            std::map< SpeciesID, SpeciesFitnessPackage > fitness_data;
+            bool finalized;
+
+        public:
+
+            PopulationSpeciesFitnessData();
+
+            bool has_species( SpeciesID species ) const;
+
+            std::vector< SpeciesID > get_species_ids() const;
+            SpeciesFitnessPackage&   get_species( SpeciesID species ) const;
+
+            SpeciesID get_speciesWithHighestAvgFitness() const;
+            SpeciesID get_speciesWithHighestFitnessIndividual() const;
+
+            SpeciesFitnessPackage&  get_highestFitnessSpecies() const;
+            GenotypeFitnessPackage& get_highestFitnessIndividual() const;
+
+        protected:
+
+            void addFitnessData( SpeciesID species, long double fitness, const NetworkGenotype * genotype );
+            void Finalize();
+    };
+
+
     class Population
     {
         private:

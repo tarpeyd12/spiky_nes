@@ -244,7 +244,7 @@ namespace neat
 
         if( dbg && dbg_callbacks->fitness_begin ) dbg_callbacks->fitness_begin();
 
-        // TODO(dot##9/16/2019): rewrite this function to use a class encapsulated fitnessMap. that data-type is a pain in the fucking butt to deal with >:(
+        // TODO(dot#9#9/16/2019): rewrite this function to use a class encapsulated fitnessMap. that data-type is a pain in the fucking butt to deal with >:(
 
         // std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > >
         // std::map< SpeciesID, std::pair< avgFitness, std::vector< std::pair< fitness, const NetworkGenotype * > > > >
