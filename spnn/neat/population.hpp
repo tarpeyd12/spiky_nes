@@ -44,6 +44,8 @@ namespace neat
                 SpeciesID                               species_id;
                 long double                             species_fitness;
                 std::vector< GenotypeFitnessPackage >   genotype_fitnesses;
+
+                SpeciesFitnessPackage() : species_id( 0 ), species_fitness( 0.0L ), genotype_fitnesses() { /*  */ }
             };
 
         private:
@@ -57,19 +59,24 @@ namespace neat
 
             bool has_species( SpeciesID species ) const;
 
+            bool is_finalized() const;
+
+            size_t                   get_num_species() const;
             std::vector< SpeciesID > get_species_ids() const;
-            SpeciesFitnessPackage&   get_species( SpeciesID species ) const;
+            SpeciesFitnessPackage&   get_species( SpeciesID species );
 
-            SpeciesID get_speciesWithHighestAvgFitness() const;
-            SpeciesID get_speciesWithHighestFitnessIndividual() const;
-
-            SpeciesFitnessPackage&  get_highestFitnessSpecies() const;
-            GenotypeFitnessPackage& get_highestFitnessIndividual() const;
+            SpeciesFitnessPackage&  get_highestFitnessSpecies();
+            GenotypeFitnessPackage& get_highestFitnessIndividual();
 
         protected:
 
+            void addFitnessData( const GenotypeFitnessPackage& genotype_pack );
             void addFitnessData( SpeciesID species, long double fitness, const NetworkGenotype * genotype );
             void Finalize();
+
+            bool sort_species_geotypes_by_fitness( SpeciesID species_id );
+
+            friend class Population;
     };
 
 

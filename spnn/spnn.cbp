@@ -101,6 +101,7 @@
 		<Unit filename="neat/network_phenotype.cpp" />
 		<Unit filename="neat/population.cpp" />
 		<Unit filename="neat/population.hpp" />
+		<Unit filename="neat/population_fitness_data.cpp" />
 		<Unit filename="neat/population_init.cpp" />
 		<Unit filename="neat/population_species.cpp" />
 		<Unit filename="neat/population_xml.cpp" />
