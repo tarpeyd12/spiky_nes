@@ -62,7 +62,7 @@ namespace neat
 
         protected:
 
-            Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, PopulationSpeciesFitnessData& fitnessData );
+            Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, PopulationFitness& fitnessData );
 
             void clearStoredGenotypes();
 

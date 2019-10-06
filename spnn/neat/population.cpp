@@ -244,7 +244,7 @@ namespace neat
 
         if( dbg && dbg_callbacks->fitness_begin ) dbg_callbacks->fitness_begin();
 
-        PopulationSpeciesFitnessData fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
+        PopulationFitness fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
 
         // clean up the map since we cant wrap this part in brackets :/
         speciatedPopulation.clear();
@@ -318,7 +318,7 @@ namespace neat
                     std::vector< std::pair< SpeciesID, long double > > speciesFitnesses;
                     speciesFitnesses.reserve( fitnessMap.get_num_species() );
 
-                    fitnessMap.for_each_species( [&,this]( PopulationSpeciesFitnessData::SpeciesFitnessPackage& species_data )
+                    fitnessMap.for_each_species( [&,this]( PopulationFitness::Species& species_data )
                     {
                         speciesFitnesses.emplace_back( species_data.species_id, species_data.species_fitness );
                     } );
@@ -326,7 +326,7 @@ namespace neat
                     std::sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
                     //std::stable_sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
 
-                    PopulationSpeciesFitnessData newFitnessMap;
+                    PopulationFitness newFitnessMap;
 
                     newFitnessMap.addFitnessData( fitnessMap.get_highestFitnessIndividual() );
 
@@ -370,7 +370,7 @@ namespace neat
             std::mutex archetype_mutex;
             std::list< tpl::future< void > > species_sort_futures;
 
-            fitnessMap.for_each_species( [&,this]( PopulationSpeciesFitnessData::SpeciesFitnessPackage& species_fitness )
+            fitnessMap.for_each_species( [&,this]( PopulationFitness::Species& species_fitness )
             {
                 species_fitness_bounds.expand( species_fitness.species_fitness );
 

@@ -15,13 +15,13 @@ namespace neat
         /*  */
     }
 
-    Generation::Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, PopulationSpeciesFitnessData& fitnessData )
+    Generation::Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, PopulationFitness& fitnessData )
          : keepCopyOfGenotypes( pointers ), generationNumber( genNum ), speciesData( new SpeciesManager( speciesTracker ) ), populationData(), speciesFitness(), minFitness( 0.0 ), maxFitness( 0.0 ), avgFitness( 0.0 )
     {
         minFitness = fitnessData.get_fitness_bounds().min;
         maxFitness = fitnessData.get_fitness_bounds().max;
 
-        fitnessData.for_each_species( [&,this]( PopulationSpeciesFitnessData::SpeciesFitnessPackage& species_data )
+        fitnessData.for_each_species( [&,this]( PopulationFitness::Species& species_data )
         {
             speciesFitness.emplace( species_data.species_id, species_data.species_fitness );
 

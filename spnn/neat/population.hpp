@@ -9,7 +9,7 @@
 namespace neat
 {
     class Population;
-    class PopulationSpeciesFitnessData;
+    class PopulationFitness;
 }
 
 
@@ -25,44 +25,44 @@ namespace neat
 
 namespace neat
 {
-    class PopulationSpeciesFitnessData
+    class PopulationFitness
     {
         public:
 
-            struct GenotypeFitnessPackage
+            struct Genotype
             {
                 SpeciesID                               species_id;
                 long double                             genotype_fitness;
                 const NetworkGenotype *                 genotype;
             };
 
-            struct SpeciesFitnessPackage
+            struct Species
             {
                 SpeciesID                               species_id;
                 long double                             species_fitness;
                 MinMax< long double >                   fitness_bounds;
-                std::vector< GenotypeFitnessPackage >   genotype_fitnesses;
+                std::vector< Genotype >   genotype_fitnesses;
 
-                SpeciesFitnessPackage();
+                Species();
 
-                GenotypeFitnessPackage& get_highest_fitness_individual();
+                Genotype& get_highest_fitness_individual();
 
-                void for_each_genotype( std::function< void(GenotypeFitnessPackage&) > func );
-                void for_each_genotype( std::function< void(const GenotypeFitnessPackage&) > func ) const;
+                void for_each_genotype( std::function< void(Genotype&) > func );
+                void for_each_genotype( std::function< void(const Genotype&) > func ) const;
 
                 bool sort_species_geotypes_by_fitness();
             };
 
         private:
 
-            std::map< SpeciesID, SpeciesFitnessPackage > fitness_data;
+            std::map< SpeciesID, Species > fitness_data;
             MinMax< long double > fitness_bounds;
             bool finalized;
 
         public:
 
-            PopulationSpeciesFitnessData();
-            PopulationSpeciesFitnessData( const PopulationSpeciesFitnessData& other );
+            PopulationFitness();
+            PopulationFitness( const PopulationFitness& other );
 
             bool has_species( SpeciesID species ) const;
 
@@ -70,22 +70,22 @@ namespace neat
 
             size_t                   get_num_species() const;
             std::vector< SpeciesID > get_species_ids() const;
-            SpeciesFitnessPackage&   get_species( SpeciesID species );
+            Species&                 get_species( SpeciesID species );
 
             MinMax< long double >    get_fitness_bounds() const;
 
-            SpeciesFitnessPackage&   get_highestFitnessSpecies();
-            GenotypeFitnessPackage&  get_highestFitnessIndividual();
+            Species&                 get_highestFitnessSpecies();
+            Genotype&                get_highestFitnessIndividual();
 
-            void for_each_species( std::function< void(SpeciesFitnessPackage&) > func );
-            void for_each_species( std::function< void(const SpeciesFitnessPackage&) > func ) const;
-            void for_each_genotype( std::function< void(GenotypeFitnessPackage&) > func );
-            void for_each_genotype( std::function< void(const GenotypeFitnessPackage&) > func ) const;
+            void for_each_species( std::function< void(Species&) > func );
+            void for_each_species( std::function< void(const Species&) > func ) const;
+            void for_each_genotype( std::function< void(Genotype&) > func );
+            void for_each_genotype( std::function< void(const Genotype&) > func ) const;
 
         protected:
 
-            void addFitnessData( const SpeciesFitnessPackage& species_pack );
-            void addFitnessData( const GenotypeFitnessPackage& genotype_pack );
+            void addFitnessData( const Species& species_pack );
+            void addFitnessData( const Genotype& genotype_pack );
             void addFitnessData( SpeciesID species, long double fitness, const NetworkGenotype * genotype );
             void Finalize();
 
@@ -170,8 +170,8 @@ namespace neat
             uint64_t getNumMassExtinctions() const;
 
             std::map< SpeciesID, long double > getSpeciesFitness( tpl::pool& thread_pool );
-            PopulationSpeciesFitnessData getSpeciesAndNetworkFitness( tpl::pool& thread_pool );
-            PopulationSpeciesFitnessData getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation );
+            PopulationFitness getSpeciesAndNetworkFitness( tpl::pool& thread_pool );
+            PopulationFitness getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation );
 
             void printSpeciesArchetypes( std::ostream& out );
 

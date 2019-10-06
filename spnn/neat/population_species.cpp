@@ -114,14 +114,14 @@ namespace neat
         return speciesFitness;
     }
 
-    PopulationSpeciesFitnessData
+    PopulationFitness
     Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool )
     {
         auto speciatedPopulation = getSpeciatedPopulationData( thread_pool );
         return getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
     }
 
-    PopulationSpeciesFitnessData
+    PopulationFitness
     Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation )
     {
         struct fitness_package
@@ -169,7 +169,7 @@ namespace neat
             }
         }
 
-        PopulationSpeciesFitnessData speciesFitness;
+        PopulationFitness speciesFitness;
 
         while( !fitness_futures.empty() )
         {
