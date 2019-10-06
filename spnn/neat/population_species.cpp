@@ -114,18 +114,16 @@ namespace neat
         return speciesFitness;
     }
 
-    std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > >
+    PopulationSpeciesFitnessData
     Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool )
     {
         auto speciatedPopulation = getSpeciatedPopulationData( thread_pool );
         return getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
     }
 
-    std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > >
+    PopulationSpeciesFitnessData
     Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation )
     {
-        std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > > speciesFitness;
-
         struct fitness_package
         {
             SpeciesID species;
@@ -164,30 +162,24 @@ namespace neat
             SpeciesID species = it->first;
             const std::vector< NetworkGenotype * >& genotypes = it->second;
 
-            speciesFitness[ species ].first = 0.0;
-            speciesFitness[ species ].second.reserve( genotypes.size() );
-
             for( const NetworkGenotype * genotype : genotypes )
             {
                 auto fitness_package_future = thread_pool.submit( fitness_lambda, species, genotype, fitnessCalculatorFactory );
                 fitness_futures.push( std::move( fitness_package_future ) );
             }
-            speciesFitness[ species ].first /= ( long double )genotypes.size();
         }
+
+        PopulationSpeciesFitnessData speciesFitness;
 
         while( !fitness_futures.empty() )
         {
             auto fitness_pack = fitness_futures.front().get();
             fitness_futures.pop();
 
-            speciesFitness[ fitness_pack.species ].first += fitness_pack.fitness;
-            speciesFitness[ fitness_pack.species ].second.emplace_back( fitness_pack.fitness, fitness_pack.genotype );
+            speciesFitness.addFitnessData( fitness_pack.species, fitness_pack.fitness, fitness_pack.genotype );
         }
 
-        for( auto sp : speciatedPopulation )
-        {
-            speciesFitness[ sp.first ].first /= ( long double )sp.second.size();
-        }
+        speciesFitness.Finalize();
 
         return speciesFitness;
     }

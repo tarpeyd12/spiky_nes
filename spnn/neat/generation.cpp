@@ -15,42 +15,30 @@ namespace neat
         /*  */
     }
 
-    Generation::Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, const std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > >& fitnessData )
+    Generation::Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, PopulationSpeciesFitnessData& fitnessData )
          : keepCopyOfGenotypes( pointers ), generationNumber( genNum ), speciesData( new SpeciesManager( speciesTracker ) ), populationData(), speciesFitness(), minFitness( 0.0 ), maxFitness( 0.0 ), avgFitness( 0.0 )
     {
-        if( !fitnessData.empty() && !fitnessData.begin()->second.second.empty() )
+        minFitness = fitnessData.get_fitness_bounds().min;
+        maxFitness = fitnessData.get_fitness_bounds().max;
+
+        fitnessData.for_each_species( [&,this]( PopulationSpeciesFitnessData::SpeciesFitnessPackage& species_data )
         {
-            minFitness = maxFitness = fitnessData.begin()->second.second[0].first;
-        }
+            speciesFitness.emplace( species_data.species_id, species_data.species_fitness );
 
-
-        for( auto map_it : fitnessData )
-        {
-            SpeciesID speciesID = map_it.first;
-            long double speciesFit = map_it.second.first;
-
-            speciesFitness.emplace( speciesID, speciesFit );
-
-            const auto& speciesGenotypesFitnesPairs = map_it.second.second;
-            for( auto p : speciesGenotypesFitnesPairs )
+            for( auto& genotype_fit_pack : species_data.genotype_fitnesses )
             {
-                long double fitness = p.first;
                 std::shared_ptr< NetworkGenotype > genotype_copy = nullptr;
 
                 if( keepsGenotypeCopies() )
                 {
-                    genotype_copy = std::make_shared< NetworkGenotype >( *p.second );
+                    genotype_copy = std::make_shared< NetworkGenotype >( *genotype_fit_pack.genotype );
                 }
 
-                populationData.push_back( std::make_tuple( speciesID, fitness, genotype_copy ) );
+                populationData.push_back( std::make_tuple( species_data.species_id, genotype_fit_pack.genotype_fitness, genotype_copy ) );
 
-                {
-                    minFitness = std::min( minFitness, fitness );
-                    maxFitness = std::max( maxFitness, fitness );
-                    avgFitness += fitness;
-                }
+                avgFitness += genotype_fit_pack.genotype_fitness;
             }
-        }
+        } );
         avgFitness /= (long double)( populationData.size() );
     }
 

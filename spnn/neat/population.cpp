@@ -244,34 +244,10 @@ namespace neat
 
         if( dbg && dbg_callbacks->fitness_begin ) dbg_callbacks->fitness_begin();
 
-        // TODO(dot#9#9/16/2019): rewrite this function to use a class encapsulated fitnessMap. that data-type is a pain in the fucking butt to deal with >:(
-
-        // std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > >
-        // std::map< SpeciesID, std::pair< avgFitness, std::vector< std::pair< fitness, const NetworkGenotype * > > > >
-        auto fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
+        PopulationSpeciesFitnessData fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
 
         // clean up the map since we cant wrap this part in brackets :/
         speciatedPopulation.clear();
-
-        SpeciesID speciesIDwithHighestIndividualFitness = fitnessMap.begin()->first;
-        long double highestFitnessPressent = fitnessMap.begin()->second.second[0].first;
-        {
-            for( const auto& f : fitnessMap )
-            {
-                SpeciesID sID = f.first;
-                const auto& indvFitness_vec = f.second.second;
-                if( !indvFitness_vec.empty() )
-                for( const auto& indv_f : indvFitness_vec )
-                {
-                    if( indv_f.first > highestFitnessPressent )
-                    {
-                        highestFitnessPressent = indv_f.first;
-                        speciesIDwithHighestIndividualFitness = sID;
-                    }
-                }
-            }
-        }
-
 
         if( dbg && dbg_callbacks->fitness_end ) dbg_callbacks->fitness_end();
 
@@ -340,38 +316,32 @@ namespace neat
                     ++massExtinctionCount;
 
                     std::vector< std::pair< SpeciesID, long double > > speciesFitnesses;
-                    speciesFitnesses.reserve( fitnessMap.size() );
+                    speciesFitnesses.reserve( fitnessMap.get_num_species() );
 
-                    for( const auto& f : fitnessMap )
+                    fitnessMap.for_each_species( [&,this]( PopulationSpeciesFitnessData::SpeciesFitnessPackage& species_data )
                     {
-                        speciesFitnesses.emplace_back( f.first, f.second.first );
-                    }
+                        speciesFitnesses.emplace_back( species_data.species_id, species_data.species_fitness );
+                    } );
 
                     std::sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
                     //std::stable_sort( speciesFitnesses.begin(), speciesFitnesses.end(), []( const auto& a, const auto& b ){ return a.second > b.second; } );
 
-                    std::map< SpeciesID, std::pair<long double, std::vector< std::pair<long double, const NetworkGenotype * > > > > newFitnessMap;
+                    PopulationSpeciesFitnessData newFitnessMap;
 
-                    // TODO(dot##9/16/2019): use speciesIDwithHighestIndividualFitness here to somehow stop the removal of the highest preforming individual during mass extinctions
+                    newFitnessMap.addFitnessData( fitnessMap.get_highestFitnessIndividual() );
+
+                    // TODO(dot##10/5/2019): make sure that the highest fitness individual is not added twice? (might not need to do this)
 
                     if( speciesFitnesses.size() >= 1 )
                     {
-                        newFitnessMap.emplace( speciesFitnesses[0].first, fitnessMap[ speciesFitnesses[0].first ] );
+                        newFitnessMap.addFitnessData( fitnessMap.get_species( speciesFitnesses[0].first ) );
                     }
                     if( speciesFitnesses.size() >= 2 )
                     {
-                        newFitnessMap.emplace( speciesFitnesses[1].first, fitnessMap[ speciesFitnesses[1].first ] );
+                        newFitnessMap.addFitnessData( fitnessMap.get_species( speciesFitnesses[1].first ) );
                     }
 
-                    for( auto& f : newFitnessMap )
-                    {
-                        auto& genotype_fitness_vector = f.second.second;
-                        while( genotype_fitness_vector.size() > 1 )
-                        {
-                            genotype_fitness_vector.pop_back();
-                        }
-                        genotype_fitness_vector.shrink_to_fit();
-                    }
+                    newFitnessMap.Finalize();
 
                     fitnessMap = newFitnessMap;
 
@@ -395,42 +365,43 @@ namespace neat
         {
             if( dbg && dbg_callbacks->matching_begin ) dbg_callbacks->matching_begin();
 
-            MinMax< long double > fitnessBounds( fitnessMap.begin()->second.first );
+            MinMax< long double > species_fitness_bounds( fitnessMap.get_species( fitnessMap.get_species_ids()[0] ).species_fitness );
 
             std::mutex archetype_mutex;
             std::list< tpl::future< void > > species_sort_futures;
 
-            for( auto& f : fitnessMap )
+            fitnessMap.for_each_species( [&,this]( PopulationSpeciesFitnessData::SpeciesFitnessPackage& species_fitness )
             {
-                fitnessBounds.expand( f.second.first );
+                species_fitness_bounds.expand( species_fitness.species_fitness );
 
-                speciesFitnessRatio.emplace( f.first, f.second.first );
+                speciesFitnessRatio.emplace( species_fitness.species_id, species_fitness.species_fitness );
 
                 // std::vector< std::pair<long double, const NetworkGenotype * > >
                 auto _rand =  std::make_shared< Rand::Random_Safe >( rand->Int() );
                 species_sort_futures.emplace_back( thread_pool.submit(
-                [&archetype_mutex,this,_rand]( SpeciesID species, auto& species_vec )
+                [&archetype_mutex,this,_rand]( auto& species_data )
                 {
-                    std::sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
-                    //std::stable_sort( species_vec.begin(), species_vec.end(), [](const auto& a, const auto& b){ return a.first > b.first; } );
+                    species_data.sort_species_geotypes_by_fitness();
+
                     {
                         std::lock_guard<std::mutex> lock( archetype_mutex );
-                        speciesTracker->updateSpeciesArchtype( species, *species_vec.front().second );
-                        //speciesTracker->updateSpeciesArchtype( species, *species_vec[ _rand->Int( 0, species_vec.size() - 1 ) ].second );
+                        speciesTracker->updateSpeciesArchtype( species_data.species_id, *species_data.genotype_fitnesses[0].genotype );
+                        //speciesTracker->updateSpeciesArchtype( species_data.species_id, *species_data.get_highest_fitness_individual().genotype );
                     }
 
-                }, f.first, std::ref( f.second.second ) ) );
-            }
+                },  std::ref( species_fitness ) ) );
+            } );
 
             long double fitnessRatiosSum = 0.0;
 
             for( auto& f : speciesFitnessRatio )
             {
-                f.second -= fitnessBounds.min;
+                f.second -= species_fitness_bounds.min;
                 f.second += 1.0;
                 fitnessRatiosSum += f.second;
             }
 
+            auto& highest_fitness_individual = fitnessMap.get_highestFitnessIndividual();
 
             for( auto& f : speciesFitnessRatio )
             {
@@ -447,7 +418,7 @@ namespace neat
                     speciesKillDelay[ f.first ] += 1;
                 }
 
-                if( f.first == speciesIDwithHighestIndividualFitness )
+                if( f.first == highest_fitness_individual.species_id )
                 {
                     speciesKillDelay[ f.first ] = 0;
                 }
@@ -479,12 +450,11 @@ namespace neat
                     continue;
                 }
 
-                auto it = fitnessMap.find( nextCount.first );
-                if( it != fitnessMap.end() )
+                if( fitnessMap.has_species( nextCount.first ) )
                 {
-                    nextCount.second = std::max<size_t>( 1, size_t( double( nextCount.second ) * 0.5 + double( it->second.second.size() ) * 0.5 ) );
-                    countSum += nextCount.second;
+                    nextCount.second = std::max<size_t>( 1, size_t( double( nextCount.second ) * 0.5 + double( fitnessMap.get_species( nextCount.first ).genotype_fitnesses.size() ) * 0.5 ) );
                 }
+                countSum += nextCount.second;
             }
 
             // account for too few
@@ -563,7 +533,12 @@ namespace neat
                     continue;
                 }
 
-                const auto& oldGenotypesVec = fitnessMap[ species ].second; // should already be sorted, high to low
+                if( !fitnessMap.has_species( species ) )
+                {
+                    continue;
+                }
+
+                const auto& oldGenotypesVec = fitnessMap.get_species( species ).genotype_fitnesses; // should already be sorted, high to low
 
                 // we cant make the new genotypes without the old genotypes, on to the next ones!
                 if( oldGenotypesVec.empty() )
@@ -609,14 +584,14 @@ namespace neat
                     // if the pair is the same, then just return one of them instead of splicing
                     if( p.first == p.second )
                     {
-                        genotype_futures.push_back( { thread_pool.submit( [&,p]{ return *oldGenotypesVec[ p.first ].second; } ), p.do_mutate, species } );
+                        genotype_futures.push_back( { thread_pool.submit( [&,p]{ return *oldGenotypesVec[ p.first ].genotype; } ), p.do_mutate, species } );
                         continue;
                     }
 
-                    //nextPopulation.push_back( SpliceGenotypes( *oldGenotypesVec[ p.first ].second, *oldGenotypesVec[ p.second ].second, rand ) );
+                    //nextPopulation.push_back( SpliceGenotypes( *oldGenotypesVec[ p.first ].genotype, *oldGenotypesVec[ p.second ].genotype, rand ) );
                     auto _rand = std::make_shared< Rand::Random_Unsafe >( rand->Int() );
                     using overload_type = NetworkGenotype( const NetworkGenotype&, const NetworkGenotype&, std::shared_ptr< Rand::RandomFunctor > );
-                    genotype_futures.push_back( { thread_pool.submit< overload_type >( SpliceGenotypes, std::cref( *oldGenotypesVec[ p.first ].second ), std::cref( *oldGenotypesVec[ p.second ].second ), _rand ), p.do_mutate, species } );
+                    genotype_futures.push_back( { thread_pool.submit< overload_type >( SpliceGenotypes, std::cref( *oldGenotypesVec[ p.first ].genotype ), std::cref( *oldGenotypesVec[ p.second ].genotype ), _rand ), p.do_mutate, species } );
                 }
             }
 

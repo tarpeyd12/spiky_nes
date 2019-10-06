@@ -14,6 +14,7 @@ namespace neat
 }
 
 #include "neat.hpp"
+#include "population.hpp"
 
 namespace neat
 {
@@ -61,7 +62,7 @@ namespace neat
 
         protected:
 
-            Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, const std::map< SpeciesID, std::pair< long double, std::vector< std::pair< long double, const NetworkGenotype * > > > >& fitnessData );
+            Generation( uint64_t genNum, bool pointers, const SpeciesManager& speciesTracker, PopulationSpeciesFitnessData& fitnessData );
 
             void clearStoredGenotypes();
 

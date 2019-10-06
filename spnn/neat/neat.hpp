@@ -75,7 +75,7 @@ namespace neat
 
         MinMax() : min(), max() {  }
         MinMax( const Type& _min, const Type& _mix ) : min( _min ), max( _mix ) { assert( min < max || !( max < min ) ); }
-        MinMax( const Type& _v ) : min( _v ), max( _v ) { assert( min < max || !( max < min ) ); }
+        MinMax( const Type& _v ) : MinMax( _v, _v ) { assert( min < max || !( max < min ) ); }
 
         template< typename std::enable_if< std::is_arithmetic< Type >::value, int >::type = 0 >
         Type clamp( const Type& value ) const { return std::min<Type>( std::max<Type>( value, min ), max ); }
