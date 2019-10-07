@@ -129,8 +129,8 @@ namespace spkn
 
         fitness *= ( controllStopped ? 1.0L - ( 0.1L ) : 1.0L ); // -10% to score if the network stopped giving inputs
 
-        fitness -= ( pow( minutes_played   + 1.0L, 1.0L / 3.0L ) - 1.0L ) * screen_points;
-        fitness -= ( pow( network_activity + 1.0L, 1.0L / 4.0L ) - 1.0L ) * screen_points;
+        fitness -= ( pow( minutes_played   + 1.0L, 1.0L / 2.0L ) - 1.0L ) * screen_points;
+        fitness -= ( pow( network_activity + 1.0L, 1.0L / 3.0L ) - 1.0L ) * screen_points;
 
         return fitness;
     }
@@ -166,9 +166,9 @@ namespace spkn
     {
         if( time % networkStepsPerFrame == 0 )
         {
-            actionsAvailable += actionsPerMinute / 3600.0; // accumulate apm
+            actionsAvailable += actionsPerMinute / 3600.0L; // accumulate apm
 
-            actionsAvailable = std::min( 12.0l, actionsAvailable );
+            actionsAvailable = std::min( 12.0L, actionsAvailable );
 
             emulator.stepFrame();
             resetControllerState();
@@ -217,6 +217,7 @@ namespace spkn
             //ImageToSingle( ResizeImage( *emuScreen, scaled_width, scaled_height ), spiralRings, true, screenInput, activationMaxValue, 0 );
 
             // fast and good enough
+            // downscale then edge-find
             ImageSobelEdgeDetectionToLightness( ResizeImage( *emuScreen, scaled_width, scaled_height ), screenInput, activationMaxValue, 0 );
 
             // a much better way, but waaaay slower, and somehow not as effective

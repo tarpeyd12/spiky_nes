@@ -21,13 +21,13 @@ namespace neat
         }
 
         auto& best = genotype_fitnesses.front();
-        for( auto& genotype_data : genotype_fitnesses )
+        for_each_genotype( [&]( Genotype& data )
         {
-            if( genotype_data.genotype_fitness > best.genotype_fitness )
+            if( data.genotype_fitness > best.genotype_fitness )
             {
-                best = genotype_data;
+                best = data;
             }
-        }
+        } );
 
         return best;
     }
@@ -136,13 +136,14 @@ namespace neat
         }
 
         Species& best = fitness_data.begin()->second;
-        for( auto& data : fitness_data )
+        for_each_species( [&]( Species& data )
         {
-            if( data.second.species_fitness > best.species_fitness )
+            if( data.species_fitness > best.species_fitness )
             {
-                best = data.second;
+                best = data;
             }
-        }
+        } );
+
         return best;
     }
 
@@ -155,16 +156,14 @@ namespace neat
         }
 
         Genotype& best = fitness_data.begin()->second.genotype_fitnesses.front();
-        for( auto& species_data : fitness_data )
+        for_each_genotype( [&]( Genotype& data )
         {
-            for( Genotype& data : species_data.second.genotype_fitnesses )
+            if( data.genotype_fitness > best.genotype_fitness )
             {
-                if( data.genotype_fitness > best.genotype_fitness )
-                {
-                    best = data;
-                }
+                best = data;
             }
-        }
+        } );
+
         return best;
     }
 
@@ -204,10 +203,7 @@ namespace neat
             return;
         }
 
-        for( auto& species_data : fitness_data )
-        {
-            species_data.second.for_each_genotype( func );
-        }
+        for_each_species( [&]( Species& data ){ data.for_each_genotype( func ); } );
     }
 
     void
@@ -218,10 +214,7 @@ namespace neat
             return;
         }
 
-        for( auto& species_data : fitness_data )
-        {
-            species_data.second.for_each_genotype( func );
-        }
+        for_each_species( [&]( const Species& data ){ data.for_each_genotype( func ); } );
     }
 
     void
