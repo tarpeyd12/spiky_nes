@@ -220,6 +220,9 @@ namespace spkn
             // downscale then edge-find
             ImageSobelEdgeDetectionToLightness( ResizeImage( *emuScreen, scaled_width, scaled_height ), screenInput, activationMaxValue, 0 );
 
+            // slower but less aliasing
+            //ImageSobelEdgeDetectionToLightness( DownsizeImage_Multiple( *emuScreen, downsizeSize ), screenInput, activationMaxValue, 0 );
+
             // a much better way, but waaaay slower, and somehow not as effective
             /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
             ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
@@ -229,7 +232,8 @@ namespace spkn
             for( double& v : screenInput ) { v = std::min<double>( v * 2.0, activationMaxValue ); }*/
 
             /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
-            ImageVecToImage( tmp, sn::NESVideoWidth, sn::NESVideoHeight, activationMaxValue ).saveToFile( "tmp.png" );
+            //ImageVecToImage( tmp, sn::NESVideoWidth, sn::NESVideoHeight, activationMaxValue ).saveToFile( "tmp.png" );
+            tmp.saveToFile( "tmp.png" );
             exit(0);*/
 
 

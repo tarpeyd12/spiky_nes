@@ -244,9 +244,8 @@ namespace neat
     {
         fitness_bounds = MinMax< long double >( fitness_data.begin()->second.genotype_fitnesses.front().genotype_fitness );
 
-        for( auto& species_data_pair : fitness_data )
+        for_each_species( [&]( Species& species_data )
         {
-            auto& species_data = species_data_pair.second;
             species_data.species_id = species_data.genotype_fitnesses.front().species_id;
             species_data.fitness_bounds = MinMax< long double >( species_data.genotype_fitnesses.front().genotype_fitness );
 
@@ -264,7 +263,7 @@ namespace neat
             species_data.species_fitness /= (long double)(species_data.genotype_fitnesses.size());
 
             fitness_bounds.expand( species_data.fitness_bounds );
-        }
+        } );
 
         finalized = true;
     }
