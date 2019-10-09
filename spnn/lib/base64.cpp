@@ -46,10 +46,10 @@ std::string base64_encode(std::string const& s) {
     return base64_encode( reinterpret_cast<const unsigned char*>( s.c_str() ), s.size() );
 }
 
-std::string base64_encode(unsigned char const* bytes_to_encode, unsigned int in_len) {
+std::string base64_encode(unsigned char const* bytes_to_encode, size_t in_len) {
   std::string ret;
-  int i = 0;
-  int j = 0;
+  size_t i = 0;
+  size_t j = 0;
   unsigned char char_array_3[3];
   unsigned char char_array_4[4];
 
@@ -92,10 +92,10 @@ std::string base64_decode(std::string const& encoded_string) {
   return base64_decode( reinterpret_cast<const unsigned char*>( encoded_string.c_str() ), encoded_string.size() );
 }
 
-std::string base64_decode(unsigned char const* bytes_to_decode, unsigned int in_len) {
-  int i = 0;
-  int j = 0;
-  int in_ = 0;
+std::string base64_decode(unsigned char const* bytes_to_decode, size_t in_len) {
+  size_t i = 0;
+  size_t j = 0;
+  size_t in_ = 0;
   unsigned char char_array_4[4], char_array_3[3];
   std::string ret;
 
