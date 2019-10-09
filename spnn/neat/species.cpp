@@ -326,7 +326,7 @@ namespace neat
     }
 
     void
-    SpeciesManager::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
+    SpeciesManager::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, std::shared_ptr<xml::DataBlob> data_blob )
     {
         std::shared_lock< std::shared_timed_mutex > map_lock( speciesIDMap_mutex, std::defer_lock );
         std::unique_lock< std::mutex > count_lock( speciesCounter_mutex, std::defer_lock );
@@ -346,7 +346,7 @@ namespace neat
             {
                 auto archtype = xml::Node( "species", "", mem_pool );
                 archtype->append_attribute( xml::Attribute( "ID", xml::to_string( s.first ), mem_pool ) );
-                xml::Encode_NetworkGenotype( *s.second, archtype, mem_pool );
+                xml::Encode_NetworkGenotype( *s.second, archtype, mem_pool, data_blob );
                 species_node->append_node( archtype );
             }
             node->append_node( species_node );
@@ -374,7 +374,7 @@ namespace neat
                     auto archtype = xml::Node( "species", "", mem_pool );
                     archtype->append_attribute( xml::Attribute( "ID", xml::to_string( sp_p.first ), mem_pool ) );
                     archtype->append_attribute( xml::Attribute( "generation", xml::to_string( sp_p_gg_p.first ), mem_pool ) );
-                    xml::Encode_NetworkGenotype( *sp_p_gg_p.second, archtype, mem_pool );
+                    xml::Encode_NetworkGenotype( *sp_p_gg_p.second, archtype, mem_pool, data_blob );
                     species_histoy_map->append_node( archtype );
 
                     ++count;
@@ -408,7 +408,7 @@ namespace neat
         destination->append_node( node );
     }
 
-    SpeciesManager::SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th )
+    SpeciesManager::SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th, std::shared_ptr<xml::DataBlob> data_blob )
      : SpeciesManager( th, SpeciationMethod::FirstForward ) // first forward is temporary
     {
         assert( species_manager_node && neat::xml::Name( species_manager_node ) == "species_tracker" );
@@ -433,7 +433,7 @@ namespace neat
 
                 SpeciesID species_id = xml::GetAttributeValue<SpeciesID>( "ID", species_node );
 
-                speciesIDMap[ species_id ] = std::make_shared< NetworkGenotype >( xml::Decode_NetworkGenotype( xml::FindNode( "genotype", species_node ) ) );
+                speciesIDMap[ species_id ] = std::make_shared< NetworkGenotype >( xml::Decode_NetworkGenotype( xml::FindNode( "genotype", species_node ), data_blob ) );
 
                 species_node = species_node->next_sibling();
             }
@@ -464,7 +464,7 @@ namespace neat
                 SpeciesID species_id = xml::GetAttributeValue<SpeciesID>( "ID", species_node );
                 uint64_t generation = xml::GetAttributeValue<uint64_t>( "generation", species_node );
 
-                auto genotype = std::make_shared< NetworkGenotype >( xml::Decode_NetworkGenotype( xml::FindNode( "genotype", species_node ) ) );
+                auto genotype = std::make_shared< NetworkGenotype >( xml::Decode_NetworkGenotype( xml::FindNode( "genotype", species_node ), data_blob ) );
 
                 historicSpeciesIDMapList[ species_id ].push_back( { generation, genotype } );
 

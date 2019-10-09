@@ -3,6 +3,7 @@
 
 #include "../lib/rapidxml.hpp"
 
+#include "xml_datablob.hpp"
 #include "neat.hpp"
 
 namespace neat
@@ -71,8 +72,8 @@ namespace neat
         void Encode_SpeciesDistanceParameters( const SpeciesDistanceParameters& params, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
         SpeciesDistanceParameters Decode_SpeciesDistanceParameters( rapidxml::xml_node<> * source );
 
-        void Encode_NetworkGenotype( const NetworkGenotype& genotype, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
-        NetworkGenotype Decode_NetworkGenotype( rapidxml::xml_node<> * source );
+        void Encode_NetworkGenotype( const NetworkGenotype& genotype, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, std::shared_ptr<DataBlob> data_blob );
+        NetworkGenotype Decode_NetworkGenotype( rapidxml::xml_node<> * source, std::shared_ptr<DataBlob> data_blob );
     }
 }
 

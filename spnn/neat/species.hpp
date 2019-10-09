@@ -62,7 +62,7 @@ namespace neat
         public:
 
             SpeciesManager( const SpeciesDistanceParameters& th, SpeciationMethod specMethod = SpeciationMethod::FirstForward );
-            SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th );
+            SpeciesManager( const rapidxml::xml_node<> * species_manager_node, const SpeciesDistanceParameters& th, std::shared_ptr<xml::DataBlob> data_blob );
 
             SpeciesManager( const SpeciesManager& other );
 
@@ -81,7 +81,7 @@ namespace neat
 
             void printSpeciesArchetypes( std::ostream& out );
 
-            void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
+            void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, std::shared_ptr<xml::DataBlob> data_blob );
 
         private:
 

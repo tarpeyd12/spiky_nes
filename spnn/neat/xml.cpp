@@ -12,33 +12,25 @@ namespace neat
         std::string
         Encode_NodeGenotype( const std::vector< NodeDef >& nodes )
         {
-            return base64_encode( reinterpret_cast<const unsigned char*>( nodes.data() ), nodes.size() * sizeof( NodeDef ) );
+            return Encode_VectorData( nodes );
         }
 
         void
         Decode_NodeGenotype( size_t size, const std::string& encoded_nodes, std::vector< NodeDef >& out )
         {
-            out.clear();
-            out.resize( size );
-            std::string decoded = base64_decode( encoded_nodes );
-            size_t len = std::min<size_t>( sizeof( NodeDef ) * size, decoded.size() );
-            std::memcpy( out.data(), reinterpret_cast<const void*>( decoded.c_str() ), len );
+            Decode_VectorData( encoded_nodes, size, out );
         }
 
         std::string
         Encode_ConnectionGenotype( const std::vector< ConnectionDef >& conns )
         {
-            return base64_encode( reinterpret_cast<const unsigned char*>( conns.data() ), conns.size() * sizeof( ConnectionDef ) );
+            return Encode_VectorData( conns );
         }
 
         void
         Decode_ConnectionGenotype( size_t size, const std::string& encoded_conns, std::vector< ConnectionDef >& out )
         {
-            out.clear();
-            out.resize( size );
-            std::string decoded = base64_decode( encoded_conns );
-            size_t len = std::min<size_t>( sizeof( ConnectionDef ) * size, decoded.size() );
-            std::memcpy( out.data(), reinterpret_cast<const void*>( decoded.c_str() ), len );
+            Decode_VectorData( encoded_conns, size, out );
         }
     }
 
@@ -168,7 +160,7 @@ namespace neat
 
 
         void
-        Encode_NetworkGenotype( const NetworkGenotype& genotype, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
+        Encode_NetworkGenotype( const NetworkGenotype& genotype, rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, std::shared_ptr<DataBlob> data_blob )
         {
             auto genotype_node = Node( "genotype", "", mem_pool );
             auto nodes_node    = Node( "nodes", "", mem_pool );
@@ -177,11 +169,25 @@ namespace neat
             genotype_node->append_attribute( Attribute( "parent_species", xml::to_string( genotype.getParentSpeciesID() ), mem_pool ) );
 
             nodes_node->append_attribute( Attribute( "N", xml::to_string( genotype.getNumNodes() ), mem_pool ) );
-            nodes_node->append_attribute( Attribute( "data", b64::Encode_NodeGenotype( genotype.getNodes() ), mem_pool ) );
+            if( data_blob != nullptr )
+            {
+                data_blob->add_data( genotype.getNodes() ).SaveToXML_asAttributes( nodes_node, mem_pool );
+            }
+            else
+            {
+                nodes_node->append_attribute( Attribute( "data", b64::Encode_NodeGenotype( genotype.getNodes() ), mem_pool ) );
+            }
             genotype_node->append_node( nodes_node );
 
             conns_node->append_attribute( Attribute( "N", xml::to_string( genotype.getNumConnections() ), mem_pool ) );
-            conns_node->append_attribute( Attribute( "data", b64::Encode_ConnectionGenotype( genotype.getConnections() ), mem_pool ) );
+            if( data_blob != nullptr )
+            {
+                data_blob->add_data( genotype.getConnections() ).SaveToXML_asAttributes( conns_node, mem_pool );
+            }
+            else
+            {
+                conns_node->append_attribute( Attribute( "data", b64::Encode_ConnectionGenotype( genotype.getConnections() ), mem_pool ) );
+            }
             genotype_node->append_node( conns_node );
 
             // append to destination
@@ -189,7 +195,7 @@ namespace neat
         }
 
         NetworkGenotype
-        Decode_NetworkGenotype( rapidxml::xml_node<> * source )
+        Decode_NetworkGenotype( rapidxml::xml_node<> * source, std::shared_ptr<DataBlob> data_blob )
         {
             if( !source || Name( source ) != "genotype" )
             {
@@ -203,13 +209,29 @@ namespace neat
             size_t num_nodes = 0;
             auto nodes_node = FindNode( "nodes", source );
             num_nodes = from_string<size_t>( Value( FindAttribute( "N", nodes_node ) ) );
-            b64::Decode_NodeGenotype( num_nodes, Value( FindAttribute( "data", nodes_node ) ), nodes );
+            if( data_blob != nullptr && BlobReference::ContainsBlobRef( nodes_node ) )
+            {
+                data_blob->get_data( BlobReference( nodes_node ), nodes );
+                assert( nodes.size() == num_nodes );
+            }
+            else
+            {
+                b64::Decode_NodeGenotype( num_nodes, Value( FindAttribute( "data", nodes_node ) ), nodes );
+            }
 
             std::vector< ConnectionDef > conns;
             size_t num_conns = 0;
             auto conns_node = FindNode( "connections", source );
             num_conns = from_string<size_t>( Value( FindAttribute( "N", conns_node ) ) );
-            b64::Decode_ConnectionGenotype( num_conns, Value( FindAttribute( "data", conns_node ) ), conns );
+            if( data_blob != nullptr && BlobReference::ContainsBlobRef( conns_node ) )
+            {
+                data_blob->get_data( BlobReference( conns_node ), conns );
+                assert( conns.size() == num_conns );
+            }
+            else
+            {
+                b64::Decode_ConnectionGenotype( num_conns, Value( FindAttribute( "data", conns_node ) ), conns );
+            }
 
             return make_genotype( nodes, conns, parent );
         }

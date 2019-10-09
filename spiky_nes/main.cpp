@@ -260,19 +260,19 @@ main( int argc, char** argv )
             }
             catch( const rapidxml::parse_error& e )
             {
-                std::cout << "\nParsing exception caught during file settings load" << std::endl;
+                std::cout << "\nParsing exception caught during file load" << std::endl;
                 std::cout << e.what() << std::endl;
                 exit( 1 );
             }
             catch( const std::exception& e )
             {
-                std::cout << "\nException caught during file settings load" << std::endl;
+                std::cout << "\nException caught during file load" << std::endl;
                 std::cout << e.what() << std::endl;
                 exit( 1 );
             }
             catch( ... )
             {
-                std::cout << "Unknown exception during file settings load" << std::endl;
+                std::cout << "Unknown exception during file load" << std::endl;
                 exit( 1 );
             }
         }

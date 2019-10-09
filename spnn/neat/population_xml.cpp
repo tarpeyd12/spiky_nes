@@ -7,6 +7,12 @@ namespace neat
     {
         auto population_node = xml::Node( "population", "", mem_pool );
 
+        std::shared_ptr<xml::DataBlob> data_blob = nullptr;
+        if( true )
+        {
+            data_blob = std::make_shared< xml::DataBlob >();
+        }
+
         {
             auto settings = xml::Node( "settings", "", mem_pool );
 
@@ -92,7 +98,7 @@ namespace neat
             pop_data->append_attribute( xml::Attribute( "N", xml::to_string( populationData.size() ), mem_pool ) );
             for( const auto& genotype : populationData )
             {
-                xml::Encode_NetworkGenotype( genotype, pop_data, mem_pool );
+                xml::Encode_NetworkGenotype( genotype, pop_data, mem_pool, data_blob );
             }
 
             // add to population node
@@ -100,7 +106,13 @@ namespace neat
         }
 
         // speciesTracker
-        speciesTracker->SaveToXML( population_node, mem_pool );
+        speciesTracker->SaveToXML( population_node, mem_pool, data_blob );
+
+        // save the data blob
+        if( data_blob != nullptr )
+        {
+            data_blob->SaveToXML( population_node, mem_pool );
+        }
 
         // add node to destination
         destination->append_node( population_node );
@@ -134,6 +146,15 @@ namespace neat
         assert( population_node && neat::xml::Name( population_node ) == "population" );
 
         SpeciesDistanceParameters species_distance_params;
+
+        std::shared_ptr<xml::DataBlob> data_blob = nullptr;
+        {
+            auto data_blob_node = xml::FindNode( "data_blob", population_node );
+            if( data_blob_node != nullptr )
+            {
+                data_blob = std::make_shared<xml::DataBlob>( data_blob_node );
+            }
+        }
 
         {
             auto settings_node = xml::FindNode( "settings", population_node );
@@ -224,7 +245,7 @@ namespace neat
 
             while( genotype_node != nullptr )
             {
-                populationData.emplace_back( xml::Decode_NetworkGenotype( genotype_node ) );
+                populationData.emplace_back( xml::Decode_NetworkGenotype( genotype_node, data_blob ) );
                 genotype_node = genotype_node->next_sibling();
             }
 
@@ -234,7 +255,7 @@ namespace neat
         {
             auto species_tracker_node = xml::FindNode( "species_tracker", population_node );
 
-            speciesTracker = std::make_unique< SpeciesManager >( species_tracker_node, species_distance_params );
+            speciesTracker = std::make_unique< SpeciesManager >( species_tracker_node, species_distance_params, data_blob );
         }
     }
 }

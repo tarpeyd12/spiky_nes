@@ -126,6 +126,9 @@
 		<Unit filename="neat/xml.cpp" />
 		<Unit filename="neat/xml.hpp" />
 		<Unit filename="neat/xml.inl" />
+		<Unit filename="neat/xml_datablob.cpp" />
+		<Unit filename="neat/xml_datablob.hpp" />
+		<Unit filename="neat/xml_datablob.inl" />
 		<Unit filename="spnn.hpp" />
 		<Unit filename="spnn/network.hpp" />
 		<Unit filename="spnn/network.inl" />
