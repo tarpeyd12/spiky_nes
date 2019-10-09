@@ -229,9 +229,6 @@ main( int argc, char** argv )
         );
     }
 
-
-
-
     std::shared_ptr< neat::Population > population = nullptr;
 
     if( !settings.arg_input_path.empty() )
@@ -243,15 +240,41 @@ main( int argc, char** argv )
 
         if( !file_data.empty() )
         {
-            doc.parse<rapidxml::parse_default>( &file_data[0] );
+            std::cout << "Load Complete ... " << std::flush;
 
-            auto mutations_factory = std::make_shared< neat::Mutations::MutationsFileLoadFactory >();
+            try
+            {
+                doc.parse<rapidxml::parse_default>( &file_data[0] );
 
-            population = std::make_shared< neat::Population >( fitnessFactory, mutations_factory, neat::xml::FindNode( "population", &doc ) );
+                std::cout << "Parse Complete ... " << std::flush;
 
-            file_data.clear();
+                auto mutations_factory = std::make_shared< neat::Mutations::MutationsFileLoadFactory >();
 
-            std::cout << "Done." << std::endl;
+                population = std::make_shared< neat::Population >( fitnessFactory, mutations_factory, neat::xml::FindNode( "population", &doc ) );
+
+                std::cout << "Decode Complete ... " << std::flush;
+
+                file_data.clear();
+
+                std::cout << "Done." << std::endl;
+            }
+            catch( const rapidxml::parse_error& e )
+            {
+                std::cout << "\nParsing exception caught during file settings load" << std::endl;
+                std::cout << e.what() << std::endl;
+                exit( 1 );
+            }
+            catch( const std::exception& e )
+            {
+                std::cout << "\nException caught during file settings load" << std::endl;
+                std::cout << e.what() << std::endl;
+                exit( 1 );
+            }
+            catch( ... )
+            {
+                std::cout << "Unknown exception during file settings load" << std::endl;
+                exit( 1 );
+            }
         }
         else
         {

@@ -83,18 +83,38 @@ namespace spkn
         {
             rapidxml::xml_document<> doc;
 
-            std::string file_data = GetFileAsString( file_path );
-
-            if( file_data.empty() )
+            try
             {
-                return;
+                std::string file_data = GetFileAsString( file_path );
+
+                if( file_data.empty() )
+                {
+                    return;
+                }
+
+                doc.parse<rapidxml::parse_default>( &file_data[0] );
+
+                settings.__LoadFromXML( neat::xml::FindNode( "settings", &doc ) );
+
+                file_data.clear();
             }
-
-            doc.parse<rapidxml::parse_default>( &file_data[0] );
-
-            settings.__LoadFromXML( neat::xml::FindNode( "settings", &doc ) );
-
-            file_data.clear();
+            catch( const rapidxml::parse_error& e )
+            {
+                std::cout << "\nParsing exception caught during file settings load" << std::endl;
+                std::cout << e.what() << std::endl;
+                exit( 1 );
+            }
+            catch( const std::exception& e )
+            {
+                std::cout << "\nException caught during file settings load" << std::endl;
+                std::cout << e.what() << std::endl;
+                exit( 1 );
+            }
+            catch( ... )
+            {
+                std::cout << "Unknown exception during file settings load" << std::endl;
+                exit( 1 );
+            }
         };
 
         cmd.add_void(          { "?", "-h", "help" },               help_func,                                                                                         "Prints help"  );
