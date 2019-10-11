@@ -34,7 +34,6 @@ namespace neat
         }
 
 
-
         DataBlob::DataBlob()
          : data()
         {
@@ -49,16 +48,47 @@ namespace neat
             {
                 auto blob_node = FindNode( "blob", data_blob_node );
                 size_t expected_length = GetAttributeValue<size_t>( "length", blob_node );
-                std::string encoding_type = GetAttributeValue<std::string>( "encoding", blob_node );
+                std::string encoding_types = GetAttributeValue<std::string>( "encoding", blob_node );
 
-                if( encoding_type == "base-64" )
+                // extract the data
                 {
-                    data = base64_decode( Value( blob_node ) );
+                    data = "";
+                    auto block_node = FindNode( "block", blob_node );
+                    if( block_node != nullptr )
+                    {
+                        while( block_node != nullptr )
+                        {
+                            if( Name( block_node ) != "block" )
+                            {
+                                continue;
+                            }
+                            data.append( Value( block_node ) );
+                            block_node = block_node->next_sibling();
+                        }
+                    }
+                    else
+                    {
+                        data = Value( blob_node );
+                    }
                 }
-                else
+
+                std::istringstream ss( encoding_types );
+                std::string encoding_type;
+                while( std::getline( ss, encoding_type, ':' ) )
                 {
-                    // error unknown encoding type
-                    throw std::invalid_argument( "Unknown DataBlob data encoding type." );
+                    if( encoding_type == "base64" )
+                    {
+                        data = base64_decode( data );
+                    }
+                    /*else if( encoding_type == "" )
+                    {
+                        ;
+                    }*/
+                    else
+                    {
+                        // error unknown encoding type
+                        throw std::invalid_argument( "Unknown DataBlob data encoding type." );
+                    }
                 }
 
                 assert( expected_length == size() );
@@ -68,7 +98,7 @@ namespace neat
                 std::string hash_str = "";
                 readSimpleValueNode( "hash", hash_str, data_blob_node );
 
-                std::stringstream current_hash_str;
+                std::ostringstream current_hash_str;
                 current_hash_str << std::hex << hash();
 
                 assert( current_hash_str.str() == hash_str );
@@ -159,20 +189,61 @@ namespace neat
         }
 
         void
-        DataBlob::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const
+        DataBlob::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, const std::vector< std::string >& encoding_sequence ) const
         {
             auto data_blob_node = Node( "data_blob", "", mem_pool );
 
             {
-                std::stringstream ss;
+                std::ostringstream ss;
                 ss << std::hex << hash();
                 appendSimpleValueNode( "hash", ss.str(), data_blob_node, mem_pool );
             }
 
             {
-                auto blob_node = Node( "blob", base64_encode( data ), mem_pool );
+                auto blob_node = Node( "blob", "", mem_pool );
                 blob_node->append_attribute( Attribute( "length", to_string( size() ), mem_pool ) );
-                blob_node->append_attribute( Attribute( "encoding", "base-64", mem_pool ) );
+
+                std::string encoded_data = data;
+                {
+                    std::string encoding = "";
+
+                    for( auto enc_type = encoding_sequence.begin(); enc_type != encoding_sequence.end(); ++enc_type )
+                    {
+                        if( *enc_type == "base64" )
+                        {
+                            encoded_data = base64_encode( encoded_data );
+                        }
+                        /*else if( *enc_type == "" )
+                        {
+                            ;
+                        }*/
+                        else
+                        {
+                            continue;
+                        }
+
+                        encoding = *enc_type + std::string( encoding.empty() ? "" : ":" ) + encoding;
+                    }
+
+                    // finish with base64
+                    {
+                        encoded_data = base64_encode( encoded_data );
+                        encoding = "base64" + std::string( encoding.empty() ? "" : ":" ) + encoding;
+                    }
+
+                    blob_node->append_attribute( Attribute( "encoding", encoding, mem_pool ) );
+                }
+
+                {
+                    const size_t block_size = 1024*1024*1;
+                    size_t pos = 0;
+                    while( pos < encoded_data.size() )
+                    {
+                        blob_node->append_node( Node( "block", encoded_data.substr( pos, block_size ), mem_pool ) );
+                        pos += block_size;
+                    }
+                }
+
                 data_blob_node->append_node( blob_node );
             }
 

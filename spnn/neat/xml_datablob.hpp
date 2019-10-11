@@ -69,8 +69,6 @@ namespace neat
                 template < typename T >
                 BlobReference add_data( const std::vector<T>& data_vec_in );
 
-
-
                 template < typename T >
                 void get_data( const BlobReference& ref, T& data_out ) const;
 
@@ -81,12 +79,10 @@ namespace neat
                 void extract_data_raw( const BlobReference& ref, unsigned char * ptr_out ) const;
                 void extract_data_raw( const BlobReference& ref, unsigned char * ptr_out, size_t & length ) const;
 
-
                 size_t hash() const;
                 size_t hash_of( const BlobReference& ref ) const;
 
-
-                void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool ) const;
+                void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, const std::vector< std::string >& encoding_sequence = {} ) const;
         };
     }
 }

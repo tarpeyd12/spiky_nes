@@ -425,11 +425,15 @@ main( int argc, char** argv )
                 auto begin = std::chrono::high_resolution_clock::now();
                 std::ofstream success_file( settings.arg_output_path, std::ofstream::trunc );
                 success_file << *doc << std::flush;
+                size_t bytes_written = success_file.tellp(); // no need to subtract the before tellp() because we trunc when opening the file
                 success_file.close();
                 delete doc;
+                auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
                 std::cout << " [Disc Write Complete ";
-                std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
-                std::cout << "s] " << std::flush;
+                std::cout << round( 1000.0 * seconds_taken ) / 1000.0 << "s ";
+                std::cout << round( 1.0 * double(bytes_written)/1048576.0 ) / 1.0 << "MB ";
+                std::cout << round( 10.0 * ( (double(bytes_written)/1048576.0) / seconds_taken ) ) / 10.0 << "MB/s";
+                std::cout << "] " << std::flush;
             } );
 
             if( settings.arg_file_sync )
