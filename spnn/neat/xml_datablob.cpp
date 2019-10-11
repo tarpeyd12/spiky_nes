@@ -240,6 +240,7 @@ namespace neat
                     while( pos < encoded_data.size() )
                     {
                         blob_node->append_node( Node( "block", encoded_data.substr( pos, block_size ), mem_pool ) );
+                        //blob_node->append_node( mem_pool->allocate_node( rapidxml::node_element, "block", mem_pool->allocate_string( &encoded_data[pos], block_size ), 0, std::min<size_t>( block_size, encoded_data.size() - pos ) ) );
                         pos += block_size;
                     }
                 }
