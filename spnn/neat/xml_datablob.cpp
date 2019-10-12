@@ -3,6 +3,8 @@
 #include "xml.hpp"
 #include "xml_datablob.hpp"
 
+#include "../../zlib/zlib.hpp"
+
 namespace neat
 {
     namespace xml
@@ -80,6 +82,20 @@ namespace neat
                     {
                         data = base64_decode( data );
                     }
+                    else if( encoding_type == "zlib" )
+                    {
+                        data = zlib::decompress_string( data );
+                    }
+                    else if( encoding_type == "zlib-0" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-1" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-2" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-3" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-4" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-5" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-6" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-7" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-8" ) { data = zlib::decompress_string( data ); }
+                    else if( encoding_type == "zlib-9" ) { data = zlib::decompress_string( data ); }
                     /*else if( encoding_type == "" )
                     {
                         ;
@@ -213,6 +229,20 @@ namespace neat
                         {
                             encoded_data = base64_encode( encoded_data );
                         }
+                        else if( *enc_type == "zlib" )
+                        {
+                            encoded_data = zlib::compress_string( encoded_data, -1 );
+                        }
+                        else if( *enc_type == "zlib-0" ) { encoded_data = zlib::compress_string( encoded_data, 0 ); }
+                        else if( *enc_type == "zlib-1" ) { encoded_data = zlib::compress_string( encoded_data, 1 ); }
+                        else if( *enc_type == "zlib-2" ) { encoded_data = zlib::compress_string( encoded_data, 2 ); }
+                        else if( *enc_type == "zlib-3" ) { encoded_data = zlib::compress_string( encoded_data, 3 ); }
+                        else if( *enc_type == "zlib-4" ) { encoded_data = zlib::compress_string( encoded_data, 4 ); }
+                        else if( *enc_type == "zlib-5" ) { encoded_data = zlib::compress_string( encoded_data, 5 ); }
+                        else if( *enc_type == "zlib-6" ) { encoded_data = zlib::compress_string( encoded_data, 6 ); }
+                        else if( *enc_type == "zlib-7" ) { encoded_data = zlib::compress_string( encoded_data, 7 ); }
+                        else if( *enc_type == "zlib-8" ) { encoded_data = zlib::compress_string( encoded_data, 8 ); }
+                        else if( *enc_type == "zlib-9" ) { encoded_data = zlib::compress_string( encoded_data, 9 ); }
                         /*else if( *enc_type == "" )
                         {
                             ;

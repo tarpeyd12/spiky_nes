@@ -111,7 +111,7 @@ namespace neat
         // save the data blob
         if( data_blob != nullptr )
         {
-            data_blob->SaveToXML( population_node, mem_pool );
+            data_blob->SaveToXML( population_node, mem_pool, { "zlib" } );
         }
 
         // add node to destination
