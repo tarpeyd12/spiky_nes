@@ -73,6 +73,7 @@ $RECYCLE.BIN/
 spnn/bin/
 simple_nes/bin/
 spiky_nes/bin/
+zlib/bin/
 
 # Project misc files
 # =========================
