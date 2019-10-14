@@ -248,9 +248,18 @@ main( int argc, char** argv )
 
                 std::cout << "Parse Complete ... " << std::flush;
 
+                std::shared_ptr<neat::xml::DataBlob> data_blob = nullptr;
+                {
+                    auto data_blob_node = neat::xml::FindNode( "data_blob", &doc );
+                    if( data_blob_node != nullptr )
+                    {
+                        data_blob = std::make_shared<neat::xml::DataBlob>( data_blob_node );
+                    }
+                }
+
                 auto mutations_factory = std::make_shared< neat::Mutations::MutationsFileLoadFactory >();
 
-                population = std::make_shared< neat::Population >( fitnessFactory, mutations_factory, neat::xml::FindNode( "population", &doc ) );
+                population = std::make_shared< neat::Population >( fitnessFactory, mutations_factory, neat::xml::FindNode( "population", &doc ), data_blob );
 
                 std::cout << "Decode Complete ... " << std::flush;
 
@@ -410,30 +419,47 @@ main( int argc, char** argv )
             //population->printSpeciesArchetypes( success_file );
 
             rapidxml::xml_document<> * doc = new rapidxml::xml_document<>();
+            std::shared_ptr<neat::xml::DataBlob> data_blob = std::make_shared<neat::xml::DataBlob>();
 
             {
                 auto begin = std::chrono::high_resolution_clock::now();
                 settings.SaveToXML( doc, doc );
-                population->SaveToXML( doc, doc );
+                population->SaveToXML( doc, doc, data_blob );
                 std::cout << " [Data Encoding Complete ";
                 std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
                 std::cout << "s] " << std::flush;
             }
 
-            save_future = thread_pool.submit( [doc,&settings]
+            save_future = thread_pool.submit( [doc,&settings,data_blob]
             {
-                auto begin = std::chrono::high_resolution_clock::now();
-                std::ofstream success_file( settings.arg_output_path, std::ofstream::trunc );
-                success_file << *doc << std::flush;
-                size_t bytes_written = success_file.tellp(); // no need to subtract the before tellp() because we trunc when opening the file
-                success_file.close();
-                delete doc;
-                auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
-                std::cout << " [Disc Write Complete ";
-                std::cout << round( 1000.0 * seconds_taken ) / 1000.0 << "s ";
-                std::cout << round( 1.0 * double(bytes_written)/1048576.0 ) / 1.0 << "MB ";
-                std::cout << round( 10.0 * ( (double(bytes_written)/1048576.0) / seconds_taken ) ) / 10.0 << "MB/s";
-                std::cout << "] " << std::flush;
+                // data compress
+                if( data_blob != nullptr )
+                {
+                    auto begin = std::chrono::high_resolution_clock::now();
+                    data_blob->SaveToXML( doc, doc, { "zlib" } );
+                    auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
+                    std::cout << " [Data Compression Complete " << round( seconds_taken * 1000.0 ) / 1000.0 << "s ";
+                    std::cout << round( 1.0 * double(data_blob->size())/1048576.0 ) / 1.0 << "MB";
+                    std::cout << "] " << std::flush;
+                }
+
+                // data write
+                {
+                    auto begin = std::chrono::high_resolution_clock::now();
+
+                    std::ofstream success_file( settings.arg_output_path, std::ofstream::trunc );
+                    success_file << *doc << std::flush;
+                    size_t bytes_written = success_file.tellp(); // no need to subtract the before tellp() because we trunc when opening the file
+                    success_file.close();
+                    delete doc;
+
+                    auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
+                    std::cout << " [Disc Write Complete ";
+                    std::cout << round( 1000.0 * seconds_taken ) / 1000.0 << "s ";
+                    std::cout << round( 1.0 * double(bytes_written)/1048576.0 ) / 1.0 << "MB ";
+                    std::cout << round( 10.0 * ( (double(bytes_written)/1048576.0) / seconds_taken ) ) / 10.0 << "MB/s";
+                    std::cout << "] " << std::flush;
+                }
             } );
 
             if( settings.arg_file_sync )

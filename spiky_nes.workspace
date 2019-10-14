@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
 	<Workspace title="spiky_nes workspace">
+		<Project filename="zlib/zlib.cbp" />
 		<Project filename="spnn/spnn.cbp">
 			<Depends filename="zlib/zlib.cbp" />
 		</Project>
@@ -10,6 +11,5 @@
 			<Depends filename="simple_nes/simple_nes.cbp" />
 			<Depends filename="zlib/zlib.cbp" />
 		</Project>
-		<Project filename="zlib/zlib.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

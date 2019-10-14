@@ -153,7 +153,7 @@ namespace neat
                         size_t massExtinction = 200,
                         size_t gensToKeep = 10 );
 
-            Population( std::shared_ptr< FitnessFactory > fitFactory, std::shared_ptr< Mutations::MutationsFileLoadFactory > mutations_factory, const rapidxml::xml_node<> * population_node );
+            Population( std::shared_ptr< FitnessFactory > fitFactory, std::shared_ptr< Mutations::MutationsFileLoadFactory > mutations_factory, const rapidxml::xml_node<> * population_node, std::shared_ptr<xml::DataBlob> data_blob = nullptr );
 
             virtual ~Population() = default;
 
@@ -217,7 +217,7 @@ namespace neat
 
             void IterateGeneration( tpl::pool& thread_pool, std::shared_ptr< Rand::RandomFunctor > rand = nullptr, const double attritionRate = 0.5, std::shared_ptr< DbgGenerationCallbacks > dbg_callbacks = nullptr );
 
-            void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
+            void SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, std::shared_ptr<xml::DataBlob> data_blob = nullptr, bool use_datablob_fallback = true );
 
         protected:
 

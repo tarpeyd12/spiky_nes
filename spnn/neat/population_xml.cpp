@@ -3,14 +3,15 @@
 namespace neat
 {
     void
-    Population::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
+    Population::SaveToXML( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool, std::shared_ptr<xml::DataBlob> data_blob, bool use_datablob_fallback  )
     {
         auto population_node = xml::Node( "population", "", mem_pool );
 
-        std::shared_ptr<xml::DataBlob> data_blob = nullptr;
-        if( true )
+        bool internal_data_blob = false;
+        if( data_blob == nullptr && use_datablob_fallback )
         {
             data_blob = std::make_shared< xml::DataBlob >();
+            internal_data_blob = true;
         }
 
         {
@@ -109,7 +110,7 @@ namespace neat
         speciesTracker->SaveToXML( population_node, mem_pool, data_blob );
 
         // save the data blob
-        if( data_blob != nullptr )
+        if( data_blob != nullptr && internal_data_blob )
         {
             data_blob->SaveToXML( population_node, mem_pool, { "zlib" } );
         }
@@ -118,7 +119,7 @@ namespace neat
         destination->append_node( population_node );
     }
 
-    Population::Population( std::shared_ptr< FitnessFactory > fitFactory, std::shared_ptr< Mutations::MutationsFileLoadFactory > mutations_factory, const rapidxml::xml_node<> * population_node )
+    Population::Population( std::shared_ptr< FitnessFactory > fitFactory, std::shared_ptr< Mutations::MutationsFileLoadFactory > mutations_factory, const rapidxml::xml_node<> * population_node, std::shared_ptr<xml::DataBlob> data_blob )
         :
         innovationCounter( nullptr ),
         numNetworks( ~0L ),
@@ -147,7 +148,8 @@ namespace neat
 
         SpeciesDistanceParameters species_distance_params;
 
-        std::shared_ptr<xml::DataBlob> data_blob = nullptr;
+        // find/init datablob
+        if( data_blob == nullptr )
         {
             auto data_blob_node = xml::FindNode( "data_blob", population_node );
             if( data_blob_node != nullptr )
