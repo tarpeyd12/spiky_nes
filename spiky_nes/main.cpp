@@ -438,8 +438,8 @@ main( int argc, char** argv )
                     auto begin = std::chrono::high_resolution_clock::now();
                     data_blob->SaveToXML( doc, doc, { "zlib" } );
                     auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
-                    std::cout << " [Data Compression Complete " << round( seconds_taken * 1000.0 ) / 1000.0 << "s ";
-                    std::cout << round( 1.0 * double(data_blob->size())/1048576.0 ) / 1.0 << "MB";
+                    std::cout << " [Data Compression Complete " << round( seconds_taken * 1000.0 ) / 1000.0 << "s";
+                    //std::cout << " " << round( 1.0 * double(data_blob->size())/1048576.0 ) / 1.0 << "MB";
                     std::cout << "] " << std::flush;
                 }
 

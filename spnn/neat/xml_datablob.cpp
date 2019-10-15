@@ -12,14 +12,16 @@ namespace neat
         bool
         BlobReference::ContainsBlobRef( const rapidxml::xml_node<> * data_node )
         {
-            return FindAttribute( "__blob_pos", data_node ) != nullptr && FindAttribute( "__blob_len", data_node ) != nullptr;
+            return FindAttribute( "__blob_ref", data_node ) != nullptr;
         }
 
         BlobReference::BlobReference( const rapidxml::xml_node<> * data_node )
          : BlobReference()
         {
-            position = xml::GetAttributeValue<size_t>( "__blob_pos", data_node );
-            length   = xml::GetAttributeValue<size_t>( "__blob_len", data_node );
+            std::string data = xml::GetAttributeValue<std::string>( "__blob_ref", data_node );
+            auto colon_pos = data.find(':');
+            position = xml::from_string<size_t>( data.substr( 0, colon_pos ) );
+            length   = xml::from_string<size_t>( data.substr( colon_pos + 1 ) );
         }
 
         bool
@@ -31,8 +33,9 @@ namespace neat
         void
         BlobReference::SaveToXML_asAttributes( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool )
         {
-            destination->append_attribute( Attribute( "__blob_pos", xml::to_string( position ), mem_pool ) );
-            destination->append_attribute( Attribute( "__blob_len", xml::to_string( length ), mem_pool ) );
+            std::ostringstream ss;
+            ss << position << ":" << length;
+            destination->append_attribute( Attribute( "__blob_ref", ss.str(), mem_pool ) );
         }
 
 
