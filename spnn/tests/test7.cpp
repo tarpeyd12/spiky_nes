@@ -286,13 +286,13 @@ namespace _tests
                 virtual ~TestFitnessFactory() = default;
 
                 std::shared_ptr< neat::FitnessCalculator >
-                getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t count ) const override
+                getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t _count ) const override
                 {
                     std::string randomized_data = "abc123";
 
-                    if( count < data.size() )
+                    if( _count < data.size() )
                     {
-                        randomized_data = std::string( 7, data[ count ] );
+                        randomized_data = std::string( 7, data[ _count ] );
 
                         for( size_t i = 0; i < 1; ++i )
                         {

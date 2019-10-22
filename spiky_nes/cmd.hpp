@@ -23,7 +23,7 @@ namespace spkn
 
                 protected:
 
-                    virtual void call( const char * s ) {};
+                    virtual void call( const char * /*s*/ ) {  }
                     virtual bool hasParam() const { return false; }
                     bool match( const char * s ) const;
 

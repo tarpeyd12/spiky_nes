@@ -1,6 +1,8 @@
 #ifndef PULSE_MANAGER_INL_INCLUDED
 #define PULSE_MANAGER_INL_INCLUDED
 
+#include <cassert>
+
 namespace spnn
 {
     template < typename Type, typename TimeType >
@@ -52,16 +54,31 @@ namespace spnn
     {
         std::vector< pulse_base< Type, TimeType > > out;
 
-        // get the pulses that are more recent than the given time
-        while( !pulseQueue.empty() && pulseQueue.top().time <= time )
-        {
-            // add them to the output and remove them from the queue
-            out.push_back( pulseQueue.top() );
-            pulseQueue.pop();
-        }
+        // add the current time pulses to the output
+        ProcessCurrentTimePulses( time, [&out]( auto& pulse ){ out.emplace_back( pulse ); } );
 
         // return the output
         return out;
+    }
+
+    template < typename Type, typename TimeType >
+    size_t
+    pulseManager_base< Type, TimeType >::ProcessCurrentTimePulses( const TimeType& time, std::function<void(const pulse_base< Type, TimeType >&)> func )
+    {
+        assert( func != nullptr );
+
+        size_t count = 0;
+
+        // get the pulses that are more recent than the given time
+        while( !pulseQueue.empty() && pulseQueue.top().time <= time )
+        {
+            // call func on the current top pulse
+            func( pulseQueue.top() );
+            pulseQueue.pop();
+            ++count;
+        }
+
+        return count;
     }
 
     template < typename Type, typename TimeType >

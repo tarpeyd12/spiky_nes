@@ -74,9 +74,9 @@ namespace rapidxml
     public:
 
         //! Constructs parse error
-        parse_error(const char *what, void *where)
-            : m_what(what)
-            , m_where(where)
+        parse_error(const char *_what, void *_where)
+            : m_what(_what)
+            , m_where(_where)
         {
         }
 
@@ -403,7 +403,10 @@ namespace rapidxml
 
         //! Constructs empty pool with default allocator functions.
         memory_pool()
-            : m_alloc_func(nullptr)
+            : m_begin(nullptr)
+            , m_ptr(nullptr)
+            , m_end(nullptr)
+            , m_alloc_func(nullptr)
             , m_free_func(nullptr)
         {
             init();
@@ -1861,7 +1864,8 @@ namespace rapidxml
                         {
                             case Ch('['): ++depth; break;
                             case Ch(']'): --depth; break;
-                            case 0: RAPIDXML_PARSE_ERROR("unexpected end of data", text);
+                            case 0: RAPIDXML_PARSE_ERROR("unexpected end of data", text); break;
+                            default: break;
                         }
                         ++text;
                     }
@@ -2139,6 +2143,10 @@ namespace rapidxml
                 // Parse proper subset of <! node
                 switch (text[1])
                 {
+
+                default:
+                    RAPIDXML_PARSE_ERROR("unexpected symbol following <!", text);
+                    break;
 
                 // <!-
                 case Ch('-'):

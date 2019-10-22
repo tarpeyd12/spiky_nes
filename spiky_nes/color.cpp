@@ -348,7 +348,7 @@ namespace spkn
 
     inline
     void
-    __SobelKernelOp( size_t isWidth, size_t isHeight, const std::vector<float>& image, size_t x, size_t y, float& gx, float& gy )
+    __SobelKernelOp( size_t isWidth, size_t /*isHeight*/, const std::vector<float>& image, size_t x, size_t y, float& gx, float& gy )
     {
         auto getPixel = [&]( int32_t _x, int32_t _y ) -> float
         {
@@ -668,7 +668,7 @@ namespace spkn
 
 
     std::vector<double>
-    ResizeImageVec( const std::vector<double>& image, size_t width, size_t height, size_t newWidth, size_t newHeight, size_t offset )
+    ResizeImageVec( const std::vector<double>& image, size_t width, size_t height, size_t newWidth, size_t newHeight, size_t /*offset*/ )
     {
         std::vector<double> tmp( newWidth * newHeight, 0.0 );
         ResizeImageVec( image, width, height, tmp, newWidth, newHeight, 0 );

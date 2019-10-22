@@ -49,6 +49,8 @@ namespace spnn
 
             std::vector< pulse_base< Type, TimeType > > GetCurrentTimePulses( const TimeType& time );
 
+            size_t ProcessCurrentTimePulses( const TimeType& time, std::function<void(const pulse_base< Type, TimeType >&)> func );
+
             void clear_all_pulses();
 
             // accessors

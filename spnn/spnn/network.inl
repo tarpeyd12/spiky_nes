@@ -35,16 +35,14 @@ namespace spnn
 
         // transmit the pulses to their destinations
         {
-            auto currentPulses = pulses.GetCurrentTimePulses( currentTime );
-
-            for( auto pulse : currentPulses )
+            pulses.ProcessCurrentTimePulses( currentTime, [this]( const auto& pulse )
             {
                 if( pulse.destination && pulse.destination->AcceptPulse( pulse ) )
                 {
                     ++pulsesProcessedLastTick;
                     //std::cout << "\tNeuron #" << pulse.destination->getID() << " received pulse with value " << pulse.value << " at time " << pulse.time << " from neuron #" << ( pulse.source ? pulse.source->getID() : -1 ) <<  "\n";
                 }
-            }
+            } );
         }
 
         // process the neurons

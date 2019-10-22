@@ -7,6 +7,31 @@
 
 namespace neat
 {
+    Population::DbgGenerationCallbacks::DbgGenerationCallbacks()
+     :
+        begin( nullptr ),
+        speciate_begin( nullptr ),
+        speciate_end( nullptr ),
+        fitness_begin( nullptr ),
+        fitness_end( nullptr ),
+        archive_begin( nullptr ),
+        archive_end( nullptr ),
+        extinction_begin( nullptr ),
+        extinction_end( nullptr ),
+        extinction_event( nullptr ),
+        matching_begin( nullptr ),
+        matching_end( nullptr ),
+        splicing_begin( nullptr ),
+        splicing_end( nullptr ),
+        mutation_begin( nullptr ),
+        mutation_end( nullptr ),
+        swap_begin( nullptr ),
+        swap_end( nullptr ),
+        end( nullptr )
+    {
+        /*  */
+    }
+
     Population::Population(
         size_t numNets,
         size_t inNodes,
@@ -22,7 +47,7 @@ namespace neat
         size_t massExtinction,
         size_t gensToKeep
         )
-    :
+     :
         innovationCounter( std::make_unique< InnovationGenerator >() ),
         numNetworks( numNets ),
         numInputNodes( inNodes ),

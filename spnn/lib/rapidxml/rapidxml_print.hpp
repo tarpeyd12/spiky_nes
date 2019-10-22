@@ -199,7 +199,7 @@ namespace rapidxml
 
         // Print attributes of the node
         template<class OutIt, class Ch>
-        inline OutIt print_attributes(OutIt out, const xml_node<Ch> *node, int flags)
+        inline OutIt print_attributes(OutIt out, const xml_node<Ch> *node, int /*flags*/)
         {
             for (xml_attribute<Ch> *attribute = node->first_attribute(); attribute; attribute = attribute->next_attribute())
             {
@@ -293,7 +293,7 @@ namespace rapidxml
                     // If node has no children, only print its value without indenting
                     out = copy_and_expand_chars(node->value(), node->value() + node->value_size(), Ch(0), out);
                 }
-                else if (child->next_sibling() == 0 && child->type() == node_data)
+                else if (child->next_sibling() == nullptr && child->type() == node_data)
                 {
                     // If node has a sole data child, only print its value without indenting
                     out = copy_and_expand_chars(child->value(), child->value() + child->value_size(), Ch(0), out);

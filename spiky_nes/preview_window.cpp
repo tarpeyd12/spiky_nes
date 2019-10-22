@@ -24,6 +24,7 @@ namespace spkn
         screen_data_queue_out(),
         screen_data_to_remove(),
         blankScreenData( nullptr ),
+        window_thread(),
         working_thread_pool( thread_pool_to_limit ),
         numKnownVBlanks( 0 ),
         numIndividualsProcessed( 0 ),
@@ -37,7 +38,7 @@ namespace spkn
 
         while( virtual_screens.size() < num_previews )
         {
-            virtual_screens.push_back( sn::VirtualScreen() );
+            virtual_screens.push_back( sn::VirtualScreen{} );
             virtual_screens.back().create( sn::NESVideoWidth, sn::NESVideoHeight, pixelSize, sf::Color::Blue );
             virtual_screens.back().setScreenData( blankScreenData );
 
@@ -249,7 +250,7 @@ namespace spkn
 
                 ss << "Gen=" << numGenerationsProcessed << "(";
                 //ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h";
-                ss << std::fixed << std::setprecision(2) << gensPerHour << "/h";
+                ss << std::fixed << std::setprecision(3) << gensPerHour << "/h";
                 ss << ", " << std::fixed << std::setprecision(2) << percentThroughGen * 100.0 << "%";
                 ss << ", eta:" << std::fixed << std::setprecision(2) << spkn::SecondsToHMS( (long double)(netsLeftInGen) * 3600.0L/netsPerHour, 0 ) << "";
                 ss << "), ";

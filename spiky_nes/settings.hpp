@@ -15,7 +15,7 @@ namespace spkn
 
         public:
 
-            Variables() = default;
+            Variables() : vars() {  }
             Variables( const rapidxml::xml_node<> * variables_node );
             ~Variables() = default;
 

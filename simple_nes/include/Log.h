@@ -54,6 +54,9 @@ namespace sn
             // Construct a streambuf which tees output to both input
             // streambufs.
             TeeBuf(std::streambuf* sb1, std::streambuf* sb2);
+
+            TeeBuf( const TeeBuf& ) = delete;
+            TeeBuf operator=( const TeeBuf& ) = delete;
         private:
             // This tee buffer has no buffer. So every character "overflows"
             // and can be put directly into the teed buffers.

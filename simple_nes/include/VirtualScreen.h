@@ -23,7 +23,7 @@ namespace sn
     private:
         void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
-        std::shared_ptr<sf::Image> m_pixelColors; // turn this into a std::shared_ptr<sf::Image> it *should* be simpler for other stuff
+        std::shared_ptr<sf::Image> m_pixelColors;
         mutable sf::Texture m_texture;
         mutable sf::Sprite m_sprite;
         sf::Color m_defaultColor;

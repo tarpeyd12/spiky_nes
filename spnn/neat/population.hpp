@@ -185,6 +185,8 @@ namespace neat
 
             struct DbgGenerationCallbacks
             {
+                DbgGenerationCallbacks();
+
                 std::function<void()> begin;
 
                 std::function<void()> speciate_begin;

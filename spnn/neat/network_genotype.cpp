@@ -165,6 +165,7 @@ namespace neat
                     case NodeType::Hidden: out << "Hidden"; break;
                     case NodeType::Input: out << "Input"; break;
                     case NodeType::Output: out << "Output"; break;
+                    default: break;
                 }
 
                 out << ", tMin = " << node.thresholdMin << ", ";

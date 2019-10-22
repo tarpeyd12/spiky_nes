@@ -59,6 +59,8 @@ namespace spkn
             FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio, double APM, std::shared_ptr<Rand::RandomFunctor> _rand = nullptr );
             virtual ~FitnessCalculator();
 
+            FitnessCalculator( const FitnessCalculator& ) = delete;
+            FitnessCalculator operator=( const FitnessCalculator& ) = delete;
 
             size_t numInputs();
             size_t numOutputs();

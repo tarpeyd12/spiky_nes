@@ -9,6 +9,8 @@
 #include "spikey_nes.hpp"
 
 std::list< std::function<void()> > __atexit_CPP;
+void AtExit( std::function<void()>& f );
+void __atexit_callback();
 
 void
 AtExit( std::function<void()>& f )
@@ -222,8 +224,8 @@ main( int argc, char** argv )
             settings.arg_rom_path,
             previewWindow,
             limits.thresholdMax.max, // maximum activation value, used to scale input values
-            settings.var.get<double>( "fitness_max_apm", 3.0 * 60.0 ), // APM allowed
-            nullptr, //random, // pointer to random number generator to induce non-determinism (screen noise). null for determinism
+            settings.var.get<double>( "fitness_apm_cap", 3.0 * 60.0 ), // APM allowed
+            settings.var.get<bool>( "fitness_deterministic", true ) ? nullptr : random, // pointer to random number generator to induce non-determinism (screen noise). null for determinism
             100, // network steps per NES frame
             5, // color winding value
             settings.var.get<size_t>( "fitness_downscale_ratio", 16 ) // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
