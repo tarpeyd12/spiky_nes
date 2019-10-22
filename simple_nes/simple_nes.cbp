@@ -14,7 +14,7 @@
 				<Option compiler="gcc" />
 				<Option parameters="pac-man.nes -s 1" />
 				<Compiler>
-					<Add option="-O3" />
+					<Add option="-Og" />
 					<Add option="-g" />
 				</Compiler>
 			</Target>
@@ -28,10 +28,25 @@
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
-					<Add option="-O3" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+				</Linker>
+			</Target>
+			<Target title="Debug x64">
+				<Option output="bin/simple_nes-x64-d" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Debug_x64/" />
+				<Option type="2" />
+				<Option compiler="mingw64" />
+				<Option parameters="mario.nes -s 5" />
+				<Compiler>
+					<Add option="-m64" />
+					<Add option="-Og" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-m64" />
 				</Linker>
 			</Target>
 			<Target title="Release x64">
@@ -44,7 +59,6 @@
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
-					<Add option="-O3" />
 					<Add option="-m64" />
 				</Compiler>
 				<Linker>
@@ -54,6 +68,7 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-O3" />
 			<Add option="-Wredundant-decls" />
 			<Add option="-Wall" />
 			<Add option="-std=c++14" />
