@@ -31,6 +31,8 @@ namespace spkn
 
             GameState_SuperMarioBros gameStateExtractor;
 
+            std::shared_ptr<Rand::RandomFunctor> random;
+
             // fitness state
 
             std::map< uint16_t, double > maxScreenPosPerLevel;
@@ -54,7 +56,7 @@ namespace spkn
 
         public:
 
-            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio, double APM );
+            FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio, double APM, std::shared_ptr<Rand::RandomFunctor> _rand = nullptr );
             virtual ~FitnessCalculator();
 
 
@@ -100,6 +102,8 @@ namespace spkn
             uint64_t stepsPerFrame;
             size_t colorRings;
 
+            std::shared_ptr<Rand::RandomFunctor> random;
+
             std::atomic<uint64_t> totalVBlanks;
             std::atomic<uint64_t> individualsProcessed;
             std::atomic<uint64_t> generationsProcessed;
@@ -114,7 +118,7 @@ namespace spkn
 
         public:
 
-            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, uint64_t steps_per_frame = 100, size_t color_rings = 5, size_t downscaleRatio = 2 );
+            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, std::shared_ptr<Rand::RandomFunctor> _rand = nullptr, uint64_t steps_per_frame = 100, size_t color_rings = 5, size_t downscaleRatio = 2 );
             virtual ~FitnessFactory();
 
             uint64_t getTotalVBlanks() const;

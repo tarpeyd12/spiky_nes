@@ -6,7 +6,7 @@
 
 namespace spkn
 {
-    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio, double APM )
+    FitnessCalculator::FitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, const std::string& rom_path, uint64_t stepsPerFrame, size_t colorRings, double maxActivationWeight, size_t downscaleRatio, double APM, std::shared_ptr<Rand::RandomFunctor> _rand )
          : neat::FitnessCalculator( net ),
         networkStepsPerFrame( stepsPerFrame ),
         emulator(),
@@ -19,6 +19,7 @@ namespace spkn
         lastKnownScreenPosition( 0.0 ),
         numVBlanksWithoutMoving( 0 ),
         gameStateExtractor( emulator ),
+        random( _rand ),
         maxScreenPosPerLevel(),
         highestWorldLevel( 0 ),
         controllStopped( false ),
@@ -250,6 +251,18 @@ namespace spkn
             std::vector<double> tmp( qimage.getSize().x * qimage.getSize().y, 0.0 );
             ImageSobelEdgeDetectionToLightness( qimage, tmp, activationMaxValue, 0 );
             ResizeImageVec( tmp, qimage.getSize().x, qimage.getSize().y, screenInput, scaled_width, scaled_height, 0 );*/
+
+            if( random != nullptr )
+            {
+                const double peturb = activationMaxValue / 256.0;
+
+                neat::MinMax<double> bounds( 0.0, activationMaxValue );
+
+                for( size_t i = 0; i < screenInput.size() - 1; ++i )
+                {
+                    screenInput[ i ] = bounds.clamp( screenInput[ i ] + neat::Mutations::Gaussian( random ) * peturb / 2.0L );
+                }
+            }
         }
 
         return screenInput;
@@ -308,11 +321,12 @@ namespace spkn
 
     // fitness factory
 
-    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, uint64_t steps_per_frame, size_t color_rings, size_t downscaleRatio )
+    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, std::shared_ptr<Rand::RandomFunctor> _rand, uint64_t steps_per_frame, size_t color_rings, size_t downscaleRatio )
          :
         rom_path( mario_rom ),
         stepsPerFrame( steps_per_frame ),
         colorRings( color_rings ),
+        random( _rand ),
         totalVBlanks( 0 ),
         individualsProcessed( 0 ),
         generationsProcessed( 0 ),
@@ -363,7 +377,7 @@ namespace spkn
     FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const
     {
         std::shared_ptr< spkn::FitnessCalculator > calc;
-        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue, NESpixelsPerNetworkPixel, actionsPerMinute );
+        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue, NESpixelsPerNetworkPixel, actionsPerMinute, ( random != nullptr ? std::make_shared<Rand::Random_Unsafe>( random->Int() ) : nullptr ) );
 
         calc->setParentFactory( this );
 

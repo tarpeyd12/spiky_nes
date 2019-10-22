@@ -69,7 +69,7 @@ namespace neat
     PopulationFitness::PopulationFitness( const PopulationFitness& other )
      : PopulationFitness()
     {
-        other.for_each_genotype( [&]( const auto& g ){ addFitnessData( g ); } );
+        other.for_each_genotype( [&]( const Genotype& g ){ addFitnessData( g ); } );
 
         if( other.is_finalized() )
         {
