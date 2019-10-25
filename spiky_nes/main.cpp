@@ -9,11 +9,11 @@
 #include "spikey_nes.hpp"
 
 std::list< std::function<void()> > __atexit_CPP;
-void AtExit( std::function<void()>& f );
+void AtExit( std::function<void()> f );
 void __atexit_callback();
 
 void
-AtExit( std::function<void()>& f )
+AtExit( std::function<void()> f )
 {
     __atexit_CPP.emplace_back( f );
 }
@@ -39,14 +39,14 @@ main( int argc, char** argv )
 
     spkn::InitEmulatorLogs();
 
-    spkn::Settings settings;
+    std::shared_ptr<spkn::Settings> settings = std::make_shared<spkn::Settings>();
     {
-        settings.parse_cmd( argc, argv );
+        settings->parse_cmd( argc, argv );
     }
 
     std::cout << "spiky_nes " << __DATE__ << ", " << __TIME__ << std::endl;
 
-    if( settings.arg_rom_path.empty() )
+    if( settings->arg_rom_path.empty() )
     {
         std::cout << "Argument required: ROM path" << std::endl;
         return 1;
@@ -158,27 +158,27 @@ main( int argc, char** argv )
     uint64_t populationSize = 150;
 
     {
-        //if( settings.cmd.wasArgFound( "scale" ) )
+        //if( settings->cmd.wasArgFound( "scale" ) )
         {
-            pixelMultiplier = settings.arg_windowScale;
+            pixelMultiplier = settings->arg_windowScale;
             pixelMultiplier = std::max<float>( 0.125f, pixelMultiplier );
         }
 
-        //if( settings.cmd.wasArgFound( "threads" ) )
+        //if( settings->cmd.wasArgFound( "threads" ) )
         {
-            numThreads = settings.arg_numThreads;
+            numThreads = settings->arg_numThreads;
             numThreads = neat::MinMax<size_t>{ 1, std::max<size_t>( 2, std::thread::hardware_concurrency() ) - 1 }.clamp( numThreads );
         }
 
-        //if( settings.cmd.wasArgFound( "population" ) )
+        //if( settings->cmd.wasArgFound( "population" ) )
         {
-            populationSize = settings.arg_populationSize;
+            populationSize = settings->arg_populationSize;
             populationSize = std::max<size_t>( 15, populationSize );
         }
 
-        //if( settings.cmd.wasArgFound( "columns" ) )
+        //if( settings->cmd.wasArgFound( "columns" ) )
         {
-            numColumns = settings.arg_numColumns;
+            numColumns = settings->arg_numColumns;
             numColumns = neat::MinMax<size_t>{ 1, 256 }.clamp( numColumns );
         }
     }
@@ -211,7 +211,7 @@ main( int argc, char** argv )
     tpl::pool thread_pool{ numThreads };
 
     std::shared_ptr<spkn::PreviewWindow> previewWindow = nullptr;
-    if( !settings.arg_headless )
+    if( !settings->arg_headless )
     {
         previewWindow = std::make_shared<spkn::PreviewWindow>( "SpikeyNES", populationSize, thread_pool.num_threads(), numColumns, thread_pool, pixelMultiplier );
     }
@@ -221,25 +221,25 @@ main( int argc, char** argv )
     if( fitnessFactory == nullptr )
     {
         fitnessFactory = std::make_shared< spkn::FitnessFactory >(
-            settings.arg_rom_path,
+            settings->arg_rom_path,
             previewWindow,
             limits.thresholdMax.max, // maximum activation value, used to scale input values
-            settings.var.get<double>( "fitness_apm_cap", 3.0 * 60.0 ), // APM allowed
-            settings.var.get<bool>( "fitness_deterministic", true ) ? nullptr : random, // pointer to random number generator to induce non-determinism (screen noise). null for determinism
+            settings->var.get<double>( "fitness_apm_cap", 3.0 * 60.0 ), // APM allowed
+            settings->var.get<bool>( "fitness_deterministic", true ) ? nullptr : random, // pointer to random number generator to induce non-determinism (screen noise). null for determinism
             100, // network steps per NES frame
             5, // color winding value
-            settings.var.get<size_t>( "fitness_downscale_ratio", 16 ) // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
+            settings->var.get<size_t>( "fitness_downscale_ratio", 16 ) // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
         );
     }
 
     std::shared_ptr< neat::Population > population = nullptr;
 
-    if( !settings.arg_input_path.empty() )
+    if( !settings->arg_input_path.empty() )
     {
-        std::cout << "Loading Population From File '" << settings.arg_input_path << "' ... " << std::flush;
+        std::cout << "Loading Population From File '" << settings->arg_input_path << "' ... " << std::flush;
         rapidxml::xml_document<> doc;
 
-        std::string file_data = spkn::GetFileAsString( settings.arg_input_path );
+        std::string file_data = spkn::GetFileAsString( settings->arg_input_path );
 
         if( !file_data.empty() )
         {
@@ -386,9 +386,40 @@ main( int argc, char** argv )
 
     std::cout << "Population Evolution ..." << std::endl;
 
-    std::function<void()> onExit = [&]() -> void
+    std::function<void(std::string,bool)> onExit_save = [&,population,settings]( std::string filename, bool crashing = false ) -> void // non reference string, needs own copy
     {
-        std::cout << "Closing log files." << std::endl;
+        std::cout << "\n\nSaving Data ... " << std::flush;
+
+        rapidxml::xml_document<> * doc = new rapidxml::xml_document<>();
+        if( crashing )
+        {
+            settings->SaveToXML( doc, doc );
+            population->SaveToXML( doc, doc, nullptr, false );
+            std::ostringstream ss;
+            ss << filename << "_" << std::hex << std::time(nullptr) << ".xml";
+            filename = ss.str();
+        }
+        else
+        {
+            std::shared_ptr<neat::xml::DataBlob> data_blob = std::make_shared<neat::xml::DataBlob>();
+            settings->SaveToXML( doc, doc );
+            population->SaveToXML( doc, doc, data_blob );
+            data_blob->SaveToXML( doc, doc, { "zlib" } );
+        }
+
+        std::ofstream success_file( filename, std::ofstream::trunc );
+        success_file << *doc << std::flush;
+        size_t bytes_written = success_file.tellp(); // no need to subtract the before tellp() because we trunc when opening the file
+        success_file.close();
+
+        delete doc;
+
+        std::cout << "Done. \"" << filename << "\" (" << bytes_written << " bytes)" << std::endl;
+    };
+
+    std::function<void()> onExit_close = [&]() -> void
+    {
+        std::cout << "\n\nClosing log files." << std::endl;
 
         logfile.close();
         popfile.close();
@@ -396,7 +427,12 @@ main( int argc, char** argv )
         previewWindow->close();
     };
 
-    AtExit( onExit );
+    if( !settings->arg_output_path.empty() )
+    {
+        AtExit( [settings,onExit_save]()->void{ onExit_save( settings->arg_output_path, false ); } );
+    }
+
+    AtExit( onExit_close );
 
     const size_t num_starting_nodes = fitnessFactory->numInputs() + fitnessFactory->numOutputs();
     const size_t num_starting_conns = fitnessFactory->numInputs() * fitnessFactory->numOutputs();
@@ -404,7 +440,7 @@ main( int argc, char** argv )
     auto evolution_start_time = std::chrono::high_resolution_clock::now();
 
     //while( true )
-    while( population->getGenerationCount() < settings.arg_numGenerations )
+    while( population->getGenerationCount() < settings->arg_numGenerations )
     {
         auto generation_start_time = std::chrono::high_resolution_clock::now();
 
@@ -412,7 +448,7 @@ main( int argc, char** argv )
 
         tpl::future<void> save_future;
 
-        if( !settings.arg_output_path.empty() )
+        if( !settings->arg_output_path.empty() )
         {
             // this is the PLEASE DON'T CRASH section
 
@@ -426,14 +462,14 @@ main( int argc, char** argv )
 
             {
                 auto begin = std::chrono::high_resolution_clock::now();
-                settings.SaveToXML( doc, doc );
+                settings->SaveToXML( doc, doc );
                 population->SaveToXML( doc, doc, data_blob );
                 std::cout << " [Data Encoding Complete ";
                 std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
                 std::cout << "s] " << std::flush;
             }
 
-            save_future = thread_pool.submit( [doc,&settings,data_blob]
+            save_future = thread_pool.submit( [doc,settings,data_blob]
             {
                 // data compress
                 if( data_blob != nullptr )
@@ -450,7 +486,7 @@ main( int argc, char** argv )
                 {
                     auto begin = std::chrono::high_resolution_clock::now();
 
-                    std::ofstream success_file( settings.arg_output_path, std::ofstream::trunc );
+                    std::ofstream success_file( settings->arg_output_path, std::ofstream::trunc );
                     success_file << *doc << std::flush;
                     size_t bytes_written = success_file.tellp(); // no need to subtract the before tellp() because we trunc when opening the file
                     success_file.close();
@@ -465,7 +501,7 @@ main( int argc, char** argv )
                 }
             } );
 
-            if( settings.arg_file_sync )
+            if( settings->arg_file_sync )
             {
                 save_future.wait();
             }
