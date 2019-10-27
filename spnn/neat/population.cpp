@@ -422,7 +422,8 @@ namespace neat
             for( auto& f : speciesFitnessRatio )
             {
                 f.second -= species_fitness_bounds.min;
-                f.second += 1.0;
+                //f.second += 1.0;
+                f.second += ( (long double)populationSize / (long double)fitnessMap.get_num_species() );
                 fitnessRatiosSum += f.second;
             }
 
@@ -477,6 +478,7 @@ namespace neat
 
                 if( fitnessMap.has_species( nextCount.first ) )
                 {
+                    // average next species size with previous species size to smooth out next species size
                     nextCount.second = std::max<size_t>( 1, size_t( double( nextCount.second ) * 0.5 + double( fitnessMap.get_species( nextCount.first ).genotype_fitnesses.size() ) * 0.5 ) );
                 }
                 countSum += nextCount.second;

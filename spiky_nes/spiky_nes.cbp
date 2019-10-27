@@ -93,7 +93,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters='mario.nes -f data_5000.xml --auto-threads -s &quot;125%&quot; -n 20' />
+				<Option parameters='mario.nes -f data_5000.xml --auto-threads -s &quot;125%&quot; -n 20000000' />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
