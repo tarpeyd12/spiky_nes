@@ -74,7 +74,13 @@
 		<Compiler>
 			<Add option="-O3" />
 			<Add option="-Wall" />
+			<Add option="-std=c++14" />
 		</Compiler>
+		<Linker>
+			<Add option="-static-libstdc++" />
+			<Add option="-static-libgcc" />
+			<Add option="-static" />
+		</Linker>
 		<Unit filename="zlib-1.2.11/adler32.c">
 			<Option compilerVar="CC" />
 		</Unit>

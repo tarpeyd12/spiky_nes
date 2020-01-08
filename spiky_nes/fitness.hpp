@@ -105,6 +105,7 @@ namespace spkn
             size_t colorRings;
 
             std::shared_ptr<Rand::RandomFunctor> random;
+            size_t num_times_to_test;
 
             std::atomic<uint64_t> totalVBlanks;
             std::atomic<uint64_t> individualsProcessed;
@@ -120,7 +121,7 @@ namespace spkn
 
         public:
 
-            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, std::shared_ptr<Rand::RandomFunctor> _rand = nullptr, uint64_t steps_per_frame = 100, size_t color_rings = 5, size_t downscaleRatio = 2 );
+            FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, std::shared_ptr<Rand::RandomFunctor> _rand = nullptr, size_t runs_to_average = 1, uint64_t steps_per_frame = 100, size_t color_rings = 5, size_t downscaleRatio = 2 );
             virtual ~FitnessFactory();
 
             uint64_t getTotalVBlanks() const;

@@ -71,7 +71,6 @@ main( int argc, char** argv )
     limits.length =       { 1, 100*60*60*4 };
 
 
-
     const double simpleMutationRate_node = 0.001;
     const double simpleMutationRate_conn = 0.001;
 
@@ -97,7 +96,7 @@ main( int argc, char** argv )
     speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   25.0;
+    speciationParams.threshold =   settings->var.get<double>( "species_threshold", 25.0 );
 
     auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
@@ -220,12 +219,16 @@ main( int argc, char** argv )
 
     if( fitnessFactory == nullptr )
     {
+        bool is_deterministic = settings->var.get<bool>( "fitness_deterministic", true );
+        size_t num_runs = is_deterministic ? 1 : settings->var.get<size_t>( "fitness_runs", 1 );
+
         fitnessFactory = std::make_shared< spkn::FitnessFactory >(
             settings->arg_rom_path,
             previewWindow,
             limits.thresholdMax.max, // maximum activation value, used to scale input values
             settings->var.get<double>( "fitness_apm_cap", 3.0 * 60.0 ), // APM allowed
-            settings->var.get<bool>( "fitness_deterministic", true ) ? nullptr : random, // pointer to random number generator to induce non-determinism (screen noise). null for determinism
+            is_deterministic ? nullptr : random, // pointer to random number generator to induce non-determinism (screen noise). null for determinism
+            num_runs, // number of times the network is tested
             100, // network steps per NES frame
             5, // color winding value
             settings->var.get<size_t>( "fitness_downscale_ratio", 16 ) // ratio of NES pixels (squared) to network inputs, powers of 2 are a best bet here
@@ -308,9 +311,9 @@ main( int argc, char** argv )
             fitnessFactory,
             speciationParams,
             neat::SpeciationMethod::Closest,
-            25, // min species size to not be considered endangered
-            5, // num generations to buffer before endangered species goes extinct
-            25, // min generations between mass extinctions
+            settings->var.get<size_t>( "population_species_min_size", 25 ), // min species size to not be considered endangered
+            settings->var.get<size_t>( "population_extinction_size", 5 ), // num generations to buffer before endangered species goes extinct
+            settings->var.get<size_t>( "population_mass_extinction", 25 ), // min generations between mass extinctions
             1 // num generation data to keep
         );
 
@@ -388,19 +391,25 @@ main( int argc, char** argv )
 
     std::function<void(std::string,bool)> onExit_save = [&,population,settings]( std::string filename, bool crashing = false ) -> void // non reference string, needs own copy
     {
-        std::cout << "\n\nSaving Data ... " << std::flush;
+        std::cout << "\n\nSaving Data to \"" << std::flush;
 
         rapidxml::xml_document<> * doc = new rapidxml::xml_document<>();
         if( crashing )
         {
-            settings->SaveToXML( doc, doc );
-            population->SaveToXML( doc, doc, nullptr, false );
             std::ostringstream ss;
             ss << filename << "_" << std::hex << std::time(nullptr) << ".xml";
             filename = ss.str();
+
+            std::cout << filename << "\" ... " << std::flush;
+
+            settings->SaveToXML( doc, doc );
+            population->SaveToXML( doc, doc, nullptr, false );
+
         }
         else
         {
+            std::cout << filename << "\" ... " << std::flush;
+
             std::shared_ptr<neat::xml::DataBlob> data_blob = std::make_shared<neat::xml::DataBlob>();
             settings->SaveToXML( doc, doc );
             population->SaveToXML( doc, doc, data_blob );
@@ -429,7 +438,7 @@ main( int argc, char** argv )
 
     if( !settings->arg_output_path.empty() )
     {
-        AtExit( [settings,onExit_save]()->void{ onExit_save( settings->arg_output_path, false ); } );
+        AtExit( [settings,onExit_save]()->void{ onExit_save( settings->arg_output_path, !false ); } );
     }
 
     AtExit( onExit_close );
@@ -462,6 +471,9 @@ main( int argc, char** argv )
 
             {
                 auto begin = std::chrono::high_resolution_clock::now();
+
+                std::cout << " [Encoding Data] " << std::flush;
+
                 settings->SaveToXML( doc, doc );
                 population->SaveToXML( doc, doc, data_blob );
                 std::cout << " [Data Encoding Complete ";
@@ -471,32 +483,79 @@ main( int argc, char** argv )
 
             save_future = thread_pool.submit( [doc,settings,data_blob]
             {
+                std::this_thread::sleep_for( std::chrono::duration<double>( 0.01 ) );
+
+                std::cout << std::flush;
+
+                auto file_save_begin = std::chrono::high_resolution_clock::now();
+
                 // data compress
                 if( data_blob != nullptr )
                 {
                     auto begin = std::chrono::high_resolution_clock::now();
+
+                    std::cout << " [Compressing Data] " << std::flush;
+
                     data_blob->SaveToXML( doc, doc, { "zlib" } );
+
                     auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
                     std::cout << " [Data Compression Complete " << round( seconds_taken * 1000.0 ) / 1000.0 << "s";
                     //std::cout << " " << round( 1.0 * double(data_blob->size())/1048576.0 ) / 1.0 << "MB";
                     std::cout << "] " << std::flush;
                 }
 
+                /*std::ostringstream flattened_file;
+
+                {
+                    auto begin = std::chrono::high_resolution_clock::now();
+
+                    std::cout << " [Flattening Data] " << std::flush;
+
+                    flattened_file << *doc << std::flush;
+                    size_t bytes_written = flattened_file.tellp();
+                    delete doc;
+
+                    auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
+                    std::cout << " [Data Flattening Complete ";
+                    std::cout << round( 1000.0 * seconds_taken ) / 1000.0 << "s ";
+                    std::cout << round( 1.0 * double(bytes_written)/1048576.0 ) / 1.0 << "MB ";
+                    std::cout << round( 10.0 * ( (double(bytes_written)/1048576.0) / seconds_taken ) ) / 10.0 << "MB/s";
+                    std::cout << "] " << std::flush;
+                }
+                */
+                size_t file_size = 0;
+
                 // data write
                 {
                     auto begin = std::chrono::high_resolution_clock::now();
 
+                    std::cout << " [Writing Data] " << std::flush;
+
                     std::ofstream success_file( settings->arg_output_path, std::ofstream::trunc );
-                    success_file << *doc << std::flush;
+                    //success_file << flattened_file.str() << std::flush;
+                    {
+                        success_file << *doc << std::flush;
+                        delete doc;
+                    }
+
                     size_t bytes_written = success_file.tellp(); // no need to subtract the before tellp() because we trunc when opening the file
                     success_file.close();
-                    delete doc;
 
                     auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - begin).count();
                     std::cout << " [Disc Write Complete ";
                     std::cout << round( 1000.0 * seconds_taken ) / 1000.0 << "s ";
                     std::cout << round( 1.0 * double(bytes_written)/1048576.0 ) / 1.0 << "MB ";
                     std::cout << round( 10.0 * ( (double(bytes_written)/1048576.0) / seconds_taken ) ) / 10.0 << "MB/s";
+                    std::cout << "] " << std::flush;
+
+                    file_size = bytes_written;
+                }
+
+                {
+                    auto seconds_taken = std::chrono::duration<long double>(std::chrono::high_resolution_clock::now() - file_save_begin).count();
+                    std::cout << " [File Save Complete " << round( seconds_taken * 1000.0 ) / 1000.0 << "s ";
+                    std::cout << round( 10.0 * ( (double(file_size)/1048576.0) / seconds_taken ) ) / 10.0 << "MB/s";
+                    //std::cout << " " << round( 1.0 * double(data_blob->size())/1048576.0 ) / 1.0 << "MB";
                     std::cout << "] " << std::flush;
                 }
             } );
@@ -526,11 +585,13 @@ main( int argc, char** argv )
         fitnessFactory->incrementGeneration();
 
         double genComplettionTime = std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - generation_start_time).count();
-        std::cout << "\tDone. (~" << round(1000.0*genComplettionTime)/1000.0 << "s " << spkn::SecondsToHMS( genComplettionTime ) << ")\n\n";
+        std::cout << "\tDone. (~" << round(1000.0*genComplettionTime)/1000.0 << "s " << spkn::SecondsToHMS( genComplettionTime ) << ")\n\n" << std::flush;
 
         if( save_future.valid() )
         {
+            std::cout << "\tWaiting for Completed File Save ... " << std::flush;
             save_future.wait();
+            std::cout << "Complete.\n" << std::flush;
         }
 
         std::cout << "\tattrRate = " << attritionRate << "\n";

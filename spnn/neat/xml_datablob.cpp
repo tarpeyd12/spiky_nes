@@ -195,16 +195,63 @@ namespace neat
             length = ref.get_len();
         }
 
+        inline
+        size_t
+        __large_string_hash( const std::string& str_in )
+        {
+            // maximum string size that std::hash< std::string >{}() can handle ( at least on my compiler/stdlib combo )
+            const size_t chunk_size = 0x7fffffff;
+
+            // if less than chunk size do normal hash, this is the break case
+            if( str_in.size() <= chunk_size )
+            {
+                return std::hash< std::string >{}( str_in );
+            }
+
+            // intermediate store of chunk hashes
+            std::string other_hashes;
+
+            size_t start_pos = 0;
+            while( start_pos < str_in.size() )
+            {
+                // get the hash for the current chunk
+                size_t chunk_hash = __large_string_hash( str_in.substr( start_pos, chunk_size ) );
+
+                // convert the hash number to char string
+                char * chunk_hash_data = reinterpret_cast< char * >( &chunk_hash );
+
+                // append hash byte-wise to the intermediate string
+                for( size_t i = 0; i < sizeof( size_t ); ++i )
+                {
+                    other_hashes += chunk_hash_data[i];
+                }
+
+                // increment chunk
+                start_pos += chunk_size;
+            }
+
+            // hash the hashes of the chunks, we recurse in the _extremly_ unlikely case that the intermediate hash string is larger than chunk size
+            return __large_string_hash( other_hashes );
+        }
+
         size_t
         DataBlob::hash() const
         {
-            return std::hash< std::string >{}( data );
+            // note std::hash< std::string >{}() crashes for strings larger than 2^31 bytes
+            //return std::hash< std::string >{}( data );
+
+            // custom large string hash
+            return __large_string_hash( data );
         }
 
         size_t
         DataBlob::hash_of( const BlobReference& ref ) const
         {
-            return std::hash< std::string >{}( extract_data_copy( ref ) );
+            // note std::hash< std::string >{}() crashes for strings larger than 2^31 bytes
+            //return std::hash< std::string >{}( extract_data_copy( ref ) );
+
+            // custom large string hash
+            return __large_string_hash( extract_data_copy( ref ) );
         }
 
         void

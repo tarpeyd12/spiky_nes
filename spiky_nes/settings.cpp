@@ -52,6 +52,7 @@ namespace spkn
             std::cout << "\t--rom           rom_path\n";
             std::cout << "\t--hash-rom      rom_path_to_hash\n";
             std::cout << "\t--file-sync     save file on main thread\n";
+            std::cout << "\t--file-async    save file on worker thread\n";
             std::cout << "\t--headless      disable preview window\n";
             std::cout << "\t--auto-threads  automatically choose max num threads\n";
             exit( 0 );
@@ -135,6 +136,7 @@ namespace spkn
         cmd.add<size_t>(       { "-n", "generations" },             [&]( size_t i ){ arg_numGenerations = i; },                                                        "Number of generations to calculate"  );
 
         cmd.add_void(          { "--file-sync", "filesync" },       [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
+        cmd.add_void(          { "--file-async", "fileasync" },     [&](){ arg_file_sync = false; },                                                                   "Flag to save file on worker thread"  );
         cmd.add_void(          { "--headless", "headless" },        [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );
         cmd.add_void(          { "--auto-threads", "autothreads" }, [&](){ auto_threads( 1.0f, *this ); },                                                             "Automatically set threads to max allowed and window to accommodate"  );
     }

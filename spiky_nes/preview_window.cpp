@@ -17,6 +17,7 @@ namespace spkn
         width_inNES( std::max<size_t>( 1, num_columns ) ),
         height_inNES( std::max<size_t>( 1, num_previews ) / std::max<size_t>( 1, num_columns ) + ( std::max<size_t>( 1, num_previews ) % std::max<size_t>( 1, num_columns ) ? 1 : 0 ) ),
         populationSize( population_size ),
+        runsPerNetwork( 1 ),
         doRun( true ),
         virtual_screens_mutex(),
         virtual_screens(),
@@ -89,6 +90,12 @@ namespace spkn
 
         screen_data_queue_in.clear();
         screen_data_queue_out.clear();
+    }
+
+    void
+    PreviewWindow::setNumRunsPerNetwork( size_t runs_per_network )
+    {
+        runsPerNetwork = runs_per_network;
     }
 
     void
@@ -238,11 +245,11 @@ namespace spkn
                 long double runTime = std::chrono::duration<long double>(currentTime-startTime).count();
                 long double lastVBlankTime = std::chrono::duration<long double>(lastUpdatedCurrentTime-startTime).count();
 
-                long double netsPerHour = numIndividualsProcessed / (lastVBlankTime/3600.0L);
-                long double gensPerHour = netsPerHour / (long double)( populationSize );
-                uint64_t netsInGen = numIndividualsProcessed % populationSize;
-                uint64_t netsLeftInGen = populationSize - netsInGen;
-                long double percentThroughGen = (long double)( netsInGen ) / (long double)( populationSize );
+                long double netsPerHour = numIndividualsProcessed / ( lastVBlankTime/3600.0L );
+                long double gensPerHour = netsPerHour / (long double)( populationSize * runsPerNetwork );
+                uint64_t netsInGen = numIndividualsProcessed % ( populationSize * runsPerNetwork );
+                uint64_t netsLeftInGen = ( populationSize * runsPerNetwork ) - netsInGen;
+                long double percentThroughGen = (long double)( netsInGen ) / (long double)( populationSize * runsPerNetwork );
 
 
                 std::stringstream ss;

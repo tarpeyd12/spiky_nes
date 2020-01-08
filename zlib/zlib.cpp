@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <sstream>
 
+#include <iostream> // for some debugging
+
 #include "zlib-1.2.11/zlib.h"
 #include "zlib-1.2.11/zutil.h"
 #include "zlib-1.2.11/zconf.h"
@@ -14,6 +16,7 @@
 namespace zlib
 {
     const size_t chunk_size = 1024*1024;
+    //const size_t chunk_size = 0x7fff;
 
     std::string
     compress_string( const std::string& str, int compression )
@@ -30,7 +33,7 @@ namespace zlib
         zstrm.avail_in = str.size();
 
         int code = Z_OK;
-        unsigned char buff[ chunk_size ]; // 1 MB
+        unsigned char buff[ chunk_size ];
         std::string out_string;
 
         do
@@ -74,7 +77,7 @@ namespace zlib
         zstrm.avail_in = str.size();
 
         int code = Z_OK;
-        unsigned char buff[ chunk_size ]; // 1 MB
+        unsigned char buff[ chunk_size ];
         std::string out_string;
 
         do

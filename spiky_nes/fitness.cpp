@@ -321,12 +321,13 @@ namespace spkn
 
     // fitness factory
 
-    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, std::shared_ptr<Rand::RandomFunctor> _rand, uint64_t steps_per_frame, size_t color_rings, size_t downscaleRatio )
+    FitnessFactory::FitnessFactory( const std::string& mario_rom, std::shared_ptr<PreviewWindow> window, double maxWeightForActivation, double APM, std::shared_ptr<Rand::RandomFunctor> _rand, size_t runs_to_average, uint64_t steps_per_frame, size_t color_rings, size_t downscaleRatio )
          :
         rom_path( mario_rom ),
         stepsPerFrame( steps_per_frame ),
         colorRings( color_rings ),
         random( _rand ),
+        num_times_to_test( runs_to_average ),
         totalVBlanks( 0 ),
         individualsProcessed( 0 ),
         generationsProcessed( 0 ),
@@ -369,6 +370,7 @@ namespace spkn
         ++generationsProcessed;
         if( preview_window )
         {
+            preview_window->setNumRunsPerNetwork( numTimesToTest() );
             preview_window->setNumGenerations( generationsProcessed );
         }
     }
@@ -387,7 +389,7 @@ namespace spkn
     size_t
     FitnessFactory::numTimesToTest() const
     {
-        return 1;
+        return num_times_to_test;
     }
 
     void
@@ -397,6 +399,7 @@ namespace spkn
         ++individualsProcessed;
         if( preview_window )
         {
+            preview_window->setNumRunsPerNetwork( numTimesToTest() );
             preview_window->setNumVBlanks( totalVBlanks );
             preview_window->setNumProcessed( individualsProcessed );
         }

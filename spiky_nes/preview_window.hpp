@@ -28,6 +28,7 @@ namespace spkn
             size_t height_inNES;
 
             size_t populationSize;
+            size_t runsPerNetwork;
 
             std::atomic_bool doRun;
             std::mutex virtual_screens_mutex;
@@ -55,6 +56,8 @@ namespace spkn
             void close();
 
             void clearAllScreenData();
+
+            void setNumRunsPerNetwork( size_t runs_per_network );
 
             void setNumVBlanks( uint64_t vblanks );
             void setNumProcessed( uint64_t numProcessed );
