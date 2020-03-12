@@ -93,6 +93,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
+				<Option parameters='mario.nes -p 2500 -f data.xml -t 7 -w 7 -s &quot;125%&quot; -n 200 --set fitness_deterministic=true --set fitness_runs=1 --set fitness_downscale_ratio=16 --set species_threshold=100.0 --set population_species_min_size=500 --set attr_base=0.95 --file-async' />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
