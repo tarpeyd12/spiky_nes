@@ -7,6 +7,7 @@ namespace spkn
     inline std::string SecondsToHMS( long double seconds, uint8_t precision = 2, bool prepad_zeros = true );
 
     inline std::string GetFileAsString( const std::string& file_path );
+    inline std::string GetFileAsString_untill( const std::string& file_path, const std::string& stop_sequence );
 
     inline std::string GetROMFileHashString( const std::string& rom_file_path );
 }

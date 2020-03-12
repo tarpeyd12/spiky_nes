@@ -15,8 +15,8 @@
 
 namespace zlib
 {
-    const size_t chunk_size = 1024*1024;
-    //const size_t chunk_size = 0x7fff;
+    //const size_t chunk_size = 1024*1024;
+    const size_t chunk_size = 0x7fffff;
 
     std::string
     compress_string( const std::string& str, int compression )
@@ -29,26 +29,32 @@ namespace zlib
             throw std::runtime_error( "zlib::compress_string deflateInit() failed." );
         }
 
-        zstrm.next_in  = (unsigned char *)str.data();
-        zstrm.avail_in = str.size();
-
         int code = Z_OK;
-        unsigned char buff[ chunk_size ];
+        unsigned char * buff = new unsigned char[ chunk_size ];
         std::string out_string;
+
+        size_t input_processed = 0;
 
         do
         {
-            zstrm.next_out  = buff;
-            zstrm.avail_out = sizeof( buff );
+            zstrm.next_in  = (unsigned char *)str.data() + input_processed;
+            zstrm.avail_in = std::min<uInt>( chunk_size, str.size() - input_processed );
+            input_processed += chunk_size;
 
-            code = deflate( &zstrm, Z_FINISH );
-
-            if( out_string.size() < zstrm.total_out )
+            do
             {
-                out_string.append( reinterpret_cast<char*>(buff), zstrm.total_out - out_string.size() );
+                zstrm.next_out  = buff;
+                zstrm.avail_out = sizeof( unsigned char ) * chunk_size;
+
+                code = deflate( &zstrm, input_processed >= str.size() ? Z_FINISH : Z_NO_FLUSH );
+
+                out_string.append( reinterpret_cast<char*>(buff), chunk_size - zstrm.avail_out );
             }
+            while( zstrm.avail_out == 0 );
         }
-        while( code == Z_OK );
+        while( input_processed < str.size() );
+
+        delete[] buff;
 
         deflateEnd( &zstrm );
 
@@ -73,26 +79,50 @@ namespace zlib
             throw std::runtime_error( "zlib::decompress_string inflateInit() failed." );
         }
 
-        zstrm.next_in  = (unsigned char *)str.data();
-        zstrm.avail_in = str.size();
-
         int code = Z_OK;
-        unsigned char buff[ chunk_size ];
+        unsigned char * buff = new unsigned char[ chunk_size ];
         std::string out_string;
+
+        size_t input_processed = 0;
 
         do
         {
-            zstrm.next_out  = buff;
-            zstrm.avail_out = sizeof( buff );
+            zstrm.next_in  = (unsigned char *)str.data() + input_processed;
+            zstrm.avail_in = std::min<uInt>( chunk_size, str.size() - input_processed );
+            input_processed += chunk_size;
 
-            code = inflate( &zstrm, 0 );
-
-            if( out_string.size() < zstrm.total_out )
+            if( zstrm.avail_in == 0 )
             {
-                out_string.append( reinterpret_cast<char*>(buff), zstrm.total_out - out_string.size() );
+                break;
             }
+
+            do
+            {
+                zstrm.next_out  = buff;
+                zstrm.avail_out = sizeof( unsigned char ) * chunk_size;
+
+                code = inflate( &zstrm, Z_NO_FLUSH );
+
+                if( code == Z_STREAM_ERROR )
+                {
+                    throw std::runtime_error( "zlib::decompress_string inflate() failed Z_STREAM_ERROR." );
+                }
+
+                switch( code )
+                {
+                    default: break;
+                    case Z_NEED_DICT:  throw std::runtime_error( "zlib::decompress_string inflate() failed Z_NEED_DICT." ); break;
+                    case Z_DATA_ERROR: throw std::runtime_error( "zlib::decompress_string inflate() failed Z_DATA_ERROR." ); break;
+                    case Z_MEM_ERROR:  throw std::runtime_error( "zlib::decompress_string inflate() failed Z_MEM_ERROR." ); break;
+                }
+
+                out_string.append( reinterpret_cast<char*>(buff), chunk_size - zstrm.avail_out );
+            }
+            while( zstrm.avail_out == 0 );
         }
-        while( code == Z_OK );
+        while( code != Z_STREAM_END );
+
+        delete[] buff;
 
         inflateEnd( &zstrm );
 

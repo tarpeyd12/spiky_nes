@@ -78,6 +78,45 @@ namespace spkn
     }
 
     std::string
+    GetFileAsString_untill( const std::string& file_path, const std::string& stop_sequence )
+    {
+        const size_t chunk_size = 0xffff;
+
+        std::ifstream file( file_path.c_str(), std::ifstream::in | std::ifstream::binary);
+
+        if( file.is_open() )
+        {
+            std::string output;
+
+            std::string previous_chunk_end;
+
+            bool end_found = false;
+
+            while( file.good() && !end_found )
+            {
+                std::string chunk( chunk_size, '\0' );
+
+                file.read( const_cast<char *>( chunk.data() ), chunk_size );
+
+                if( ( previous_chunk_end + chunk ).find( stop_sequence ) != std::string::npos )
+                {
+                    end_found = true;
+                }
+
+                previous_chunk_end = chunk.substr( chunk.size() - stop_sequence.size() );
+
+                output += chunk;
+            }
+
+            file.close();
+
+            return output.substr( 0, output.find( stop_sequence ) + stop_sequence.size() );
+        }
+
+        return std::string();
+    }
+
+    std::string
     GetROMFileHashString( const std::string& rom_file_path )
     {
         std::stringstream ss;

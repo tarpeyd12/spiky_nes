@@ -86,7 +86,8 @@ namespace spkn
 
             try
             {
-                std::string file_data = GetFileAsString( file_path );
+                //std::string file_data = GetFileAsString( file_path );
+                std::string file_data = GetFileAsString_untill( file_path, "</settings>" );
 
                 if( file_data.empty() )
                 {

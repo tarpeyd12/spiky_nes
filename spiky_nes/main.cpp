@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <stack>
 #include <future>
 
 #include "../spnn/spnn.hpp"
@@ -131,6 +132,8 @@ main( int argc, char** argv )
         //connMutator_new->addMutator< neat::Mutations::Mutation_Conn_enable >();
 
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
+        nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
+        nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn        >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
@@ -246,13 +249,75 @@ main( int argc, char** argv )
 
         if( !file_data.empty() )
         {
-            std::cout << "Load Complete ... " << std::flush;
+            std::cout << "Read Complete ... " << std::flush;
 
             try
             {
                 doc.parse<rapidxml::parse_default>( &file_data[0] );
 
                 std::cout << "Parse Complete ... " << std::flush;
+
+                // dbg
+                {
+                    std::ofstream xml_structure_log( "load_xml_structure_dbg_log.xml", std::ofstream::trunc );
+
+                    std::stack< rapidxml::xml_node<> * > node_stack;
+
+                    node_stack.push( doc.first_node() );
+
+                    while( !node_stack.empty() )
+                    {
+                        std::string indentation = std::string( node_stack.size() - 1, '\t' );
+
+                        auto current_node = node_stack.top();
+
+                        if( current_node == nullptr )
+                        {
+                            node_stack.pop();
+                            continue;
+                        }
+
+                        xml_structure_log << indentation << "<" << neat::xml::Name( current_node ) << ">\n" << std::flush;
+
+                        if( current_node->first_node() != nullptr )
+                        {
+                            node_stack.push( current_node->first_node() );
+                            continue;
+                        }
+
+                        if( current_node->parent() != nullptr && current_node->next_sibling() != nullptr )
+                        {
+                            xml_structure_log << indentation << "</" << neat::xml::Name( current_node ) << ">\n" << std::flush;
+                            node_stack.top() = current_node->next_sibling();
+                            continue;
+                        }
+
+                        if( current_node->parent() != nullptr && current_node->next_sibling() == nullptr )
+                        {
+                            do
+                            {
+                                xml_structure_log << std::string( node_stack.size() - 1, '\t' ) << "</" << neat::xml::Name( node_stack.top() ) << ">\n" << std::flush;
+                                node_stack.pop();
+                            }
+                            while( !node_stack.empty() && node_stack.top()->next_sibling() == nullptr );
+
+                            if( node_stack.empty() )
+                            {
+                                break;
+                            }
+
+                            if( node_stack.top()->parent() != nullptr && node_stack.top()->next_sibling() != nullptr )
+                            {
+                                xml_structure_log << std::string( node_stack.size() - 1, '\t' ) << "</" << neat::xml::Name( node_stack.top() ) << ">\n" << std::flush;
+                                node_stack.top() = node_stack.top()->next_sibling();
+                            }
+
+                            continue;
+                        }
+                    }
+
+                    xml_structure_log.close();
+                }
 
                 std::shared_ptr<neat::xml::DataBlob> data_blob = nullptr;
                 {
@@ -261,6 +326,8 @@ main( int argc, char** argv )
                     {
                         data_blob = std::make_shared<neat::xml::DataBlob>( data_blob_node );
                     }
+
+                    std::cout << "Load Complete ... " << std::flush;
                 }
 
                 auto mutations_factory = std::make_shared< neat::Mutations::MutationsFileLoadFactory >();
@@ -443,6 +510,9 @@ main( int argc, char** argv )
 
     AtExit( onExit_close );
 
+    double base_attrition  = settings->var.get<double>( "attr_base", 0.5 );
+    double attrition_range = settings->var.get<double>( "attr_range", 0.0125 );
+
     const size_t num_starting_nodes = fitnessFactory->numInputs() + fitnessFactory->numOutputs();
     const size_t num_starting_conns = fitnessFactory->numInputs() * fitnessFactory->numOutputs();
 
@@ -478,7 +548,8 @@ main( int argc, char** argv )
                 population->SaveToXML( doc, doc, data_blob );
                 std::cout << " [Data Encoding Complete ";
                 std::cout << round( 1000.0*std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begin).count())/1000.0;
-                std::cout << "s] " << std::flush;
+                std::cout << "s " << round( 1.0 * double(data_blob->size())/1048576.0 ) / 1.0 << "MB";
+                std::cout << "] " << std::flush;
             }
 
             save_future = thread_pool.submit( [doc,settings,data_blob]
@@ -556,6 +627,7 @@ main( int argc, char** argv )
                     std::cout << " [File Save Complete " << round( seconds_taken * 1000.0 ) / 1000.0 << "s ";
                     std::cout << round( 10.0 * ( (double(file_size)/1048576.0) / seconds_taken ) ) / 10.0 << "MB/s";
                     //std::cout << " " << round( 1.0 * double(data_blob->size())/1048576.0 ) / 1.0 << "MB";
+                    std::cout << " Compression:" << round( 1000.0 * double(file_size)/double(data_blob->size()) ) / 10.0 << "%";
                     std::cout << "] " << std::flush;
                 }
             } );
@@ -570,8 +642,6 @@ main( int argc, char** argv )
 
         std::cout << "\n\tCalculating ...\n" << std::flush;
 
-        double base_attrition  = 0.5;
-        double attrition_range = 0.0125;
         neat::MinMax<double> attritionRange( base_attrition - attrition_range, base_attrition + attrition_range );
         double attritionRate = 0.5;
         {

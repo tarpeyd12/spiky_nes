@@ -376,10 +376,10 @@ namespace spkn
     }
 
     std::shared_ptr< neat::FitnessCalculator >
-    FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t /*testNum*/ ) const
+    FitnessFactory::getNewFitnessCalculator( std::shared_ptr< neat::NetworkPhenotype > net, size_t testNum ) const
     {
         std::shared_ptr< spkn::FitnessCalculator > calc;
-        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue, NESpixelsPerNetworkPixel, actionsPerMinute, ( random != nullptr ? std::make_shared<Rand::Random_Unsafe>( random->Int() ) : nullptr ) );
+        calc = std::make_shared<spkn::FitnessCalculator>( net, rom_path, stepsPerFrame, colorRings, avtivationMaxValue, NESpixelsPerNetworkPixel, actionsPerMinute, ( random != nullptr && testNum != 0 ? std::make_shared<Rand::Random_Unsafe>( random->Int() ) : nullptr ) );
 
         calc->setParentFactory( this );
 
