@@ -66,6 +66,24 @@
 					<Add option="-m64" />
 				</Linker>
 			</Target>
+			<Target title="Release x64 archspec">
+				<Option output="bin/simple_nes-x64-archspec" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Release_x64_archspec/" />
+				<Option type="2" />
+				<Option compiler="mingw64" />
+				<Option parameters="mario.nes -s 5" />
+				<Compiler>
+					<Add option="-march=corei7-avx" />
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-m64" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m64" />
+				</Linker>
+			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-O3" />

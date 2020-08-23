@@ -227,14 +227,14 @@ namespace spkn
             // a much better way, but waaaay slower, and somehow not as effective
             /*std::vector<double> tmp( emuScreen->getSize().x * emuScreen->getSize().y, 0.0 );
             ImageSobelEdgeDetectionToLightness( *emuScreen, tmp, activationMaxValue, 0 );
-            DownsizeImageVec_Multiple( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, downsizeSize, 0 );
+            DownsizeImageVec_Multiple( tmp, emuScreen->getSize().x, emuScreen->getSize().y, screenInput, downsizeSize, 0 );*/
             // double the values, but clamp to max value, this is because the sobel edge image is predominantly dark, thus the downscale
             // darkens the pixels, and thus the network will only be operating on a partial value space per input pixel.
-            for( double& v : screenInput ) { v = std::min<double>( v * 2.0, activationMaxValue ); }*/
+            //for( double& v : screenInput ) { v = std::min<double>( v * 2.0, activationMaxValue ); }
 
             /*ImageVecToImage( screenInput, scaled_width, scaled_height, activationMaxValue ).saveToFile( "tmp_scaled.png" );
             //ImageVecToImage( tmp, sn::NESVideoWidth, sn::NESVideoHeight, activationMaxValue ).saveToFile( "tmp.png" );
-            tmp.saveToFile( "tmp.png" );
+            //tmp.saveToFile( "tmp.png" );
             exit(0);*/
 
 

@@ -90,6 +90,8 @@ namespace spkn
 
         screen_data_queue_in.clear();
         screen_data_queue_out.clear();
+
+        screen_data_to_remove.clear();
     }
 
     void
@@ -114,6 +116,50 @@ namespace spkn
     PreviewWindow::setNumGenerations( uint64_t numGenerations )
     {
         numGenerationsProcessed = numGenerations;
+    }
+
+    std::string
+    PreviewWindow::getCurrentWindowTitle( std::chrono::time_point<std::chrono::steady_clock> start_time, std::chrono::time_point<std::chrono::steady_clock> last_updated_current_time  ) const
+    {
+        auto currentTime = std::chrono::steady_clock::now();
+
+        long double runTime = std::chrono::duration<long double>(currentTime-start_time).count();
+        long double lastVBlankTime = std::chrono::duration<long double>(last_updated_current_time-start_time).count();
+
+        long double netsPerHour = numIndividualsProcessed / ( lastVBlankTime/3600.0L );
+        long double gensPerHour = netsPerHour / (long double)( populationSize * runsPerNetwork );
+        uint64_t netsInGen = numIndividualsProcessed % ( populationSize * runsPerNetwork );
+        uint64_t netsLeftInGen = ( populationSize * runsPerNetwork ) - netsInGen;
+        long double percentThroughGen = (long double)( netsInGen ) / (long double)( populationSize * runsPerNetwork );
+
+
+        std::stringstream ss;
+        ss << "SpikeyNES [";
+
+        ss << "Gen=" << numGenerationsProcessed << "(";
+        //ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h";
+        ss << std::fixed << std::setprecision(3) << gensPerHour << "/h";
+        ss << ", " << std::fixed << std::setprecision(2) << percentThroughGen * 100.0 << "%";
+        ss << ", eta:" << std::fixed << std::setprecision(2) << spkn::SecondsToHMS( (long double)(netsLeftInGen) * 3600.0L/netsPerHour, 0 ) << "";
+        ss << "), ";
+
+        ss << "Nets=" << numIndividualsProcessed << "(";
+        ss << std::fixed << std::setprecision(2) << netsPerHour << "/h), ";
+
+        ss << "VBlanks=" << numKnownVBlanks << "(";
+        ss << std::fixed << std::setprecision(2) << (long double)(numKnownVBlanks)/60.0L << "s, " << spkn::SecondsToHMS( (long double)(numKnownVBlanks)/60.0L, 2 ) << "), ";
+
+        ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(" << spkn::SecondsToHMS( runTime, 1 ) << "), ";
+
+        ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L) / lastVBlankTime << "s:1s";
+        ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s), ";
+
+        ss << "Queue=" << working_thread_pool.size() << "+" << working_thread_pool.workers_active();
+        ss << "(" << working_thread_pool.workers_limit() << "/" <<  working_thread_pool.num_threads() << ")";
+
+        ss << "]";
+
+        return ss.str();
     }
 
     void
@@ -240,45 +286,7 @@ namespace spkn
             {
                 windowUpdates = 0;
 
-                auto currentTime = std::chrono::steady_clock::now();
-
-                long double runTime = std::chrono::duration<long double>(currentTime-startTime).count();
-                long double lastVBlankTime = std::chrono::duration<long double>(lastUpdatedCurrentTime-startTime).count();
-
-                long double netsPerHour = numIndividualsProcessed / ( lastVBlankTime/3600.0L );
-                long double gensPerHour = netsPerHour / (long double)( populationSize * runsPerNetwork );
-                uint64_t netsInGen = numIndividualsProcessed % ( populationSize * runsPerNetwork );
-                uint64_t netsLeftInGen = ( populationSize * runsPerNetwork ) - netsInGen;
-                long double percentThroughGen = (long double)( netsInGen ) / (long double)( populationSize * runsPerNetwork );
-
-
-                std::stringstream ss;
-                ss << "SpikeyNES [";
-
-                ss << "Gen=" << numGenerationsProcessed << "(";
-                //ss << std::fixed << std::setprecision(2) << numGenerationsProcessed / (lastVBlankTime/3600.0) << "/h";
-                ss << std::fixed << std::setprecision(3) << gensPerHour << "/h";
-                ss << ", " << std::fixed << std::setprecision(2) << percentThroughGen * 100.0 << "%";
-                ss << ", eta:" << std::fixed << std::setprecision(2) << spkn::SecondsToHMS( (long double)(netsLeftInGen) * 3600.0L/netsPerHour, 0 ) << "";
-                ss << "), ";
-
-                ss << "Nets=" << numIndividualsProcessed << "(";
-                ss << std::fixed << std::setprecision(2) << netsPerHour << "/h), ";
-
-                ss << "VBlanks=" << numKnownVBlanks << "(";
-                ss << std::fixed << std::setprecision(2) << (long double)(numKnownVBlanks)/60.0L << "s, " << spkn::SecondsToHMS( (long double)(numKnownVBlanks)/60.0L, 2 ) << "), ";
-
-                ss << "runtime=" << std::fixed << std::setprecision(1) << runTime << "s(" << spkn::SecondsToHMS( runTime, 1 ) << "), ";
-
-                ss << "NESs/s=" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L) / lastVBlankTime << "s:1s";
-                ss << "(" << std::fixed << std::setprecision(2) << ((long double)(numKnownVBlanks)/60.0L/(long double)(virtual_screens.size())) / lastVBlankTime << "s:1s), ";
-
-                ss << "Queue=" << working_thread_pool.size() << "+" << working_thread_pool.workers_active();
-                ss << "(" << working_thread_pool.workers_limit() << "/" <<  working_thread_pool.num_threads() << ")";
-
-                ss << "]";
-
-                window.setTitle( ss.str() );
+                window.setTitle( getCurrentWindowTitle( startTime, lastUpdatedCurrentTime ) );
             }
         }
     }
@@ -287,6 +295,22 @@ namespace spkn
     PreviewWindow::processAddRequests()
     {
         std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
+
+        // as a precaution, if the queues are really full start over
+        if( screen_data_queue_in.size() + screen_data_queue_out.size() + screen_data_to_remove.size() > populationSize )
+        {
+            // should be the same as clearAllScreenData() but without the double-locking
+            for( auto& vs : virtual_screens )
+            {
+                vs.setScreenData( blankScreenData );
+            }
+
+            screen_data_queue_in.clear();
+            screen_data_queue_out.clear();
+
+            // also clear the removal backlog
+            screen_data_to_remove.clear();
+        }
 
         for( auto& vs : virtual_screens )
         {
@@ -302,6 +326,22 @@ namespace spkn
     PreviewWindow::processRemoveRequests()
     {
         std::unique_lock<std::mutex> vs_lock( virtual_screens_mutex );
+
+        // as a precaution, if the queues are really full start over
+        if( screen_data_queue_in.size() + screen_data_queue_out.size() + screen_data_to_remove.size() > populationSize )
+        {
+            // should be the same as clearAllScreenData() but without the double-locking
+            for( auto& vs : virtual_screens )
+            {
+                vs.setScreenData( blankScreenData );
+            }
+
+            screen_data_queue_in.clear();
+            screen_data_queue_out.clear();
+
+            // also clear the removal backlog
+            screen_data_to_remove.clear();
+        }
 
         std::shared_ptr<sf::Image> target( nullptr );
         while( screen_data_queue_out.try_pop( target ) && target != nullptr )

@@ -63,6 +63,10 @@ namespace spkn
             void setNumProcessed( uint64_t numProcessed );
             void setNumGenerations( uint64_t numGenerations );
 
+        protected:
+
+            std::string getCurrentWindowTitle( std::chrono::time_point<std::chrono::steady_clock> start_time, std::chrono::time_point<std::chrono::steady_clock> last_updated_current_time ) const;
+
         private:
 
             void run();

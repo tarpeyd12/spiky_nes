@@ -93,7 +93,7 @@
 				<Option object_output="obj/Release_x64/" />
 				<Option type="1" />
 				<Option compiler="mingw64" />
-				<Option parameters='mario.nes -p 2500 -f data.xml -t 7 -w 7 -s &quot;125%&quot; -n 200 --set fitness_deterministic=true --set fitness_runs=1 --set fitness_downscale_ratio=16 --set species_threshold=100.0 --set population_species_min_size=500 --set attr_base=0.95 --file-async' />
+				<Option parameters='mario.nes -p 1500 -f data.xml -t 7 -w 4 -s &quot;150%&quot; -n 20 --set fitness_deterministic=true --set fitness_runs=1 --set fitness_downscale_ratio=16 --set species_threshold=100.0 --set population_species_min_size=250 --set attr_base=0.9 --file-async' />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
 					<Add option="-fexpensive-optimizations" />
@@ -105,6 +105,36 @@
 					<Add library="spnn-x64" />
 					<Add library="simple_nes-x64" />
 					<Add library="zlib-x64" />
+					<Add library="sfml-graphics-s" />
+					<Add library="sfml-window-s" />
+					<Add library="sfml-system-s" />
+					<Add library="opengl32" />
+					<Add library="freetype" />
+					<Add library="winmm" />
+					<Add library="gdi32" />
+					<Add directory="../lib/SFML-x64/lib" />
+					<Add directory="../lib/SFML/extlibs/libs-mingw/x64" />
+				</Linker>
+			</Target>
+			<Target title="Release x64 archspec">
+				<Option output="bin/spiky_nes-x64-archspec" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../exec/" />
+				<Option object_output="obj/Release_x64_archspec/" />
+				<Option type="1" />
+				<Option compiler="mingw64" />
+				<Option parameters='mario.nes -p 150 -f data.xml -t 4 -w 4 -s &quot;200%&quot; -n 2000 --set fitness_deterministic=true --set fitness_runs=1 --set fitness_downscale_ratio=16 --set species_threshold=5.0 --set population_species_min_size=25 --set attr_base=0.5 --file-async' />
+				<Compiler>
+					<Add option="-march=corei7-avx" />
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-m64" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-m64" />
+					<Add library="spnn-x64-archspec" />
+					<Add library="simple_nes-x64-archspec" />
+					<Add library="zlib-x64-archspec" />
 					<Add library="sfml-graphics-s" />
 					<Add library="sfml-window-s" />
 					<Add library="sfml-system-s" />
