@@ -26,6 +26,8 @@ namespace spkn
             uint16_t Lives() const;
             uint64_t Time() const;
 
+            uint16_t PowerupState() const;
+
             uint16_t World() const;
             uint16_t Level() const;
             uint16_t WorldLevel() const;

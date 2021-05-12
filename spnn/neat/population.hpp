@@ -171,7 +171,7 @@ namespace neat
 
             std::map< SpeciesID, long double > getSpeciesFitness( tpl::pool& thread_pool );
             PopulationFitness getSpeciesAndNetworkFitness( tpl::pool& thread_pool );
-            PopulationFitness getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation );
+            PopulationFitness getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation, std::shared_ptr< Rand::RandomFunctor > rand = nullptr );
 
             void printSpeciesArchetypes( std::ostream& out );
 
@@ -190,6 +190,7 @@ namespace neat
                 std::function<void()> begin;
 
                 std::function<void()> speciate_begin;
+                std::function<void(uint64_t)> speciate_count;
                 std::function<void()> speciate_end;
 
                 std::function<void()> fitness_begin;
@@ -209,6 +210,7 @@ namespace neat
                 std::function<void()> splicing_end;
 
                 std::function<void()> mutation_begin;
+                std::function<void(uint64_t)> mutation_count;
                 std::function<void()> mutation_end;
 
                 std::function<void()> swap_begin;
@@ -231,6 +233,8 @@ namespace neat
 
             NetworkGenotype getDefaultNetworkCopy( const MutationLimits& limits ) const;
     };
+
+    std::vector< size_t > RandomIndexes( size_t num, std::shared_ptr< Rand::RandomFunctor > rand );
 }
 
 #endif // NEAT_POPULATION_HPP_INCLUDED

@@ -11,6 +11,7 @@ namespace neat
      :
         begin( nullptr ),
         speciate_begin( nullptr ),
+        speciate_count( nullptr ),
         speciate_end( nullptr ),
         fitness_begin( nullptr ),
         fitness_end( nullptr ),
@@ -24,6 +25,7 @@ namespace neat
         splicing_begin( nullptr ),
         splicing_end( nullptr ),
         mutation_begin( nullptr ),
+        mutation_count( nullptr ),
         mutation_end( nullptr ),
         swap_begin( nullptr ),
         swap_end( nullptr ),
@@ -215,27 +217,6 @@ namespace neat
         innovationCounter->clearGenerationConnections();
     }
 
-    inline
-    std::vector< size_t >
-    RandomIndexes( size_t num, std::shared_ptr< Rand::RandomFunctor > rand )
-    {
-        // make sure we have a functioning random number generator
-        if( !rand ) rand = std::make_shared< Rand::Random_Safe >( Rand::Int() );
-
-        // init out to be numbers from 0 to num-1
-        std::vector< size_t > out( num );
-        size_t i = 0;
-        std::generate( out.begin(), out.end(), [&]{ return i++; } );
-
-        // scramble
-        for( i = 0; i < out.size(); ++i )
-        {
-            std::swap( out[ i ], out[ rand->Int( 0, out.size() - 1 ) ] );
-        }
-
-        return out;
-    }
-
     size_t
     Population::speciatePopulationAndCount( tpl::pool& thread_pool )
     {
@@ -264,12 +245,14 @@ namespace neat
 
         auto speciatedPopulation = getSpeciatedPopulationData( thread_pool );
 
+        if( dbg && dbg_callbacks->speciate_count ) dbg_callbacks->speciate_count( speciatedPopulation.size() );
+
         if( dbg && dbg_callbacks->speciate_end ) dbg_callbacks->speciate_end();
 
 
         if( dbg && dbg_callbacks->fitness_begin ) dbg_callbacks->fitness_begin();
 
-        PopulationFitness fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation );
+        PopulationFitness fitnessMap = getSpeciesAndNetworkFitness( thread_pool, speciatedPopulation, rand );
 
         // clean up the map since we cant wrap this part in brackets :/
         speciatedPopulation.clear();
@@ -664,7 +647,9 @@ namespace neat
             clearGenerationConnections();
 
             // mutate the population
-            mutatePopulation( thread_pool, nextPopulation_to_mutate, rand );
+            uint64_t mutations_count = mutatePopulation( thread_pool, nextPopulation_to_mutate, rand );
+
+            if( dbg && dbg_callbacks->mutation_count ) dbg_callbacks->mutation_count( mutations_count );
 
             if( dbg && dbg_callbacks->mutation_end ) dbg_callbacks->mutation_end();
         }
@@ -694,4 +679,24 @@ namespace neat
         // and done
     }
 
+
+    std::vector< size_t >
+    RandomIndexes( size_t num, std::shared_ptr< Rand::RandomFunctor > rand )
+    {
+        // make sure we have a functioning random number generator
+        if( !rand ) rand = std::make_shared< Rand::Random_Unsafe >( Rand::Int() );
+
+        // init out to be numbers from 0 to num-1
+        std::vector< size_t > out( num );
+        size_t i = 0;
+        std::generate( out.begin(), out.end(), [&]{ return i++; } );
+
+        // scramble
+        for( i = 0; i < out.size(); ++i )
+        {
+            std::swap( out[ i ], out[ rand->Int( 0, out.size() - 1 ) ] );
+        }
+
+        return out;
+    }
 }

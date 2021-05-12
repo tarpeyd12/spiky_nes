@@ -75,7 +75,7 @@
 				<Option working_dir="" />
 				<Option object_output="obj/Release_x64_archspec/" />
 				<Option type="2" />
-				<Option compiler="mingw64" />
+				<Option compiler="gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
 					<Add option="-march=corei7-avx" />
@@ -159,9 +159,6 @@
 		<Unit filename="zlib.cpp" />
 		<Unit filename="zlib.hpp" />
 		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>

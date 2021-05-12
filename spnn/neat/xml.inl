@@ -26,7 +26,7 @@ namespace neat
             std::string decoded = base64_decode( data );
             T out;
             size_t size = std::min<size_t>( sizeof( T ), decoded.size() );
-            std::memcpy( &out, reinterpret_cast<void*>( decoded.c_str() ), size );
+            std::memcpy( reinterpret_cast<void*>( &out ), reinterpret_cast<void*>( decoded.c_str() ), size );
             return out;
         }
 
@@ -45,7 +45,7 @@ namespace neat
             out.resize( size );
             std::string decoded = base64_decode( encoded );
             size_t len = std::min<size_t>( sizeof( T ) * size, decoded.size() );
-            std::memcpy( out.data(), reinterpret_cast<const void*>( decoded.c_str() ), len );
+            std::memcpy( reinterpret_cast<void*>( out.data() ), reinterpret_cast<const void*>( decoded.c_str() ), len );
         }
     }
 

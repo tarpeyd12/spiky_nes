@@ -48,6 +48,8 @@ namespace spkn
                 networkOutputCallbacks.back() = nullptr;
         }*/
 
+        // TODO(dot##11/10/2020): Create ControllerStateSanityFilter class or something along those lines
+
         networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::A ) ); } );
         networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::B ) ); } );
         networkOutputCallbacks.emplace_back( [&](const spnn::neuron&){ activateButton( size_t( sn::Controller::Up ) ); } );

@@ -6,6 +6,7 @@
 #include <future>
 
 #include "../spnn/spnn.hpp"
+#include "../spnn/tests/tests.hpp"
 
 #include "spikey_nes.hpp"
 
@@ -32,6 +33,9 @@ __atexit_callback()
 int
 main( int argc, char** argv )
 {
+    //_tests::Test7();
+    //return 0;
+
     atexit( __atexit_callback );
 
     std::ios_base::sync_with_stdio( false );
@@ -73,7 +77,7 @@ main( int argc, char** argv )
 
 
     const double simpleMutationRate_node = 0.001;
-    const double simpleMutationRate_conn = 0.001;
+    const double simpleMutationRate_conn = 0.01;
 
     rates.thresholdMin =         simpleMutationRate_node * limits.thresholdMin.range();
     rates.thresholdMax =         simpleMutationRate_node * limits.thresholdMax.range();
@@ -89,12 +93,12 @@ main( int argc, char** argv )
 
     speciationParams.excess =      1.0;
     speciationParams.disjoint =    1.0;
-    speciationParams.weights =     0.25 / limits.weight.range();
-    speciationParams.lengths =     0.25 / limits.length.range();
+    speciationParams.weights =     1.25 / limits.weight.range();
+    speciationParams.lengths =     1.25 / limits.length.range();
 
-    speciationParams.activations = 0.25 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
-    speciationParams.decays =      0.25 / ( limits.valueDecay.range() + limits.activDecay.range() );
-    speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
+    speciationParams.activations = 1.25 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
+    speciationParams.decays =      1.25 / ( limits.valueDecay.range() + limits.activDecay.range() );
+    speciationParams.pulses =      1.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
     speciationParams.threshold =   settings->var.get<double>( "species_threshold", 25.0 );
@@ -133,7 +137,7 @@ main( int argc, char** argv )
 
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
-        nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
+        //nwtkMutator->addMutator< neat::Mutations::Mutation_Add_node        >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn        >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_unique >();
         nwtkMutator->addMutator< neat::Mutations::Mutation_Add_conn_dup    >();
@@ -143,13 +147,13 @@ main( int argc, char** argv )
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
-        mutator->addMutator( 0.0,   0.005,  0.0,    nodeMutator );
-        mutator->addMutator( 0.0,   0.0005, 0.0,    nodeMutator_new );
-        mutator->addMutator( 0.0,   0.0,    0.005,  connMutator );
-        mutator->addMutator( 0.0,   0.0,    0.0005, connMutator_new );
-        mutator->addMutator( 0.015, 0.0,    0.0,    nwtkMutator );
-        mutator->addMutator( 0.005, 0.0,    0.0,    nwtkMutator_multi );
-        mutator->addMutator( 0.0,   0.0,    0.0002, connMutator_enable );
+        mutator->addMutator( 0.0,     0.005,  0.0,    nodeMutator );
+        mutator->addMutator( 0.0,     0.0005, 0.0,    nodeMutator_new );
+        mutator->addMutator( 0.0,     0.0,    0.005,  connMutator );
+        mutator->addMutator( 0.0,     0.0,    0.0005, connMutator_new );
+        mutator->addMutator( 0.001,   0.0,    0.0,    nwtkMutator );
+        mutator->addMutator( 0.0005,  0.0,    0.0,    nwtkMutator_multi );
+        mutator->addMutator( 0.0,     0.0,    0.002,  connMutator_enable );
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -205,6 +209,7 @@ main( int argc, char** argv )
     gen_dbg_callbacks->splicing_begin   = [&]{ std::cout << "\t    Splicing Individuals ...      " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->splicing_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
     gen_dbg_callbacks->mutation_begin   = [&]{ std::cout << "\t    Mutating Population ...       " << std::flush; dbg_time_set(); };
+    gen_dbg_callbacks->mutation_count   = [&](auto c){ std::cout << "(" << c << ") " << std::flush; };
     gen_dbg_callbacks->mutation_end     = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
     gen_dbg_callbacks->swap_begin       = [&]{ std::cout << "\t    Swapping Populations ...      " << std::flush; dbg_time_set(); };
     gen_dbg_callbacks->swap_end         = [&]{ std::cout << "Done. (" << dbg_time_get() << "s)\n" << std::flush; };
@@ -512,6 +517,7 @@ main( int argc, char** argv )
 
     double base_attrition  = settings->var.get<double>( "attr_base", 0.5 );
     double attrition_range = settings->var.get<double>( "attr_range", 0.0125 );
+    double attrition_cycle = settings->var.get<double>( "attr_cycle", 100.0 );
 
     const size_t num_starting_nodes = fitnessFactory->numInputs() + fitnessFactory->numOutputs();
     const size_t num_starting_conns = fitnessFactory->numInputs() * fitnessFactory->numOutputs();
@@ -645,7 +651,7 @@ main( int argc, char** argv )
         neat::MinMax<double> attritionRange( base_attrition - attrition_range, base_attrition + attrition_range );
         double attritionRate = 0.5;
         {
-            double x = double( population->getGenerationCount() ) / 100.0;
+            double x = double( population->getGenerationCount() ) / attrition_cycle;
             attritionRate = ( ( -cos( x * 3.14159 ) + 1.0 ) / 2.0 ) * attritionRange.range() + attritionRange.min;
             //if( population->getLastGenerationData() ) { attritionRate = neat::MinMax<double>(0.05,0.95).clamp( population->getLastGenerationData()->getMaxFitness()/1000.0 ); }
         }

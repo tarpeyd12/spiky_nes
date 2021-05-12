@@ -121,8 +121,8 @@
 				<Option working_dir="../exec/" />
 				<Option object_output="obj/Release_x64_archspec/" />
 				<Option type="1" />
-				<Option compiler="mingw64" />
-				<Option parameters='mario.nes -p 150 -f data.xml -t 4 -w 4 -s &quot;200%&quot; -n 2000 --set fitness_deterministic=true --set fitness_runs=1 --set fitness_downscale_ratio=16 --set species_threshold=5.0 --set population_species_min_size=25 --set attr_base=0.5 --file-async' />
+				<Option compiler="gcc" />
+				<Option parameters='mario.nes -p 1500 -f data.xml -t 21 -w 7 -s &quot;100%&quot; -n 4000 --set fitness_deterministic=true --set fitness_runs=1 --set fitness_downscale_ratio=16 --set species_threshold=5.0 --set population_species_min_size=400 --set attr_base=0.7 --set attr_range=0.1 --set attr_cycle=50.0 --file-async' />
 				<Compiler>
 					<Add option="-march=corei7-avx" />
 					<Add option="-fomit-frame-pointer" />
@@ -195,10 +195,6 @@
 		<Unit filename="settings.inl" />
 		<Unit filename="spikey_nes.cpp" />
 		<Unit filename="spikey_nes.hpp" />
-		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
-		</Extensions>
+		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

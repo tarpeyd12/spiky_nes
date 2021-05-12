@@ -122,7 +122,7 @@ namespace neat
     }
 
     PopulationFitness
-    Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation )
+    Population::getSpeciesAndNetworkFitness( tpl::pool& thread_pool, const std::map< SpeciesID, std::vector< NetworkGenotype * > >& speciatedPopulation, std::shared_ptr< Rand::RandomFunctor > rand )
     {
         struct fitness_package
         {
@@ -157,6 +157,14 @@ namespace neat
 
         std::queue< tpl::future< fitness_package > > fitness_futures;
 
+        struct pre_fitness_package
+        {
+            SpeciesID species;
+            const NetworkGenotype * genotype;
+        };
+
+        std::vector< pre_fitness_package > flatenedSpecatedPopulation;
+
         for( auto it = speciatedPopulation.begin(); it != speciatedPopulation.end(); ++it )
         {
             SpeciesID species = it->first;
@@ -164,9 +172,22 @@ namespace neat
 
             for( const NetworkGenotype * genotype : genotypes )
             {
-                auto fitness_package_future = thread_pool.submit( fitness_lambda, species, genotype, fitnessCalculatorFactory );
-                fitness_futures.push( std::move( fitness_package_future ) );
+                flatenedSpecatedPopulation.push_back( { species, genotype } );
+                /*auto fitness_package_future = thread_pool.submit( fitness_lambda, species, genotype, fitnessCalculatorFactory );
+                fitness_futures.push( std::move( fitness_package_future ) );*/
             }
+        }
+
+        if( rand != nullptr )
+        {
+            std::shuffle( flatenedSpecatedPopulation.begin(), flatenedSpecatedPopulation.end(), std::mt19937_64( rand->Int() ) );
+        }
+
+
+        for( auto pfp : flatenedSpecatedPopulation )
+        {
+            auto fitness_package_future = thread_pool.submit( fitness_lambda, pfp.species, pfp.genotype, fitnessCalculatorFactory );
+            fitness_futures.push( std::move( fitness_package_future ) );
         }
 
         PopulationFitness speciesFitness;

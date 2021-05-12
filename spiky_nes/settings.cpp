@@ -54,6 +54,7 @@ namespace spkn
             std::cout << "\t--file-sync     save file on main thread\n";
             std::cout << "\t--file-async    save file on worker thread\n";
             std::cout << "\t--headless      disable preview window\n";
+            std::cout << "\t--force-window  force-enable preview window\n";
             std::cout << "\t--auto-threads  automatically choose max num threads\n";
             exit( 0 );
         };
@@ -119,27 +120,28 @@ namespace spkn
             }
         };
 
-        cmd.add_void(          { "?", "-h", "help" },               help_func,                                                                                         "Prints help"  );
-        cmd.add_void(          { "-v", "version" },                 version_func,                                                                                      "Prints version"  );
+        cmd.add_void(          { "?", "-h", "help", "/help" },       help_func,                                                                                         "Prints help"  );
+        cmd.add_void(          { "-v", "version" },                  version_func,                                                                                      "Prints version"  );
 
-        cmd.add<std::string>(  { "--hash-rom", "hash_rom" },        rom_hash_func,                                                                                     "Path to rom file to hash"  );
+        cmd.add<std::string>(  { "--hash-rom", "hash_rom" },         rom_hash_func,                                                                                     "Path to rom file to hash"  );
 
-        cmd.add<std::string>(  { "--set", "_var" },                 assign_var,                                                                                        "Set misc variables"  );
+        cmd.add<std::string>(  { "--set", "_var" },                  assign_var,                                                                                        "Set misc variables"  );
 
-        cmd.add<std::string>(  { "--rom", "rom_path" },             [&]( const std::string& s ){ arg_rom_path = s; },                                                  "Path to rom file"  );
-        cmd.add<std::string>(  { "-o", "output" },                  [&]( const std::string& s ){ arg_output_path = s; },                                               "Path to file to save output"  );
-        cmd.add<std::string>(  { "-i", "input" },                   [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = s; },                   "Path to file to load at startup"  );
-        cmd.add<std::string>(  { "-f", "file" },                    [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to"  );
-        cmd.add<size_t>(       { "-t", "threads" },                 [&]( size_t i ){ arg_numThreads = i; },                                                            "Number of threads"  );
-        cmd.add<float>(        { "-s", "scale" },                   [&]( float f ){ arg_windowScale = f; },                                                            "Scale of NES preview windows"  );
-        cmd.add<size_t>(       { "-w", "columns" },                 [&]( size_t i ){ arg_numColumns = i; },                                                            "Number of NES preview Windows per row"  );
-        cmd.add<size_t>(       { "-p", "population" },              [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
-        cmd.add<size_t>(       { "-n", "generations" },             [&]( size_t i ){ arg_numGenerations = i; },                                                        "Number of generations to calculate"  );
+        cmd.add<std::string>(  { "--rom", "rom_path" },              [&]( const std::string& s ){ arg_rom_path = s; },                                                  "Path to rom file"  );
+        cmd.add<std::string>(  { "-o", "output" },                   [&]( const std::string& s ){ arg_output_path = s; },                                               "Path to file to save output to"  );
+        cmd.add<std::string>(  { "-i", "input" },                    [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = s; },                   "Path to file to load at startup"  );
+        cmd.add<std::string>(  { "-f", "file" },                     [&]( const std::string& s ){ load_settings_file(s,*this); arg_input_path = arg_output_path = s; }, "Path to file to load at startup and to save output to"  );
+        cmd.add<size_t>(       { "-t", "threads" },                  [&]( size_t i ){ arg_numThreads = i; },                                                            "Number of threads"  );
+        cmd.add<float>(        { "-s", "scale" },                    [&]( float f ){ arg_windowScale = f; },                                                            "Scale of NES preview windows"  );
+        cmd.add<size_t>(       { "-w", "columns" },                  [&]( size_t i ){ arg_numColumns = i; },                                                            "Number of NES preview Windows per row"  );
+        cmd.add<size_t>(       { "-p", "population" },               [&]( size_t i ){ arg_populationSize = i; },                                                        "Number of networks"  );
+        cmd.add<size_t>(       { "-n", "generations" },              [&]( size_t i ){ arg_numGenerations = i; },                                                        "Number of generations to calculate"  );
 
-        cmd.add_void(          { "--file-sync", "filesync" },       [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
-        cmd.add_void(          { "--file-async", "fileasync" },     [&](){ arg_file_sync = false; },                                                                   "Flag to save file on worker thread"  );
-        cmd.add_void(          { "--headless", "headless" },        [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );
-        cmd.add_void(          { "--auto-threads", "autothreads" }, [&](){ auto_threads( 1.0f, *this ); },                                                             "Automatically set threads to max allowed and window to accommodate"  );
+        cmd.add_void(          { "--file-sync", "filesync" },        [&](){ arg_file_sync = true; },                                                                    "Flag to save file on main thread"  );
+        cmd.add_void(          { "--file-async", "fileasync" },      [&](){ arg_file_sync = false; },                                                                   "Flag to save file on worker thread"  );
+        cmd.add_void(          { "--headless", "headless" },         [&](){ arg_headless = true; },                                                                     "Flag to disable preview window"  );
+        cmd.add_void(          { "--force-window", "non-headless" }, [&](){ arg_headless = false; },                                                                    "Flag to force-enable preview window"  );
+        cmd.add_void(          { "--auto-threads", "autothreads" },  [&](){ auto_threads( 1.0f, *this ); },                                                             "Automatically set threads to max allowed and window to accommodate"  );
     }
 
     Settings::Settings( const rapidxml::xml_node<> * settings_node )

@@ -212,6 +212,26 @@ namespace spkn
                         {
                             default: break;
 
+                            case sf::Keyboard::Equal:
+                            case sf::Keyboard::Add:
+                            {
+                                if( event.key.control && event.key.shift )
+                                {
+                                    working_thread_pool.limit_workers( working_thread_pool.workers_limit() + 1 );
+                                }
+                                break;
+                            }
+
+                            case sf::Keyboard::Dash:
+                            case sf::Keyboard::Subtract:
+                            {
+                                if( event.key.control && event.key.shift )
+                                {
+                                    working_thread_pool.limit_workers( working_thread_pool.workers_limit() - 1 );
+                                }
+                                break;
+                            }
+
                             case sf::Keyboard::F1:
                             case sf::Keyboard::F2:
                             case sf::Keyboard::F3:

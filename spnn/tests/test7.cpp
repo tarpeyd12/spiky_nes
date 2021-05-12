@@ -426,15 +426,15 @@ namespace _tests
 
         speciationParams.excess =      1.0;
         speciationParams.disjoint =    1.0;
-        speciationParams.weights =     1.5 / limits.weight.range();
-        speciationParams.lengths =     1.5 / limits.length.range();
+        speciationParams.weights =     0.25 / limits.weight.range();
+        speciationParams.lengths =     0.25 / limits.length.range();
 
-        speciationParams.activations = 1.5 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
-        speciationParams.decays =      1.5 / ( limits.valueDecay.range() + limits.activDecay.range() );
-        speciationParams.pulses =      1.5 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
+        speciationParams.activations = 0.25 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
+        speciationParams.decays =      0.25 / ( limits.valueDecay.range() + limits.activDecay.range() );
+        speciationParams.pulses =      0.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
         speciationParams.nodes =       1.0;
 
-        speciationParams.threshold =   3.5*1.0;
+        speciationParams.threshold =   1.0;
 
         auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
@@ -478,8 +478,8 @@ namespace _tests
             mutator->addMutator( 0.0,   0.008, 0.0,   nodeMutator_new );
             mutator->addMutator( 0.0,   0.0,   0.01,  connMutator );
             mutator->addMutator( 0.0,   0.0,   0.008, connMutator_new );
-            mutator->addMutator( 0.002, 0.0,   0.0,   nwtkMutator );
-            mutator->addMutator( 0.0,   0.0,   0.0002, connMutator_enable );
+            mutator->addMutator( 0.0002, 0.0,   0.0,   nwtkMutator );
+            mutator->addMutator( 0.0,   0.0,   0.002, connMutator_enable );
         }
 
         std::cout << "Population construct call" << std::endl;
@@ -487,9 +487,9 @@ namespace _tests
         uint64_t numInNodes = fitnessFactory->numInputNodes();
         uint64_t numOutNodes = fitnessFactory->numOutputNodes();
 
-        neat::Population population( 1000, numInNodes, numOutNodes, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::Closest, 1, 3, 500, 1 );
+        neat::Population population( 1000, numInNodes, numOutNodes, limits, rates, mutator, fitnessFactory, speciationParams, neat::SpeciationMethod::Closest, 100, 3, 500, 1 );
 
-        tpl::pool thread_pool{ 4 };
+        tpl::pool thread_pool{ 12 };
 
         std::cout << "Population Init call" << std::endl;
 

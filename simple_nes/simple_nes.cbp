@@ -71,7 +71,7 @@
 				<Option working_dir="" />
 				<Option object_output="obj/Release_x64_archspec/" />
 				<Option type="2" />
-				<Option compiler="mingw64" />
+				<Option compiler="gcc" />
 				<Option parameters="mario.nes -s 5" />
 				<Compiler>
 					<Add option="-march=corei7-avx" />
@@ -131,10 +131,6 @@
 		<Unit filename="src/PPU.cpp" />
 		<Unit filename="src/PictureBus.cpp" />
 		<Unit filename="src/VirtualScreen.cpp" />
-		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
-		</Extensions>
+		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

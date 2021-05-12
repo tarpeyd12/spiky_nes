@@ -85,6 +85,13 @@ namespace spkn
 
 
     uint16_t
+    GameState_SuperMarioBros::PowerupState() const
+    {
+        return uint16_t(emulator.peakMemory( 0x0756 ));
+    }
+
+
+    uint16_t
     GameState_SuperMarioBros::World() const
     {
         return uint16_t(emulator.peakMemory( 0x075F )) + 1;

@@ -37,12 +37,12 @@ namespace neat
 
                 void SaveToXML_asAttributes( rapidxml::xml_node<> * destination, rapidxml::memory_pool<> * mem_pool );
 
-                size_t size() const { return length; }
+                inline size_t size() const { return length; }
 
             protected:
 
-                size_t get_pos() const { return position; }
-                size_t get_len() const { return length; }
+                inline size_t get_pos() const { return position; }
+                inline size_t get_len() const { return length; }
 
                 friend class DataBlob;
         };
