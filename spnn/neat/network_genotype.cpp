@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <numeric>
 
 #include <cassert>
 
@@ -67,24 +68,21 @@ namespace neat
         return getOnlyReachableNodes().size();
     }
 
+    size_t
+    NetworkGenotype::getNumActiveConnections() const
+    {
+        // count all enabled connections
+        return std::accumulate( connectionGenotype.begin(), connectionGenotype.end(), size_t( 0 ), []( const auto& running_sum, const auto& connection ){ return running_sum + ( connection.enabled ? 1 : 0 ); } );
+    }
 
     size_t
-    NetworkGenotype::gentNumActiveConnections() const
+    NetworkGenotype::getNumReachableActiveConnections() const
     {
-        size_t count = 0;
-        for( const ConnectionDef& connection : connectionGenotype )
-        {
-            if( connection.enabled )
-            {
-                ++count;
-            }
-        }
-
-        return count;
+        return getOnlyReachableActiveConnections().size();
     }
 
     void
-    NetworkGenotype::getNumReachableNumActive( size_t& reachable, size_t& active ) const
+    NetworkGenotype::getNumReachableNumActiveNodes( size_t& reachable, size_t& active ) const
     {
         auto active_conns = getOnlyActiveConnections();
         active = active_conns.size();
@@ -406,6 +404,40 @@ namespace neat
         }
 
         return reachableNodes;
+    }
+
+    std::vector< const ConnectionDef * >
+    NetworkGenotype::getOnlyReachableActiveConnections() const
+    {
+        auto activeConnections = getOnlyActiveConnections();
+        auto reachableNodes = getOnlyReachableNodes( activeConnections );
+
+        return getOnlyReachableActiveConnections( reachableNodes, activeConnections );
+    }
+
+    std::vector< const ConnectionDef * >
+    NetworkGenotype::getOnlyReachableActiveConnections( const std::vector< const NodeDef * >& reachableNodes, const std::vector< const ConnectionDef * >& activeConnections ) const
+    {
+        std::set< NodeID > reachableNodeIDs;
+        {
+            for( const NodeDef * node : reachableNodes )
+            {
+                reachableNodeIDs.emplace( node->ID );
+            }
+        }
+
+        std::vector< const ConnectionDef * > reachableConnections;
+        {
+            for( const ConnectionDef * conn : activeConnections )
+            {
+                if( reachableNodeIDs.find( conn->sourceID ) != reachableNodeIDs.end() && reachableNodeIDs.find( conn->destinationID ) != reachableNodeIDs.end() )
+                {
+                    reachableConnections.emplace_back( conn );
+                }
+            }
+        }
+
+        return reachableConnections;
     }
 }
 

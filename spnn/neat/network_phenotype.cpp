@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <numeric>
 
 #include <cassert>
 
@@ -41,6 +42,12 @@ namespace neat
     NetworkPhenotype::numNeurons() const
     {
         return neuronData.size();
+    }
+
+    size_t
+    NetworkPhenotype::numSynapses() const
+    {
+        return std::accumulate( neurons.begin(), neurons.end(), size_t( 0 ), []( const auto & running_sum, const auto & neuron ){ return running_sum + neuron->getNumSynapses(); } );
     }
 
     void

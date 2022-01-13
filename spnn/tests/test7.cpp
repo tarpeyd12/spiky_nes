@@ -625,7 +625,7 @@ namespace _tests
                 size_t numNodes;
                 size_t numConns;
 
-                front->getNumReachableNumActive( numNodes, numConns );
+                front->getNumReachableNumActiveNodes( numNodes, numConns );
 
                 nodes_active = neat::MinMax<size_t>( numNodes );
                 conns_active = neat::MinMax<size_t>( numConns );
@@ -642,7 +642,7 @@ namespace _tests
                     nodes.expand( numNodes );
                     conns.expand( numConns );
 
-                    p->getNumReachableNumActive( numNodes, numConns );
+                    p->getNumReachableNumActiveNodes( numNodes, numConns );
 
                     avgNodes_active += numNodes;
                     avgConns_active += numConns;

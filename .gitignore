@@ -83,3 +83,4 @@ zlib/bin/
 *.csv
 *.xml
 exec/simplenes.log
+*.cscope_file_list

@@ -93,15 +93,15 @@ main( int argc, char** argv )
 
     speciationParams.excess =      1.0;
     speciationParams.disjoint =    1.0;
-    speciationParams.weights =     1.25 / limits.weight.range();
-    speciationParams.lengths =     1.25 / limits.length.range();
+    speciationParams.weights =     1.0 / limits.weight.range();
+    speciationParams.lengths =     1.0 / limits.length.range();
 
-    speciationParams.activations = 1.25 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
-    speciationParams.decays =      1.25 / ( limits.valueDecay.range() + limits.activDecay.range() );
-    speciationParams.pulses =      1.25 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
+    speciationParams.activations = 1.0 / ( limits.thresholdMax.range() + limits.thresholdMin.range() );
+    speciationParams.decays =      1.0 / ( limits.valueDecay.range() + limits.activDecay.range() );
+    speciationParams.pulses =      1.0 / ( limits.pulseFast.range() + limits.pulseSlow.range() );
     speciationParams.nodes =       0.0;
 
-    speciationParams.threshold =   settings->var.get<double>( "species_threshold", 25.0 );
+    speciationParams.threshold =   settings->var.get<double>( "species_threshold", 5.0 );
 
     auto mutator = std::make_shared< neat::Mutations::Mutation_Multi >();
 
@@ -147,13 +147,25 @@ main( int argc, char** argv )
 
         auto connMutator_enable = std::make_shared< neat::Mutations::Mutation_Conn_enable >();
 
-        mutator->addMutator( 0.0,     0.005,  0.0,    nodeMutator );
+        /*mutator->addMutator( 0.0,     0.005,  0.0,    nodeMutator );
         mutator->addMutator( 0.0,     0.0005, 0.0,    nodeMutator_new );
         mutator->addMutator( 0.0,     0.0,    0.005,  connMutator );
         mutator->addMutator( 0.0,     0.0,    0.0005, connMutator_new );
         mutator->addMutator( 0.001,   0.0,    0.0,    nwtkMutator );
         mutator->addMutator( 0.0005,  0.0,    0.0,    nwtkMutator_multi );
-        mutator->addMutator( 0.0,     0.0,    0.002,  connMutator_enable );
+        mutator->addMutator( 0.0,     0.0,    0.002,  connMutator_enable );*/
+
+
+        mutator->addMutator( 0.03,   0.0,        0.003,         connMutator );
+        mutator->addMutator( 0.001,  0.0,        0.0001,        connMutator_new );
+        mutator->addMutator( 0.001,  0.0,        0.0001,        connMutator_enable );
+
+        mutator->addMutator( 0.003,  0.000001,   0.0000000001,  nwtkMutator );
+        mutator->addMutator( 0.0003, 0.00000001, 0.00000000001, nwtkMutator_multi );
+
+        mutator->addMutator( 0.001,  0.001,      0.0,           nodeMutator );
+        mutator->addMutator( 0.0001, 0.0001,     0.0,           nodeMutator_new );
+
     }
 
     auto random = std::make_shared< Rand::Random_Safe >(  );
@@ -773,7 +785,7 @@ main( int argc, char** argv )
             size_t numNodes;
             size_t numConns;
 
-            front->getNumReachableNumActive( numNodes, numConns );
+            front->getNumReachableNumActiveNodes( numNodes, numConns );
 
             nodes_active = neat::MinMax<size_t>( numNodes );
             conns_active = neat::MinMax<size_t>( numConns );
@@ -790,7 +802,7 @@ main( int argc, char** argv )
                 nodes.expand( numNodes );
                 conns.expand( numConns );
 
-                p->getNumReachableNumActive( numNodes, numConns );
+                p->getNumReachableNumActiveNodes( numNodes, numConns );
 
                 avgNodes_active += numNodes;
                 avgConns_active += numConns;

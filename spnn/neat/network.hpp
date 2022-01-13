@@ -54,6 +54,7 @@ namespace neat
             size_t numInputs() const;
             size_t numOutputs() const;
             size_t numNeurons() const;
+            size_t numSynapses() const;
 
             void printNetworkState( std::ostream& out ) const;
 
@@ -137,8 +138,9 @@ namespace neat
             const std::vector< ConnectionDef >& getConnections() const;
 
             size_t getNumReachableNodes() const;
-            size_t gentNumActiveConnections() const;
-            void getNumReachableNumActive( size_t& reachable, size_t& active ) const;
+            size_t getNumActiveConnections() const;
+            size_t getNumReachableActiveConnections() const;
+            void getNumReachableNumActiveNodes( size_t& reachable, size_t& active ) const;
 
             std::shared_ptr< NetworkPhenotype > getNewNetworkPhenotype( uint64_t dTime = 1 ) const;
 
@@ -158,6 +160,9 @@ namespace neat
 
             std::vector< const NodeDef * > getOnlyReachableNodes() const;
             std::vector< const NodeDef * > getOnlyReachableNodes( const std::vector< const ConnectionDef * >& activeConnections ) const;
+
+            std::vector< const ConnectionDef * > getOnlyReachableActiveConnections() const;
+            std::vector< const ConnectionDef * > getOnlyReachableActiveConnections( const std::vector< const NodeDef * >& reachableNodes, const std::vector< const ConnectionDef * >& activeConnections ) const;
 
             // friends
 

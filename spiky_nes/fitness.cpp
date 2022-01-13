@@ -112,28 +112,49 @@ namespace spkn
     long double
     FitnessCalculator::getFitnessScore() const
     {
-        const long double screen_points = 1.0L;
+        const long double points_per_screen = 1.0L;
 
         long double fitness = 0.0L;
+        {
+            long double minutes_played                 = (long double)( getNumVBlank() ) / 3600.0L;
 
-        long double network_activity = (long double)( Network()->PulsesProcessed() ) / (long double)( Network()->numNeurons() ) / (long double)( Network()->Time() ) * (long double)( networkStepsPerFrame );
-        long double minutes_played   = (long double)( getNumVBlank() ) / 3600.0L;
-        long double game_score       = (long double)( gameStateExtractor.Score_High() );
-        long double world_score      = (long double)( highestWorldLevel - 11 ); // BCD ex. World 3-2 would be 32
-        long double level_count      = (long double)( std::max<size_t>( 1, maxScreenPosPerLevel.size() ) );
-        long double lives_score      = ( !controllStopped ? (long double)( gameStateExtractor.Lives() - 2 ) : 0.0L );
-        long double traversal_score  = std::accumulate( maxScreenPosPerLevel.begin(), maxScreenPosPerLevel.end(), 0.0L, []( const auto& a, const auto& b ){ return a + b.second; } );
+            fitness -= minutes_played * points_per_screen;
+            //fitness -= ( pow( minutes_played               + 1.0L, 1.0L / 2.0L ) - 1.0L ) * points_per_screen;
+        }
 
-        fitness += game_score      * screen_points * 0.0001L;
-        fitness += traversal_score * screen_points * 1.0L;
-        fitness += world_score     * screen_points * 1.0L;
-        fitness += level_count     * screen_points * 1.0L;
-        fitness += lives_score     * screen_points * 1.0L;
+        long double game_fitness = 0.0L;
+        {
 
-        fitness *= ( controllStopped ? 1.0L - ( 0.1L ) : 1.0L ); // -10% to score if the network stopped giving inputs
+            long double game_score       = (long double)( gameStateExtractor.Score_High() );
+            long double world_score      = (long double)( highestWorldLevel - 11 ); // BCD ex. World 3-2 would be 32
+            long double level_count      = (long double)( std::max<size_t>( 1, maxScreenPosPerLevel.size() ) );
+            long double lives_score      = ( !controllStopped ? (long double)( gameStateExtractor.Lives() - 2 ) : 0.0L );
+            long double traversal_score  = std::accumulate( maxScreenPosPerLevel.begin(), maxScreenPosPerLevel.end(), 0.0L, []( const auto& a, const auto& b ){ return a + b.second; } );
 
-        fitness -= ( pow( minutes_played   + 1.0L, 1.0L / 2.0L ) - 1.0L ) * screen_points;
-        fitness -= ( pow( network_activity + 1.0L, 1.0L / 3.0L ) - 1.0L ) * screen_points;
+            game_fitness += game_score      * points_per_screen * 0.0001L;
+            game_fitness += traversal_score * points_per_screen * 1.0L;
+            game_fitness += world_score     * points_per_screen * 1.0L;
+            game_fitness += level_count     * points_per_screen * 1.0L;
+            game_fitness += lives_score     * points_per_screen * 1.0L;
+
+            game_fitness *= ( controllStopped ? 1.0L - ( 0.10L ) : 1.0L ); // -10% to score if the network stopped giving inputs
+
+        }
+        fitness += game_fitness;
+
+        long double net_fitness = 0.0L;
+        {
+            long double network_activity_per_neuron    = ( (long double)( Network()->PulsesProcessed() ) / (long double)( Network()->numNeurons()  ) ) / ( (long double)( Network()->Time() ) / (long double)( networkStepsPerFrame ) );
+            long double network_activity_per_synapse   = ( (long double)( Network()->PulsesProcessed() ) / (long double)( Network()->numSynapses() ) ) / ( (long double)( Network()->Time() ) / (long double)( networkStepsPerFrame ) );
+            long double network_complexity             = (long double)( Network()->numSynapses() ) / (long double)( Network()->numNeurons() );
+
+            net_fitness -= ( pow( network_activity_per_neuron  + 1.0L, 1.0L / 3.0L ) - 1.0L ) * points_per_screen;
+            net_fitness -= ( pow( network_activity_per_synapse + 1.0L, 1.0L        ) - 1.0L ) * points_per_screen;
+            net_fitness -= ( pow( network_complexity           + 1.0L, 1.0L        ) - 1.0L ) * points_per_screen;
+        }
+        fitness += net_fitness;
+
+        //fitness = logl( 1.0L + exp2l( fitness ) )/logl( 2.0L );
 
         return fitness;
     }
