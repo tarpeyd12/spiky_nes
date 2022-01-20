@@ -229,9 +229,13 @@ namespace neat
     void
     PopulationFitness::addFitnessData( const Genotype& genotype_pack )
     {
+        // add and/or get reff to specified species_id fitness data
         auto& species_data = fitness_data[ genotype_pack.species_id ];
+
         species_data.species_id = genotype_pack.species_id;
         species_data.genotype_fitnesses.emplace_back( genotype_pack );
+
+        // flag that things need to be re-finalized
         finalized = false;
     }
 
@@ -250,17 +254,43 @@ namespace neat
             species_data.fitness_bounds = MinMax< long double >( species_data.genotype_fitnesses.front().genotype_fitness );
 
             // average the genotype fitnesses for each species
-            species_data.species_fitness = std::accumulate(
-                species_data.genotype_fitnesses.begin(),
-                species_data.genotype_fitnesses.end(),
-                0.0L,
-                [&species_data]( long double a, const Genotype& b )
+            /*
+            {
+                species_data.species_fitness = std::accumulate(
+                    species_data.genotype_fitnesses.begin(),
+                    species_data.genotype_fitnesses.end(),
+                    0.0L,
+                    [&species_data]( long double a, const Genotype& b )
+                    {
+                        species_data.fitness_bounds.expand( b.genotype_fitness );
+                        return a + b.genotype_fitness;
+                    }
+                );
+                species_data.species_fitness /= (long double)(species_data.genotype_fitnesses.size());
+            }
+            */
+
+            // median
+            {
+                species_data.sort_species_geotypes_by_fitness();
+
+                species_data.fitness_bounds.expand( species_data.genotype_fitnesses.front().genotype_fitness );
+                species_data.fitness_bounds.expand( species_data.genotype_fitnesses.back().genotype_fitness );
+
+                size_t midpoint = species_data.genotype_fitnesses.size() / 2;
+
+                species_data.species_fitness = species_data.genotype_fitnesses[ midpoint ].genotype_fitness;
+
+                // median for even-length sets is averaged between the two center-most indexes
+                if( species_data.genotype_fitnesses.size() % 2 == 0 && species_data.genotype_fitnesses.size() >= 2 )
                 {
-                    species_data.fitness_bounds.expand( b.genotype_fitness );
-                    return a + b.genotype_fitness;
+                    long double fit1 = species_data.species_fitness; // we already got the first of the two fitnesses
+                    long double fit2 = species_data.genotype_fitnesses[ midpoint + 1 ].genotype_fitness;
+
+                    species_data.species_fitness = ( fit1 + fit2 ) / 2.0L;
+
                 }
-            );
-            species_data.species_fitness /= (long double)(species_data.genotype_fitnesses.size());
+            }
 
             fitness_bounds.expand( species_data.fitness_bounds );
         } );

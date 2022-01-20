@@ -31,16 +31,16 @@ namespace neat
 
             struct Genotype
             {
-                SpeciesID                               species_id;
-                long double                             genotype_fitness;
-                const NetworkGenotype *                 genotype;
+                SpeciesID                 species_id;
+                long double               genotype_fitness;
+                const NetworkGenotype *   genotype;
             };
 
             struct Species
             {
-                SpeciesID                               species_id;
-                long double                             species_fitness;
-                MinMax< long double >                   fitness_bounds;
+                SpeciesID                 species_id;
+                long double               species_fitness;
+                MinMax< long double >     fitness_bounds;
                 std::vector< Genotype >   genotype_fitnesses;
 
                 Species();

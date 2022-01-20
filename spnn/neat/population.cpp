@@ -584,6 +584,7 @@ namespace neat
                     }
                 }
 
+                // just in case we made too many, prune down to newGenotypesToMake
                 while( matingPairs.size() > newGenotypesToMake )
                 {
                     matingPairs.pop_back();
@@ -598,10 +599,15 @@ namespace neat
                         continue;
                     }
 
-                    //nextPopulation.push_back( SpliceGenotypes( *oldGenotypesVec[ p.first ].genotype, *oldGenotypesVec[ p.second ].genotype, rand ) );
                     auto _rand = std::make_shared< Rand::Random_Unsafe >( rand->Int() );
                     using overload_type = NetworkGenotype( const NetworkGenotype&, const NetworkGenotype&, std::shared_ptr< Rand::RandomFunctor > );
-                    genotype_futures.push_back( { thread_pool.submit< overload_type >( SpliceGenotypes, std::cref( *oldGenotypesVec[ p.first ].genotype ), std::cref( *oldGenotypesVec[ p.second ].genotype ), _rand ), p.do_mutate, species } );
+                    genotype_futures.push_back(
+                            {
+                                thread_pool.submit< overload_type >( SpliceGenotypes, std::cref( *oldGenotypesVec[ p.first ].genotype ), std::cref( *oldGenotypesVec[ p.second ].genotype ), _rand ),
+                                p.do_mutate,
+                                species
+                            }
+                        );
                 }
             }
 
@@ -659,9 +665,11 @@ namespace neat
             if( dbg && dbg_callbacks->swap_begin ) dbg_callbacks->swap_begin();
 
             // if we royally screwed up the population sizing and got too big, randomly reduce as a last resort
+            // TODO(dot##1/17/2022): we may accidentally remove the highest preforming individual in this emergency operation
             while( nextPopulation.size() > populationData.size() )
             {
-                nextPopulation.erase( nextPopulation.begin() + rand->Int( 0, nextPopulation.size() - 1 ) );
+                size_t sacrifice_index = rand->Int( 0, nextPopulation.size() - 1 );
+                nextPopulation.erase( nextPopulation.begin() + sacrifice_index );
             }
 
             // double check we didn't screw up
@@ -686,7 +694,7 @@ namespace neat
         // make sure we have a functioning random number generator
         if( !rand ) rand = std::make_shared< Rand::Random_Unsafe >( Rand::Int() );
 
-        // init out to be numbers from 0 to num-1
+        // init out to contain the numbers from 0 to num-1
         std::vector< size_t > out( num );
         size_t i = 0;
         std::generate( out.begin(), out.end(), [&]{ return i++; } );

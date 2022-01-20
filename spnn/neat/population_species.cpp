@@ -77,39 +77,12 @@ namespace neat
     {
         std::map< SpeciesID, long double > speciesFitness;
 
-        std::map< SpeciesID, std::vector< NetworkGenotype * > > speciatedPopulation = getSpeciatedPopulationData( thread_pool );
+        PopulationFitness pf = getSpeciesAndNetworkFitness( thread_pool );
 
-        for( auto it = speciatedPopulation.begin(); it != speciatedPopulation.end(); ++it )
+        pf.for_each_species( [&]( PopulationFitness::Species& species_data )
         {
-            SpeciesID species = it->first;
-            std::vector< NetworkGenotype * >& genotypes = it->second;
-
-            speciesFitness[ species ] = 0.0;
-
-            for( NetworkGenotype * genotype : genotypes )
-            {
-                long double fitScore = 0.0;
-                size_t count = fitnessCalculatorFactory->numTimesToTest();
-
-                auto network_phenotype = genotype->getNewNetworkPhenotype();
-
-                while( count-- )
-                {
-                    auto fitnessCalculator = fitnessCalculatorFactory->getNewFitnessCalculator( network_phenotype, count );
-
-                    fitnessCalculator->Run();
-
-                    fitScore += fitnessCalculator->getFitnessScore();
-
-                    fitnessCalculator->clearNetwork();
-                    network_phenotype->resetNetworkState();
-                }
-                fitScore /= (long double)( fitnessCalculatorFactory->numTimesToTest() );
-
-                speciesFitness[ species ] += fitScore;
-            }
-            speciesFitness[ species ] /= ( long double )genotypes.size();
-        }
+            speciesFitness[ species_data.species_id ] = species_data.species_fitness;
+        } );
 
         return speciesFitness;
     }
@@ -163,7 +136,7 @@ namespace neat
             const NetworkGenotype * genotype;
         };
 
-        std::vector< pre_fitness_package > flatenedSpecatedPopulation;
+        std::vector< pre_fitness_package > flatenedSpeciatedPopulation;
 
         for( auto it = speciatedPopulation.begin(); it != speciatedPopulation.end(); ++it )
         {
@@ -172,19 +145,18 @@ namespace neat
 
             for( const NetworkGenotype * genotype : genotypes )
             {
-                flatenedSpecatedPopulation.push_back( { species, genotype } );
-                /*auto fitness_package_future = thread_pool.submit( fitness_lambda, species, genotype, fitnessCalculatorFactory );
-                fitness_futures.push( std::move( fitness_package_future ) );*/
+                flatenedSpeciatedPopulation.push_back( { species, genotype } );
             }
         }
 
+        // shuffle the order in which the speciated population pairs are ordered, to even out long vs short fitness times throughout the fitness evaluations
         if( rand != nullptr )
         {
-            std::shuffle( flatenedSpecatedPopulation.begin(), flatenedSpecatedPopulation.end(), std::mt19937_64( rand->Int() ) );
+            std::shuffle( flatenedSpeciatedPopulation.begin(), flatenedSpeciatedPopulation.end(), std::mt19937_64( rand->Int() ) );
         }
 
-
-        for( auto pfp : flatenedSpecatedPopulation )
+        // prep fitness evaluation futures
+        for( auto pfp : flatenedSpeciatedPopulation )
         {
             auto fitness_package_future = thread_pool.submit( fitness_lambda, pfp.species, pfp.genotype, fitnessCalculatorFactory );
             fitness_futures.push( std::move( fitness_package_future ) );
@@ -192,6 +164,7 @@ namespace neat
 
         PopulationFitness speciesFitness;
 
+        // retrieve the fitness from the evaluated futures
         while( !fitness_futures.empty() )
         {
             auto fitness_pack = fitness_futures.front().get();
@@ -200,6 +173,7 @@ namespace neat
             speciesFitness.addFitnessData( fitness_pack.species, fitness_pack.fitness, fitness_pack.genotype );
         }
 
+        // finalize the fitnesses
         speciesFitness.Finalize();
 
         return speciesFitness;
